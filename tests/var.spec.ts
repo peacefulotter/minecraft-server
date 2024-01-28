@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { readVarInt, readVarLong } from './var'
+import { readVarInt, readVarLong } from '../var'
 import Long from 'long'
 
 describe('vars work', () => {
@@ -21,7 +21,7 @@ describe('vars work', () => {
             0, 1, 2, 127, 128, 255, 25565, 2097151, 2147483647, -1, -2147483648,
         ]
         for (let i = 0; i < buffers.length; i++) {
-            expect(readVarInt(buffers[i])).toBe(values[i])
+            expect(readVarInt(buffers[i].toJSON().data)).toBe(values[i])
         }
     })
 

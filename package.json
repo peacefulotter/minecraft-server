@@ -1,17 +1,19 @@
 {
     "name": "mc-server",
-    "module": "index.ts",
+    "module": "src/index.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun --bun --hot index.ts"
+        "dev": "bun --bun --watch src/index.ts"
     },
     "devDependencies": {
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "@types/leb128": "^0.0.0"
     },
     "peerDependencies": {
         "typescript": "^5.0.0"
     },
     "dependencies": {
+        "leb128": "^0.0.5",
         "long": "^5.2.3"
     }
 }
