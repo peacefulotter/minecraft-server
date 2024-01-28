@@ -17,7 +17,6 @@ export class Handshake {
     }
 
     handleHandshake = ({ buffer, id }: PacketEmitterArgs) => {
-        console.log('Handshake handshake')
         const protocol = readVarInt(buffer)
         buffer.shift()
         const hostname = readString(buffer, buffer.length - 3)
@@ -28,7 +27,6 @@ export class Handshake {
     }
 
     handleStatus = ({}: PacketEmitterArgs) => {
-        console.log('Handshake status')
         return HANDSHAKE_RESPONSE
     }
 
@@ -36,13 +34,12 @@ export class Handshake {
         const data = Buffer.from(buffer)
         const packetLengthBuffer = leb128.signed.encode(data.length + 1)
 
-        console.log('sending pong')
-
         const res = Buffer.concat([
             packetLengthBuffer,
             Buffer.from('01', 'hex'),
             data,
         ])
+        // TODO: find better way then writing here
         socket.write(res)
     }
 

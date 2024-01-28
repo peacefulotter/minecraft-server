@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { readVarInt, readVarLong } from '../var'
+import { readVarInt, readVarLong } from '../src/var'
 import Long from 'long'
 
 describe('vars work', () => {
