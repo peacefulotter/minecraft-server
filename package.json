@@ -1,19 +1,21 @@
 {
-    "name": "mc-server",
-    "module": "src/index.ts",
-    "type": "module",
-    "scripts": {
-        "dev": "bun --bun --watch src/index.ts"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "@types/leb128": "^0.0.0"
-    },
-    "peerDependencies": {
-        "typescript": "^5.0.0"
-    },
-    "dependencies": {
-        "leb128": "^0.0.5",
-        "long": "^5.2.3"
-    }
+  "name": "mc-server",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun --watch src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/leb128": "^0.0.0",
+    "@types/shortid": "^0.0.32"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "leb128": "^0.0.5",
+    "long": "^5.2.3",
+    "shortid": "^2.2.16"
+  }
 }
