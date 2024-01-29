@@ -64,12 +64,27 @@ export class Server {
             packet.length + respLengthBuffer.length + 1
         )
 
+        console.log('--- response ---')
+        console.log('packetLengthBuffer', packetLengthBuffer)
+        console.log('packID', Buffer.from([packetId]))
+
         return Buffer.concat([
             packetLengthBuffer,
             Buffer.from([packetId]), // FIXME: works for now, but what about packetIds > 255
             respLengthBuffer,
             packet,
         ])
+    }
+
+    isPingPacket = (state: SocketState, packetId: PacketId) =>
+        packetId === PacketNameToId.ping &&
+        (state.connection === ConnectionState.NONE ||
+            state.connection === ConnectionState.STATUS)
+
+    formatPacket = (state: SocketState, packetId: PacketId, packet: Buffer) => {
+        return this.isPingPacket(state, packetId)
+            ? this.formatPing(packet)
+            : this.formatResponse(packetId, packet)
     }
 
     data = async (socket: SocketWithId, data: Buffer) => {
@@ -92,28 +107,27 @@ export class Server {
             return
         }
 
-        const packet = await this.handler[name]({
+        const response = await this.handler[name]({
             socket,
             state,
             packetId,
             buffer,
         })
-        if (!packet) return
+        if (!response) return
 
-        console.log(PacketNameToId, PacketIdToName)
-        console.log(packetId, PacketNameToId.ping)
-        console.log(packetId === PacketNameToId.ping)
+        const { responsePacketId, responseBuffer } = response
+        const responseId = responsePacketId ?? packetId
 
-        const response =
-            packetId === PacketNameToId.ping
-                ? this.formatPing(packet)
-                : this.formatResponse(packetId, packet)
+        const packet = this.formatPacket(state, responseId, responseBuffer)
+
         console.log('Responding packet', {
             socketId: socket.id,
             packetId,
+            responsePacketId,
             response,
+            packet,
         })
-        socket.write(response)
+        socket.write(packet)
     }
 
     open = (socket: SocketWithId) => {

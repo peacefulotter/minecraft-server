@@ -3,20 +3,30 @@ import Long from 'long'
 const SEGMENT_BITS = 0x7f
 const CONTINUE_BIT = 0x80
 
-export const readByte = (buffer: number[]) => buffer.shift() as number
+export const readByte = (buffer: number[]) => {
+    const byte = buffer.shift()
+    if (byte === undefined) throw new Error('Buffer is empty')
+    return byte
+}
+
+export const readBytes = (buffer: number[], n: number) => {
+    const acc: number[] = []
+    for (let i = 0; i < n; i++) {
+        acc.push(readByte(buffer))
+    }
+    return Buffer.from(acc)
+}
 
 export const readShort = (buffer: number[]) => {
-    const b1 = buffer.shift() as number
-    const b2 = buffer.shift() as number
+    const b1 = readByte(buffer)
+    const b2 = readByte(buffer)
     return (b1 << 8) | b2
 }
 
 export const readInt = (buffer: number[]) => {
-    const b1 = buffer.shift() as number
-    const b2 = buffer.shift() as number
-    const b3 = buffer.shift() as number
-    const b4 = buffer.shift() as number
-    return (b1 << 24) | (b2 << 16) | (b3 << 8) | b4
+    const b1 = readShort(buffer)
+    const b2 = readShort(buffer)
+    return (b1 << 16) | (b2 << 16)
 }
 
 export const readString = (buffer: number[], n: number) => {
@@ -35,11 +45,11 @@ export const readVarInt = (buffer: number[]) => {
     let idx = 0
 
     while (true) {
-        const currentByte = buffer.shift() // .at(idx)
-        if (currentByte === undefined) throw new Error('VarInt is too big')
-        value |= (currentByte & SEGMENT_BITS) << position
+        const byte = readByte(buffer)
 
-        if ((currentByte & CONTINUE_BIT) == 0) break
+        value |= (byte & SEGMENT_BITS) << position
+
+        if ((byte & CONTINUE_BIT) == 0) break
 
         position += 7
         idx++

@@ -10,14 +10,22 @@ export type HandlerArgs = {
     buffer: number[]
 }
 
+export type BufferResponse = {
+    responsePacketId?: PacketId
+    responseBuffer: Buffer
+}
+
 interface IMainHandler
-    extends Record<PacketName, (args: HandlerArgs) => Promise<Buffer | void>> {}
+    extends Record<
+        PacketName,
+        (args: HandlerArgs) => Promise<BufferResponse | void>
+    > {}
 
 export class MainHandler implements IMainHandler {
     handshake = new ConnectionHandler()
 
     passToHandshake = async (args: HandlerArgs) => {
-        return this.handshake.handle(args)
+        return await this.handshake.handle(args)
     };
 
     [Packets.STATUS] = this.passToHandshake;
