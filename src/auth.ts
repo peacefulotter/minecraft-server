@@ -1,13 +1,15 @@
 import * as crypto from 'crypto'
+import { mojangPublicKeyPem } from './constants'
+import NodeRSA from 'node-rsa'
 
-const { publicKey, privateKey } = await new Promise<{
+const { publicKey: pubKey, privateKey } = await new Promise<{
     publicKey: crypto.KeyObject
     privateKey: crypto.KeyObject
 }>((resolve) => {
     crypto.generateKeyPair(
         'rsa',
         {
-            modulusLength: 2048,
+            modulusLength: 1024,
         },
         (err, publicKey, privateKey) => {
             if (err) throw new Error('Failed to generate keys')
@@ -16,7 +18,11 @@ const { publicKey, privateKey } = await new Promise<{
     )
 })
 
-export const pubKey = publicKey.export({
+export const serverKeyRSA = new NodeRSA({ b: 1024 })
+
+export const mojangPubKey = crypto.createPublicKey(mojangPublicKeyPem)
+
+export const publicKey = pubKey.export({
     type: 'spki',
     format: 'der',
 })
@@ -24,9 +30,9 @@ export const pubKey = publicKey.export({
 export const encrypt = (buffer: Buffer) => {
     return crypto.publicEncrypt(
         {
-            key: publicKey,
-            padding: crypto.constants.RSA_NO_PADDING,
-            oaepHash: 'sha1',
+            key: pubKey,
+            padding: crypto.constants.RSA_PKCS1_PADDING,
+            oaepHash: 'sha256WithRSAEncryption',
         },
         buffer
     )
@@ -39,8 +45,8 @@ export const decrypt = (buffer: Buffer) => {
             // In order to decrypt the data, we need to specify the
             // same hashing function and padding scheme that we used to
             // encrypt the data in the previous step
-            padding: crypto.constants.RSA_NO_PADDING,
-            oaepHash: 'sha1',
+            padding: crypto.constants.RSA_PKCS1_PADDING,
+            oaepHash: 'sha256WithRSAEncryption',
         },
         buffer
     )

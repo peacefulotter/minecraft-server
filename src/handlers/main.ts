@@ -1,25 +1,24 @@
 import { ConnectionHandler } from './connection'
-import { Packets, type PacketId, type PacketName } from '../packet'
-import type { SocketState, SocketWithId } from '../socket'
-import * as formatting from '../formats'
+import { Packets, type PacketId, type PacketName } from '~/packet'
+import type { SocketWithId } from '~/socket'
+import * as formatting from '~/formats'
+import type { Client } from '~/client'
+import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
 
 export type HandlerArgs = {
     socket: SocketWithId
-    state: SocketState
+    client: Client
     packetId: PacketId
     buffer: number[]
 }
 
 export type BufferResponse = {
     responsePacketId?: PacketId
-    responseBuffer: Buffer
+    responseBuffer: Buffer | undefined
 }
 
 interface IMainHandler
-    extends Record<
-        PacketName,
-        (args: HandlerArgs) => Promise<BufferResponse | void>
-    > {}
+    extends Record<PacketName, (args: HandlerArgs) => Promise<BufferResponse | void>> {}
 
 export class MainHandler implements IMainHandler {
     handshake = new ConnectionHandler()
@@ -32,11 +31,7 @@ export class MainHandler implements IMainHandler {
     [Packets.PING] = this.passToHandshake;
 
     // https://wiki.vg/Server_List_Ping#1.6
-    [Packets.LEGACY_SERVER_LIST_PING] = async ({
-        socket,
-        packetId,
-        buffer,
-    }: HandlerArgs) => {
+    [Packets.LEGACY_SERVER_LIST_PING] = async ({ socket, packetId, buffer }: HandlerArgs) => {
         formatting.readByte(buffer) // fa
         const len = formatting.readShort(buffer) // 11
         formatting.readString(buffer, len) // MC|PingHost
@@ -64,9 +59,9 @@ export class MainHandler implements IMainHandler {
             0,
             ...tag,
             ...delimiter,
-            // Server.PROTOCOL_VERSION,
+            PROTOCOL_VERSION,
             ...delimiter,
-            // ...version,
+            MINECRAFT_SERVER_VERSION,
             ...delimiter,
             ...message,
             ...delimiter,

@@ -8,6 +8,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/leb128": "^0.0.0",
+    "@types/node-rsa": "^1.1.4",
     "@types/shortid": "^0.0.32"
   },
   "peerDependencies": {
@@ -16,6 +17,8 @@
   "dependencies": {
     "leb128": "^0.0.5",
     "long": "^5.2.3",
-    "shortid": "^2.2.16"
+    "node-rsa": "^1.1.1",
+    "shortid": "^2.2.16",
+    "type-fest": "^4.10.2"
   }
 }

@@ -1,7 +1,4 @@
-import { readByte, readInt, readShort, readString } from './formats'
 import { reverseRecord } from './utils'
-import { ConnectionHandler } from './handlers/connection'
-import type { SocketState, SocketWithId } from './socket'
 
 export const Packets = {
     STATUS: 'status',
@@ -16,6 +13,8 @@ export const PacketIdToName = new Map([
 ] as const)
 
 export const PacketNameToId = reverseRecord(PacketIdToName)
+
+console.log(PacketIdToName)
 
 export type PacketName = keyof typeof PacketNameToId
 export type PacketId = (typeof PacketNameToId)[keyof typeof PacketNameToId]

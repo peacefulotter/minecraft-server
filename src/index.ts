@@ -8,8 +8,9 @@ import { Server } from './server'
 //     console.log('server is listening')
 // })
 
-Bun.listen({
-    hostname: '10.0.16.209',
+const socket = Bun.listen({
+    hostname: '192.168.1.67',
     port: 25565,
     socket: new Server(),
 })
+console.log('Server listening on ', socket.hostname, ':', socket.port)
