@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
-import { createReadPacket, createWritePacket, format } from '~/formats'
+import { createReadPacket, createWritePacket, formats } from '~/formats'
 
 // const description = new Builder('text', string).next('color', int)
 // const res = description.get([0, 1, 2])
@@ -8,26 +8,26 @@ import { createReadPacket, createWritePacket, format } from '~/formats'
 describe('formats', () => {
     test('is identity when writing -> reading', () => {
         const writePacket = createWritePacket({
-            a: format.write.byte,
-            lenB: format.write.byte,
-            b: format.write.bytes,
-            c: format.write.short,
-            d: format.write.int,
-            lenE: format.write.byte,
-            e: format.write.bytes,
-            // f: format.write.varint,
-            // g: format.write.varlong,
+            a: formats.write.byte,
+            lenB: formats.write.int,
+            b: formats.write.bytes,
+            c: formats.write.short,
+            d: formats.write.int,
+            lenE: formats.write.varint,
+            e: formats.write.bytes,
+            f: formats.write.varint,
+            g: formats.write.varlong,
         })
         const readPacket = createReadPacket({
-            a: format.read.byte,
-            lenB: format.read.byte, // len holds in one byte
-            b: format.read.bytes,
-            c: format.read.short,
-            d: format.read.int,
-            lenE: format.read.byte, // len holds in one byte
-            e: format.read.bytes,
-            // f: format.read.varint,
-            // g: format.read.varlong,
+            a: formats.read.byte,
+            lenB: formats.read.int,
+            b: formats.read.bytes,
+            c: formats.read.short,
+            d: formats.read.int,
+            lenE: formats.read.varint,
+            e: formats.read.bytes,
+            f: formats.read.varint,
+            g: formats.read.varlong,
         })
         const b = [1, 2, 3]
         const e = 'hello world'
@@ -39,13 +39,14 @@ describe('formats', () => {
             d: 6,
             lenE: e.length,
             e: Buffer.from(e),
-            // f: 128,
-            // g: new Long(128, 128),
+            f: 255,
+            g: new Long(16, 128),
         } as const
         const buffer = writePacket(packet)
         console.log(buffer)
-        const res = readPacket(buffer)
-        console.log(res)
+        const data = buffer.toJSON().data
+
+        const res = readPacket(data, false)
         expect(res).toEqual(packet)
     })
 })

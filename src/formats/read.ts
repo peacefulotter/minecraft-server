@@ -2,6 +2,7 @@ import leb128 from 'leb128'
 import Long from 'long'
 
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
+import { decrypt } from '~/auth'
 
 type Args = { buffer: number[]; length: number }
 
@@ -12,9 +13,7 @@ const readByte = ({ buffer }: Args) => {
 }
 
 const readBytes = (args: Args) => {
-    const { buffer, length } = args
-    console.log('read bytes', buffer, length)
-
+    const { length } = args
     const acc: number[] = []
     for (let i = 0; i < length; i++) {
         acc.push(readByte(args))
@@ -23,29 +22,19 @@ const readBytes = (args: Args) => {
 }
 
 const readShort = (args: Args) => {
-    const { buffer } = args
-    console.log('read short', buffer)
-
     const b1 = readByte(args)
     const b2 = readByte(args)
     return (b1 << 8) | b2
 }
 
-const readInt = ({ buffer }: Args) => {
-    console.log('read int', buffer)
-
-    // const b1 = readShort({ buffer })
-    // const b2 = readShort({ buffer })
-    // return (b1 << 16) | b2
-    const res = leb128.signed.decode(Buffer.from(buffer))
-    console.log('decoded string', res)
-    return parseInt(res, 10)
+const readInt = (args: Args) => {
+    const b1 = readShort(args)
+    const b2 = readShort(args)
+    return (b1 << 16) | b2
 }
 
 const readString = (args: Args) => {
-    const { buffer, length } = args
-    console.log('read string', buffer, length)
-
+    const { length } = args
     const acc = []
     for (let i = 0; i < length; i++) {
         const element = readVarInt(args)
@@ -84,7 +73,7 @@ const readVarLong = ({ buffer }: Args) => {
     while (true) {
         const currentByte = buffer.at(idx)
         if (currentByte === undefined) throw new Error('VarLong is too big')
-        value = value.or((currentByte & SEGMENT_BITS) << position)
+        value = value.or(new Long(currentByte & SEGMENT_BITS).shiftLeft(position))
 
         if ((currentByte & CONTINUE_BIT) == 0) break
 
@@ -149,12 +138,12 @@ type ReadPacketReduce<T extends PacketCreation> = { acc: PacketReturn<T>; prev: 
 
 export const createReadPacket = <T extends PacketCreation>(
     t: T
-): ((buffer: Buffer) => PacketReturn<typeof t>) => {
-    return (buffer: Buffer) => {
-        const data = buffer.toJSON().data
+): ((buffer: number[], encripted: boolean) => PacketReturn<typeof t>) => {
+    return (buf: number[], encripted: boolean) => {
+        const buffer = encripted ? decrypt(buf) : buf
         const computed = Object.entries(t).reduce(
             ({ acc, prev }, [key, val]) => {
-                const v = val({ buffer: data, length: prev })
+                const v = val({ buffer, length: prev })
                 return { acc: { ...acc, [key]: v }, prev: v }
             },
             { acc: {}, prev: 0 } as ReadPacketReduce<T>

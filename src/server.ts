@@ -4,61 +4,32 @@ import { PacketIdToName, PacketNameToId, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
-import { Builder } from './formats/read'
+import { Unwrap } from './packets/read'
+import { WrapPing, WrapResponse } from './packets/write'
+import { formats } from './formats'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
 
-    getPacketFormat = (data: Buffer) => {
-        let buffer = data.toJSON().data
-        const length = formatting.readVarInt(buffer)
-
-        // Handle legacy server list ping
-        if (length == PacketNameToId.legacy_server_list_ping) {
-            return {
-                packetId: PacketNameToId.legacy_server_list_ping as PacketId,
-                buffer,
-            }
-        } else buffer = buffer.slice(0, length)
-        const packetId = readVarInt(buffer) as PacketId
-        return { packetId, buffer }
-    }
-
     formatPing = (packet: Buffer) => {
-        console.log('====================================', 'this.handlePing')
-        const packetLengthBuffer = leb128.signed.encode(packet.length + 1)
-        console.log(packet, packetLengthBuffer)
-        return Buffer.concat([packetLengthBuffer, Buffer.from([PacketNameToId.ping]), packet])
+        const packetLen = packet.length + 1
+        return WrapPing({
+            packetLen,
+            packet,
+        })
     }
 
-    formatResponse = (packetId: PacketId, packet: Buffer) => {
-        const respLengthBuffer = leb128.signed.encode(packet.length)
-        const packetLengthBuffer = leb128.signed.encode(packet.length + respLengthBuffer.length + 1)
+    formatResponse = (packetId: PacketId, buffer: Buffer) => {
+        const bufferLen = buffer.length
+        const packetLen = buffer.length + formats.write.varint(bufferLen).length + 1
 
-        console.log('--- response ---')
-        console.log(
-            'packetLengthBuffer',
-            packet.length,
-            '->',
-            packetLengthBuffer,
-            formatting.writeVarInt(packet.length)
-        )
-        console.log('packID', packetId, '->', Buffer.from([packetId]))
-        console.log(
-            'respLengthBuffer',
-            packet.length + respLengthBuffer.length + 1,
-            '->',
-            respLengthBuffer,
-            formatting.writeVarInt(packet.length + respLengthBuffer.length + 1)
-        )
-
-        return Buffer.concat([
-            packetLengthBuffer,
-            Buffer.from([packetId]), // FIXME: works for now, but what about packetIds > 255
-            respLengthBuffer,
-            packet,
-        ])
+        return WrapResponse({
+            packetLen,
+            packetId,
+            bufferLen,
+            buffer,
+        })
     }
 
     isPingPacket = (client: Client, packetId: PacketId) =>
@@ -80,7 +51,7 @@ export class Server {
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]
 
-        const { packetId, buffer } = this.getPacketFormat(data)
+        const { packetId, buffer } = Unwrap(data)
         const name = PacketIdToName.get(packetId)
         console.log('Received packet', {
             socketId: socket.id,

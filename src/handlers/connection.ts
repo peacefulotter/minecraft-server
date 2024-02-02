@@ -1,11 +1,13 @@
 import crypto from 'crypto'
 
 import { PacketNameToId } from '~/packet'
-import * as formatting from '~/formats'
 import type { BufferResponse, HandlerArgs } from './main'
 import { decrypt, hexDigest, publicKey, serverKeyRSA } from '~/auth'
 import { HANDSHAKE_RESPONSE } from '~/constants'
 import { ClientState } from '~/client'
+import { EncryptionResponse, Handshake } from '~/packets/read'
+import { formats } from '~/formats'
+import { EncryptionRequest } from '~/packets/write'
 
 type AuthResponse = {
     id: string
@@ -21,19 +23,10 @@ export class ConnectionHandler {
     MOJANG_AUTH_URL = new URL('', 'https://sessionserver.mojang.com/session/minecraft/hasJoined')
 
     handleHandshake = (args: HandlerArgs) => {
-        const { buffer, client, packetId } = args
+        const { client, buffer, packetId } = args
         console.log('====================================', 'this.handleHandshake')
-
-        const protocol = formatting.readVarInt(buffer)
-        buffer.shift()
-        const hostname = formatting.readString(buffer, buffer.length - 3)
-        const port = formatting.readShort(buffer)
-        const nextState = formatting.readVarInt(buffer) as ClientState.HANDSHAKE | ClientState.LOGIN
-        client.state = nextState
-
-        console.log(nextState, ClientState.LOGIN)
-
-        console.log({ packetId, protocol, hostname, port, nextState })
+        const packet = Handshake(buffer, client.encrypted)
+        console.log({ packetId, ...packet })
         return HANDSHAKE_RESPONSE
     }
 
@@ -65,7 +58,7 @@ export class ConnectionHandler {
         // console.log('token len', verifyToken.length, formatting.writeVarInt(verifyToken.length))
         // console.log('token', verifyToken)
 
-        const serverId = Buffer.from([])
+        const serverId = ''
         const publicKey = Buffer.from([
             48, 129, 159, 48, 13, 6, 9, 42, 134, 72, 134, 247, 13, 1, 1, 1, 5, 0, 3, 129, 141, 0,
             48, 129, 137, 2, 129, 129, 0, 165, 152, 27, 55, 161, 192, 11, 250, 184, 15, 7, 83, 126,
@@ -79,25 +72,20 @@ export class ConnectionHandler {
         ])
         const verifyToken = Buffer.from([188, 27, 63, 43])
 
-        console.log({
-            serverIdLen: formatting.writeVarInt(serverId.length), // Encryption Request
+        const packet = {
+            serverIdLen: serverId.length,
             serverId, // Server ID, appears to be empty
-            publicKeyLen: formatting.writeVarInt(publicKey.length),
+            publicKeyLen: publicKey.length,
             publicKey,
-            verifyTokenLen: formatting.writeVarInt(verifyToken.length),
+            verifyTokenLen: verifyToken.length,
             verifyToken,
-        })
+        }
+
+        console.log()
 
         return {
             id: PacketNameToId.ping,
-            packet: Buffer.concat([
-                formatting.writeVarInt(serverId.length), // Encryption Request
-                serverId, // Server ID, appears to be empty
-                formatting.writeVarInt(publicKey.length),
-                publicKey,
-                formatting.writeVarInt(verifyToken.length),
-                verifyToken,
-            ]),
+            packet: EncryptionRequest(packet),
         }
     }
 
@@ -107,23 +95,14 @@ export class ConnectionHandler {
     // send success response right after handleLogin
     sendSuccess = () => {}
 
-    handleEncryption = ({ buffer }: HandlerArgs) => {
+    handleEncryption = ({ client, buffer }: HandlerArgs) => {
         console.log('====================================', 'this.handleEncryption')
-        const packet = decrypt(Buffer.from(buffer))
-        console.log(packet)
-        const decrypted = packet.toJSON().data
+        const response = EncryptionResponse(buffer, true)
 
-        const sharedSecretLen = formatting.readVarInt(decrypted)
-        const sharedSecret = formatting.readBytes(decrypted, sharedSecretLen)
-
-        console.log({ sharedSecretLen, sharedSecret })
-
-        const verifyTokenLen = formatting.readVarInt(decrypted)
-        const verifyToken = formatting.readBytes(decrypted, verifyTokenLen)
-
-        console.log({ verifyTokenLen, verifyToken })
-
+        console.log(response)
         console.log(this.MOJANG_AUTH_URL)
+
+        client.encrypted = true
 
         return Buffer.from('')
     }

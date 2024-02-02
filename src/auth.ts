@@ -38,8 +38,8 @@ export const encrypt = (buffer: Buffer) => {
     )
 }
 
-export const decrypt = (buffer: Buffer) => {
-    return crypto.privateDecrypt(
+export const decrypt = (buffer: number[]) => {
+    const decrypted = crypto.privateDecrypt(
         {
             key: privateKey,
             // In order to decrypt the data, we need to specify the
@@ -48,8 +48,9 @@ export const decrypt = (buffer: Buffer) => {
             padding: crypto.constants.RSA_PKCS1_PADDING,
             oaepHash: 'sha256WithRSAEncryption',
         },
-        buffer
+        Buffer.from(buffer)
     )
+    return decrypted.toJSON().data
 }
 
 // From: https://gist.github.com/andrewrk/4425843

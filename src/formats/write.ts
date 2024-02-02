@@ -15,7 +15,7 @@ const writeShort = (value: number) => {
 }
 
 const writeInt = (value: number) => {
-    return leb128.signed.encode(value)
+    return Buffer.concat([writeShort((value >> 16) & 0xffffffff), writeShort(value & 0xffffffff)])
 }
 
 const writeVarInt = (value: number) => {

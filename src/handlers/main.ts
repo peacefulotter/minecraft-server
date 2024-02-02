@@ -4,6 +4,7 @@ import type { SocketWithId } from '~/socket'
 import * as formatting from '~/formats'
 import type { Client } from '~/client'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
+import { LegacyServerListPing } from '~/packets/read'
 
 export type HandlerArgs = {
     socket: SocketWithId
@@ -31,21 +32,17 @@ export class MainHandler implements IMainHandler {
     [Packets.PING] = this.passToHandshake;
 
     // https://wiki.vg/Server_List_Ping#1.6
-    [Packets.LEGACY_SERVER_LIST_PING] = async ({ socket, packetId, buffer }: HandlerArgs) => {
-        formatting.readByte(buffer) // fa
-        const len = formatting.readShort(buffer) // 11
-        formatting.readString(buffer, len) // MC|PingHost
-        formatting.readShort(buffer) // 7 + len(hostname)
-        const protocol = formatting.readByte(buffer)
-        const hostnameLen = formatting.readShort(buffer) // len(hostname)
-        const hostname = formatting.readString(buffer, hostnameLen)
-        const port = formatting.readInt(buffer)
+    [Packets.LEGACY_SERVER_LIST_PING] = async ({
+        client,
+        socket,
+        packetId,
+        buffer,
+    }: HandlerArgs) => {
+        const packet = LegacyServerListPing(buffer, client.encrypted)
 
         console.log({
             packetId,
-            protocol,
-            hostname,
-            port,
+            ...packet,
         })
 
         const tag = Buffer.from('§1')

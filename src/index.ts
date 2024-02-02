@@ -9,7 +9,7 @@ import { Server } from './server'
 // })
 
 const socket = Bun.listen({
-    hostname: '192.168.1.67',
+    hostname: 'localhost',
     port: 25565,
     socket: new Server(),
 })
