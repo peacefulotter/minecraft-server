@@ -1,10 +1,9 @@
+import leb128 from 'leb128'
 import Long from 'long'
 
-const SEGMENT_BITS = 0x7f
-const CONTINUE_BIT = 0x80
+import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 
-type Args = { buffer: number[] }
-type ArgsWithLength = Args & { length: number }
+type Args = { buffer: number[]; length: number }
 
 const readByte = ({ buffer }: Args) => {
     const byte = buffer.shift()
@@ -12,43 +11,57 @@ const readByte = ({ buffer }: Args) => {
     return byte
 }
 
-const readBytes = ({ buffer, length }: ArgsWithLength) => {
+const readBytes = (args: Args) => {
+    const { buffer, length } = args
+    console.log('read bytes', buffer, length)
+
     const acc: number[] = []
     for (let i = 0; i < length; i++) {
-        acc.push(readByte({ buffer }))
+        acc.push(readByte(args))
     }
     return Buffer.from(acc)
 }
 
-const readShort = ({ buffer }: Args) => {
-    const b1 = readByte({ buffer })
-    const b2 = readByte({ buffer })
+const readShort = (args: Args) => {
+    const { buffer } = args
+    console.log('read short', buffer)
+
+    const b1 = readByte(args)
+    const b2 = readByte(args)
     return (b1 << 8) | b2
 }
 
 const readInt = ({ buffer }: Args) => {
-    const b1 = readShort({ buffer })
-    const b2 = readShort({ buffer })
-    return (b1 << 16) | (b2 << 16)
+    console.log('read int', buffer)
+
+    // const b1 = readShort({ buffer })
+    // const b2 = readShort({ buffer })
+    // return (b1 << 16) | b2
+    const res = leb128.signed.decode(Buffer.from(buffer))
+    console.log('decoded string', res)
+    return parseInt(res, 10)
 }
 
-const readString = ({ buffer, length }: ArgsWithLength) => {
+const readString = (args: Args) => {
+    const { buffer, length } = args
+    console.log('read string', buffer, length)
+
     const acc = []
     for (let i = 0; i < length; i++) {
-        const element = readVarInt({ buffer })
+        const element = readVarInt(args)
         if (element === 0) i--
         else acc.push(element)
     }
     return Buffer.from(acc).toString('utf-8')
 }
 
-const readVarInt = ({ buffer }: Args) => {
+const readVarInt = (args: Args) => {
     let value = 0
     let position = 0
     let idx = 0
 
     while (true) {
-        const byte = readByte({ buffer })
+        const byte = readByte(args)
 
         value |= (byte & SEGMENT_BITS) << position
 
@@ -84,17 +97,9 @@ const readVarLong = ({ buffer }: Args) => {
     return value
 }
 
-const builder =
-    <F extends (args: ArgsWithLength) => any>(func: F) =>
-    (args: ArgsWithLength) =>
-        func(args) as ReturnType<F>
-
-const string = builder(readString)
-const int = builder(readInt)
-
 type BuilderType<
     K extends string | undefined,
-    V extends (args: ArgsWithLength) => any,
+    V extends (args: Args) => any,
     O extends {}
 > = K extends string
     ? O extends Record<infer K_, infer V_>
@@ -102,14 +107,22 @@ type BuilderType<
         : never
     : {}
 
-class Builder<K extends string | undefined, V extends (args: ArgsWithLength) => any, O extends {}> {
-    data: BuilderType<K, V, O>
+type FromEntries<A> = A extends { [K: PropertyKey]: Function }
+    ? {
+          [K in keyof A]: A[K] extends (...args: any[]) => infer R ? R : never
+      }
+    : never
+type Pure<T> = { [K in keyof T]: T[K] } & unknown
+type BuilderResult<T> = Pure<FromEntries<T>>
+
+export class Builder<K extends string | undefined, V extends (args: Args) => any, O extends {}> {
+    private data: BuilderType<K, V, O>
     constructor(name: K, value: V, acc?: O) {
         if (name === undefined) this.data = acc as BuilderType<K, V, O>
         else this.data = { ...acc, [name]: value } as BuilderType<K, V, O>
     }
 
-    next = <K_ extends string, V_ extends (args: ArgsWithLength) => any>(
+    next = <K_ extends string, V_ extends (args: Args) => any>(
         name: K_,
         value: V_
     ): Builder<K_, V_, BuilderType<K, V, O>> => {
@@ -120,26 +133,42 @@ class Builder<K extends string | undefined, V extends (args: ArgsWithLength) => 
         let length = 0
         const res: any = {}
         for (const [k, v] of Object.entries(this.data)) {
-            res[k] = v({ buffer, length: readVarInt({ buffer }) })
+            res[k] = v({ buffer, length: readVarInt({ buffer, length: 0 }) })
         }
-        return res as Aim<BuilderType<K, V, O>>
+        return res as BuilderResult<BuilderType<K, V, O>>
     }
 }
 
-type FromEntries<A> = A extends { [K: PropertyKey]: Function }
-    ? {
-          [K in keyof A]: A[K] extends (...args: any[]) => infer R ? R : never
-      }
-    : never
-type Pure<T> = { [K in keyof T]: T[K] } & unknown
-type Aim<T> = Pure<FromEntries<T>>
+type PacketCreation = { [key: string]: (arg: Args) => any }
 
-const description = new Builder('text', string).next('color', int)
-const data = description.data
-const res = description.get([0, 1, 2])
-
-export const formatting = {
-    string: factory(readString),
+type PacketReturn<T extends PacketCreation> = {
+    [key in keyof T]: T[key] extends (arg: Args) => infer Ret ? Ret : never
 }
 
-const test = formatting.string('here')
+type ReadPacketReduce<T extends PacketCreation> = { acc: PacketReturn<T>; prev: number }
+
+export const createReadPacket = <T extends PacketCreation>(
+    t: T
+): ((buffer: Buffer) => PacketReturn<typeof t>) => {
+    return (buffer: Buffer) => {
+        const data = buffer.toJSON().data
+        const computed = Object.entries(t).reduce(
+            ({ acc, prev }, [key, val]) => {
+                const v = val({ buffer: data, length: prev })
+                return { acc: { ...acc, [key]: v }, prev: v }
+            },
+            { acc: {}, prev: 0 } as ReadPacketReduce<T>
+        )
+        return computed.acc
+    }
+}
+
+export const formatting = {
+    byte: readByte,
+    bytes: readBytes,
+    short: readShort,
+    int: readInt,
+    string: readString,
+    varint: readVarInt,
+    varlong: readVarLong,
+}

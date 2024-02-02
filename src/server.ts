@@ -4,7 +4,7 @@ import { PacketIdToName, PacketNameToId, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
-import * as formatting from './formats'
+import { Builder } from './formats/read'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
@@ -12,7 +12,7 @@ export class Server {
 
     getPacketFormat = (data: Buffer) => {
         let buffer = data.toJSON().data
-        const length = readVarInt(buffer)
+        const length = formatting.readVarInt(buffer)
 
         // Handle legacy server list ping
         if (length == PacketNameToId.legacy_server_list_ping) {
