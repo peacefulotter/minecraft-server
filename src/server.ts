@@ -1,4 +1,3 @@
-import leb128 from 'leb128'
 import shortid from 'shortid'
 import { PacketIdToName, PacketNameToId, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
@@ -6,7 +5,7 @@ import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
 import { Unwrap } from './packets/read'
 import { WrapPing, WrapResponse } from './packets/write'
-import { formats } from './formats'
+import { VarInt } from './types/basic'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
@@ -16,13 +15,14 @@ export class Server {
         const packetLen = packet.length + 1
         return WrapPing({
             packetLen,
+            packetId: PacketNameToId.ping,
             packet,
         })
     }
 
     formatResponse = (packetId: PacketId, buffer: Buffer) => {
         const bufferLen = buffer.length
-        const packetLen = buffer.length + formats.write.varint(bufferLen).length + 1
+        const packetLen = buffer.length + VarInt.write(bufferLen).length + 1
 
         return WrapResponse({
             packetLen,
@@ -34,19 +34,14 @@ export class Server {
 
     isPingPacket = (client: Client, packetId: PacketId) =>
         packetId === PacketNameToId.ping &&
-        (client.state === ClientState.HANDSHAKING || client.state === ClientState.STATUS)
+        (client.state === ClientState.HANDSHAKING ||
+            client.state === ClientState.STATUS)
 
     formatPacket = (client: Client, packetId: PacketId, packet: Buffer) => {
         return this.isPingPacket(client, packetId)
             ? this.formatPing(packet)
             : this.formatResponse(packetId, packet)
     }
-
-    // TODO: future
-    // send = (client: Client, packetId: PacketId, packet: Buffer) => {
-    //     const formattedPacket = this.formatPacket(client, packetId, packet)
-    //     socket.write(formattedPacket)
-    // }
 
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]

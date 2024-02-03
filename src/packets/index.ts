@@ -1,22 +1,24 @@
-import { createWritePacket, formats } from '~/formats'
+import { ByteArray, Int, VarInt } from '~/types/basic'
+import { createWritePacket } from './create'
 
 const WriteResponseFormat = createWritePacket({
     // NOTE: since packetLen needs bufferLen to be defined,
     // we compute bufferLen separately
     // This is not ideal and if other packets need prev things as well
     // then consider refactor createWritePacket (implement a "construction" state, and concat at the end)
-    bufferLen: formats.write.bytes,
-    packetId: formats.write.int,
-    packetLen: formats.write.int,
-    packet: formats.write.bytes,
+    bufferLen: VarInt,
+    packetId: Int,
+    packetLen: VarInt,
+    packet: ByteArray,
 })
 
 export const formatResponse = (packetId: number, packet: Buffer) => {
-    const bufferLen = formats.write.int(packet.length)
+    const bufferLen = packet.length
+    const bufferLenLen = VarInt.write(packet.length).length
     return WriteResponseFormat({
         bufferLen,
         packetId,
-        packetLen: packet.length + bufferLen.length + 1,
+        packetLen: bufferLen + bufferLenLen + 1,
         packet,
     })
 }

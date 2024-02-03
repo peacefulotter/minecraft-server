@@ -6,7 +6,6 @@ import { decrypt, hexDigest, publicKey, serverKeyRSA } from '~/auth'
 import { HANDSHAKE_RESPONSE } from '~/constants'
 import { ClientState } from '~/client'
 import { EncryptionResponse, Handshake } from '~/packets/read'
-import { formats } from '~/formats'
 import { EncryptionRequest } from '~/packets/write'
 
 type AuthResponse = {
@@ -20,11 +19,17 @@ type AuthResponse = {
 }
 
 export class ConnectionHandler {
-    MOJANG_AUTH_URL = new URL('', 'https://sessionserver.mojang.com/session/minecraft/hasJoined')
+    MOJANG_AUTH_URL = new URL(
+        '',
+        'https://sessionserver.mojang.com/session/minecraft/hasJoined'
+    )
 
     handleHandshake = (args: HandlerArgs) => {
         const { client, buffer, packetId } = args
-        console.log('====================================', 'this.handleHandshake')
+        console.log(
+            '====================================',
+            'this.handleHandshake'
+        )
         const packet = Handshake(buffer, client.encrypted)
         console.log({ packetId, ...packet })
         client.state = packet.nextState
@@ -62,15 +67,17 @@ export class ConnectionHandler {
 
         const serverId = 'minecraft-serverrr'
         const publicKey = Buffer.from([
-            48, 129, 159, 48, 13, 6, 9, 42, 134, 72, 134, 247, 13, 1, 1, 1, 5, 0, 3, 129, 141, 0,
-            48, 129, 137, 2, 129, 129, 0, 165, 152, 27, 55, 161, 192, 11, 250, 184, 15, 7, 83, 126,
-            93, 173, 116, 1, 11, 122, 230, 167, 22, 104, 168, 116, 50, 40, 197, 113, 40, 192, 199,
-            73, 117, 170, 103, 91, 204, 184, 87, 37, 63, 188, 233, 128, 95, 229, 84, 200, 60, 186,
-            150, 201, 238, 40, 183, 154, 96, 210, 214, 64, 58, 244, 129, 211, 35, 117, 138, 2, 106,
-            35, 187, 24, 59, 250, 236, 28, 49, 237, 59, 29, 8, 207, 177, 7, 201, 217, 101, 0, 146,
-            103, 237, 102, 154, 38, 192, 195, 254, 189, 94, 229, 156, 55, 247, 186, 192, 103, 140,
-            90, 60, 135, 88, 174, 85, 145, 180, 170, 172, 229, 137, 83, 43, 58, 166, 251, 209, 134,
-            143, 2, 3, 1, 0, 1,
+            48, 129, 159, 48, 13, 6, 9, 42, 134, 72, 134, 247, 13, 1, 1, 1, 5,
+            0, 3, 129, 141, 0, 48, 129, 137, 2, 129, 129, 0, 165, 152, 27, 55,
+            161, 192, 11, 250, 184, 15, 7, 83, 126, 93, 173, 116, 1, 11, 122,
+            230, 167, 22, 104, 168, 116, 50, 40, 197, 113, 40, 192, 199, 73,
+            117, 170, 103, 91, 204, 184, 87, 37, 63, 188, 233, 128, 95, 229, 84,
+            200, 60, 186, 150, 201, 238, 40, 183, 154, 96, 210, 214, 64, 58,
+            244, 129, 211, 35, 117, 138, 2, 106, 35, 187, 24, 59, 250, 236, 28,
+            49, 237, 59, 29, 8, 207, 177, 7, 201, 217, 101, 0, 146, 103, 237,
+            102, 154, 38, 192, 195, 254, 189, 94, 229, 156, 55, 247, 186, 192,
+            103, 140, 90, 60, 135, 88, 174, 85, 145, 180, 170, 172, 229, 137,
+            83, 43, 58, 166, 251, 209, 134, 143, 2, 3, 1, 0, 1,
         ])
         const verifyToken = Buffer.from([188, 27, 63, 43])
 
@@ -98,7 +105,10 @@ export class ConnectionHandler {
     sendSuccess = () => {}
 
     handleEncryption = ({ client, buffer }: HandlerArgs) => {
-        console.log('====================================', 'this.handleEncryption')
+        console.log(
+            '====================================',
+            'this.handleEncryption'
+        )
         const response = EncryptionResponse(buffer, true)
 
         console.log(response)
@@ -137,26 +147,41 @@ export class ConnectionHandler {
         let responseBuffer: Buffer | undefined
 
         // 1) Handshake
-        if (packetId == PacketNameToId.status && state === ClientState.HANDSHAKING) {
+        if (
+            packetId == PacketNameToId.status &&
+            state === ClientState.HANDSHAKING
+        ) {
             responseBuffer = this.handleHandshake(args)
         }
         // 2) Status Request, send status response
-        else if (packetId == PacketNameToId.status && state === ClientState.STATUS) {
+        else if (
+            packetId == PacketNameToId.status &&
+            state === ClientState.STATUS
+        ) {
             responseBuffer = this.handleStatus(args)
         }
         // 3) Ping, send pong, ends handshake and closes connection
-        else if (packetId == PacketNameToId.ping && state === ClientState.STATUS) {
+        else if (
+            packetId == PacketNameToId.ping &&
+            state === ClientState.STATUS
+        ) {
             responseBuffer = this.handlePing(args)
         }
         // 4) Login Start, send encryption request
-        else if (packetId == PacketNameToId.status && state === ClientState.LOGIN) {
+        else if (
+            packetId == PacketNameToId.status &&
+            state === ClientState.LOGIN
+        ) {
             responseBuffer = this.handleLogin(args)
             // const res = this.handleLogin(args)
             // responsePacketId = res.id
             // responseBuffer = res.packet
         }
         // 5) Encryption Response
-        else if (packetId == PacketNameToId.ping && state === ClientState.LOGIN) {
+        else if (
+            packetId == PacketNameToId.ping &&
+            state === ClientState.LOGIN
+        ) {
             this.handleEncryption(args)
         } else {
             throw new Error('not supported')

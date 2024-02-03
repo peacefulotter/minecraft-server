@@ -1,31 +1,26 @@
-import { createWritePacket, formats } from '~/formats'
-import { PacketNameToId } from '~/packet'
+import { createWritePacket } from './create'
+import {
+    ByteArray,
+    String,
+    VarInt,
+    VarIntPrefixedByteArray,
+} from '~/types/basic'
 
-const { string, varint, bytes } = formats.write
-
-export const WrapPing = ({ packetLen, packet }: { packetLen: number; packet: Buffer }) =>
-    createWritePacket({
-        packetLen: varint,
-        packetId: () => varint(PacketNameToId.ping),
-        packet: bytes,
-    })({
-        packetLen,
-        packetId: 0,
-        packet,
-    })
+export const WrapPing = createWritePacket({
+    packetLen: VarInt,
+    packetId: VarInt,
+    packet: ByteArray,
+})
 
 export const WrapResponse = createWritePacket({
-    packetLen: varint,
-    packetId: varint,
-    bufferLen: varint,
-    buffer: bytes,
+    packetLen: VarInt,
+    packetId: VarInt,
+    bufferLen: VarInt,
+    buffer: ByteArray,
 })
 
 export const EncryptionRequest = createWritePacket({
-    serverIdLen: varint,
-    serverId: string,
-    publicKeyLen: varint,
-    publicKey: bytes,
-    verifyTokenLen: varint,
-    verifyToken: bytes,
+    serverId: String,
+    publicKey: VarIntPrefixedByteArray,
+    verifyToken: VarIntPrefixedByteArray,
 })

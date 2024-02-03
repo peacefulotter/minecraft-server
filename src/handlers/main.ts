@@ -1,7 +1,6 @@
 import { ConnectionHandler } from './connection'
 import { Packets, type PacketId, type PacketName } from '~/packet'
 import type { SocketWithId } from '~/socket'
-import * as formatting from '~/formats'
 import type { Client } from '~/client'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
 import { LegacyServerListPing } from '~/packets/read'
@@ -19,7 +18,10 @@ export type BufferResponse = {
 }
 
 interface IMainHandler
-    extends Record<PacketName, (args: HandlerArgs) => Promise<BufferResponse | void>> {}
+    extends Record<
+        PacketName,
+        (args: HandlerArgs) => Promise<BufferResponse | void>
+    > {}
 
 export class MainHandler implements IMainHandler {
     handshake = new ConnectionHandler()
