@@ -3,60 +3,66 @@ import { PacketIdToName, PacketNameToId, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
-import { Unwrap } from './packets/read'
-import { WrapPing, WrapResponse } from './packets/write'
+import { Unwrap } from './packets/server-bound'
+import { WrapPing, WrapResponse } from './packets/client-bound'
 import { VarInt } from './types/basic'
+import { log } from './logger'
+import type { ClientBoundPacket } from './packets/create'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
 
-    formatPing = (packet: Buffer) => {
-        const packetLen = packet.length + 1
+    formatPing = ({ buffer }: ClientBoundPacket) => {
+        const packetLen = buffer.length + 1
         return WrapPing({
             packetLen,
             packetId: PacketNameToId.ping,
-            packet,
-        })
-    }
-
-    formatResponse = (packetId: PacketId, buffer: Buffer) => {
-        const bufferLen = buffer.length
-        const packetLen = buffer.length + VarInt.write(bufferLen).length + 1
-
-        return WrapResponse({
-            packetLen,
-            packetId,
-            bufferLen,
             buffer,
         })
     }
 
-    isPingPacket = (client: Client, packetId: PacketId) =>
+    formatResponse = ({ packetId, buffer }: ClientBoundPacket) => {
+        const bufferLen = buffer.length
+        const packetLen = bufferLen + VarInt.write(bufferLen).length + 1
+        log('Formatting response', {
+            packetId,
+            bufferLen,
+            packetLen,
+            buffer: buffer.toJSON().data,
+        })
+        return WrapResponse({
+            packetLen,
+            packetId,
+            buffer,
+        })
+    }
+
+    isPingPacket = (client: Client, packetId: number) =>
         packetId === PacketNameToId.ping &&
         (client.state === ClientState.HANDSHAKING ||
             client.state === ClientState.STATUS)
 
-    formatPacket = (client: Client, packetId: PacketId, packet: Buffer) => {
-        return this.isPingPacket(client, packetId)
-            ? this.formatPing(packet)
-            : this.formatResponse(packetId, packet)
+    formatPacket = (client: Client, response: ClientBoundPacket) => {
+        return this.isPingPacket(client, response.packetId)
+            ? this.formatPing(response)
+            : this.formatResponse(response)
     }
 
-    data = async (socket: SocketWithId, data: Buffer) => {
-        const client = this.clients[socket.id]
-
-        const { packetId, buffer } = Unwrap(data)
+    handlePacket = async (
+        client: Client,
+        { packetId, buffer }: { packetId: PacketId; buffer: number[] }
+    ) => {
         const name = PacketIdToName.get(packetId)
-        console.log('Received packet', {
-            socketId: socket.id,
+        log('1) Received packet', {
+            socketId: client.socket.id,
             packetId,
             name,
         })
 
         if (!name) {
-            console.log('Unknown packet', {
-                socketId: socket.id,
+            log('2) Unknown packet', {
+                socketId: client.socket.id,
                 packetId,
                 name,
             })
@@ -64,40 +70,47 @@ export class Server {
         }
 
         const response = await this.handler[name]({
-            socket,
             client,
             packetId,
             buffer,
         })
-        if (!response || !response.responseBuffer) return
+        console.log('2) RESPONSE', response)
 
-        const { responsePacketId, responseBuffer } = response
-        const responseId = responsePacketId ?? packetId
+        if (!response || !response.buffer) return
 
-        const packet = this.formatPacket(client, responseId, responseBuffer)
+        const packet = this.formatPacket(client, response)
 
-        console.log('Responding packet', {
-            socketId: socket.id,
+        log('3) Responding packet', {
+            socketId: client.socket.id,
             packetId,
-            responsePacketId,
+            responsePacketId: response.packetId,
             response,
             packet,
         })
-        socket.write(packet)
+        client.write(packet.buffer)
+    }
+
+    data = async (socket: SocketWithId, data: Buffer) => {
+        const client = this.clients[socket.id]
+        const packets = Unwrap(data)
+        for (const packet of packets) {
+            this.handlePacket(client, packet)
+        }
     }
 
     open = (socket: SocketWithId) => {
         const id = shortid.generate()
         socket.id = id
-        this.clients[id] = new Client()
-        console.log('Socket connected', socket.id)
+        const client = new Client(socket)
+        this.clients[id] = client
+        log('Socket connected', socket.id)
     }
     close = (socket: SocketWithId) => {
-        console.log('Socket disconnected', socket.id)
+        log('Socket disconnected', socket.id)
         delete this.clients[socket.id]
     }
 
     error = (socket: SocketWithId, error: object) => {
-        console.log(JSON.stringify(error, null, 2))
+        log(JSON.stringify(error, null, 2))
     }
 }

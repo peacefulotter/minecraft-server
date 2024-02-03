@@ -1,42 +1,36 @@
 import { ConnectionHandler } from './connection'
 import { Packets, type PacketId, type PacketName } from '~/packet'
-import type { SocketWithId } from '~/socket'
 import type { Client } from '~/client'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
-import { LegacyServerListPing } from '~/packets/read'
+import { LegacyServerListPing } from '~/packets/server-bound'
+import type { ClientBoundPacket } from '~/packets/create'
 
 export type HandlerArgs = {
-    socket: SocketWithId
     client: Client
     packetId: PacketId
     buffer: number[]
 }
 
-export type BufferResponse = {
-    responsePacketId?: PacketId
-    responseBuffer: Buffer | undefined
-}
-
 interface IMainHandler
     extends Record<
         PacketName,
-        (args: HandlerArgs) => Promise<BufferResponse | void>
+        (args: HandlerArgs) => Promise<ClientBoundPacket | void>
     > {}
 
 export class MainHandler implements IMainHandler {
-    handshake = new ConnectionHandler()
+    connectionHandler = new ConnectionHandler()
 
-    passToHandshake = async (args: HandlerArgs) => {
-        return await this.handshake.handle(args)
+    passToConnection = async (args: HandlerArgs) => {
+        return await this.connectionHandler.handle(args)
     };
 
-    [Packets.STATUS] = this.passToHandshake;
-    [Packets.PING] = this.passToHandshake;
+    [Packets.STATUS] = this.passToConnection;
+    [Packets.PING] = this.passToConnection;
+    [Packets.LOGIN] = this.passToConnection;
 
     // https://wiki.vg/Server_List_Ping#1.6
     [Packets.LEGACY_SERVER_LIST_PING] = async ({
         client,
-        socket,
         packetId,
         buffer,
     }: HandlerArgs) => {
@@ -71,6 +65,6 @@ export class MainHandler implements IMainHandler {
         const hex = Array.from(res).map((b) => b.toString(16).padStart(2, '0'))
         console.log(res)
         console.log(hex)
-        // socket.write(Buffer.from(res))
+        // client.write(Buffer.from(res))
     }
 }

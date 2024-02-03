@@ -9,22 +9,43 @@ import {
     VarInt,
     VarIntPrefixedByteArray,
 } from '~/types/basic'
-import { createReadPacket } from './create'
+import { createReadPacket, type ServerBoundPacket } from './create'
+import { log } from '~/logger'
 
-export const Unwrap = (data: Buffer) => {
-    let buffer = data.toJSON().data
-    const length = VarInt.read(buffer)
+const UnwrapSingle = (buffer: number[]) => {
+    const packetLen = VarInt.read(buffer)
 
     // Handle legacy server list ping
-    if (length == PacketNameToId.legacy_server_list_ping) {
+    if (packetLen == PacketNameToId.legacy_server_list_ping) {
         return {
+            packetLen: 0,
             packetId: PacketNameToId.legacy_server_list_ping as PacketId,
             buffer,
         }
-    } else buffer = buffer.slice(0, length)
+    }
 
     const packetId = VarInt.read(buffer) as PacketId
-    return { packetId, buffer }
+    const newBuffer = buffer.slice(0, packetLen - 1) // - 1 to account for the packet id
+    console.log('Unwrapping single', packetLen, packetId, newBuffer)
+    return { packetId, buffer: newBuffer, packetLen }
+}
+
+export const Unwrap = (data: Buffer) => {
+    let buffer = data.toJSON().data
+
+    log('Unwrapping', data)
+
+    const packets: { packetId: PacketId; buffer: number[] }[] = []
+    while (buffer.length > 0) {
+        const { packetId, buffer: newBuffer, packetLen } = UnwrapSingle(buffer)
+        if (packetLen > 0) {
+            packets.push({ packetId, buffer: newBuffer })
+            buffer = buffer.slice(packetLen - 1)
+        }
+    }
+    log('Unwrapping', packets)
+
+    return packets
 }
 
 export const LegacyServerListPing = createReadPacket({
@@ -40,10 +61,13 @@ export const LegacyServerListPing = createReadPacket({
 
 export const Handshake = createReadPacket({
     protocol: VarInt,
-    hostnameLen: VarInt,
     hostname: String,
     port: Short,
     nextState: VarInt as Type<ClientState.STATUS | ClientState.LOGIN>,
+})
+
+export const LoginStart = createReadPacket({
+    name: String,
 })
 
 export const EncryptionResponse = createReadPacket({

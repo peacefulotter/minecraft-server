@@ -13,11 +13,21 @@ export const HANDSHAKE_RESPONSE = Buffer.from(
         players: {
             max: 69,
             online: 42,
+            sample: [
+                {
+                    name: 'thinkofdeath',
+                    id: '4566e69f-c907-48ee-8d71-d7ba5aa00d20',
+                },
+            ],
         },
         description: {
+            color: 'light_purple',
             text: WELCOME_MESSAGE,
+            bold: true,
         },
         // favicon: `data:image/png;base64,${IMAGE}`,
+        enforcesSecureChat: true,
+        previewsChat: true,
     })
 )
 

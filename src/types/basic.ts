@@ -64,9 +64,8 @@ export const String: Type<string> = class String {
         const length = VarInt.read(buffer)
         const acc = []
         for (let i = 0; i < length; i++) {
-            const element = VarInt.read(buffer)
-            if (element === 0) i-- // TODO: test this???
-            else acc.push(element)
+            const element = Byte.read(buffer)
+            acc.push(element)
         }
         return Buffer.from(acc).toString('utf-8')
     }

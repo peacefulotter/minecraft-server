@@ -1,12 +1,17 @@
-import crypto from 'crypto'
-
+import { v4 as uuid } from 'uuid'
 import { PacketNameToId } from '~/packet'
-import type { BufferResponse, HandlerArgs } from './main'
+import type { HandlerArgs } from './main'
 import { decrypt, hexDigest, publicKey, serverKeyRSA } from '~/auth'
-import { HANDSHAKE_RESPONSE } from '~/constants'
 import { ClientState } from '~/client'
-import { EncryptionResponse, Handshake } from '~/packets/read'
-import { EncryptionRequest } from '~/packets/write'
+import { String } from '~/types/basic'
+import {
+    EncryptionRequest,
+    HandshakeResponse,
+    LoginSuccess,
+    Ping,
+} from '~/packets/client-bound'
+import { EncryptionResponse, Handshake } from '~/packets/server-bound'
+import type { ClientBoundPacket } from '~/packets/create'
 
 type AuthResponse = {
     id: string
@@ -33,22 +38,30 @@ export class ConnectionHandler {
         const packet = Handshake(buffer, client.encrypted)
         console.log({ packetId, ...packet })
         client.state = packet.nextState
-        // return client.state === ClientState.STATUS ? HANDSHAKE_RESPONSE : this.handleLogin(args)
-        return HANDSHAKE_RESPONSE
     }
 
     handleStatus = ({}: HandlerArgs) => {
         console.log('====================================', 'this.handleStatus')
-        return HANDSHAKE_RESPONSE
+        return HandshakeResponse()
     }
 
     handlePing = ({ buffer }: HandlerArgs) => {
-        return Buffer.from(buffer)
+        return Ping({ payload: Buffer.from(buffer) })
     }
 
     // Send encryption request
-    handleLogin = ({ client }: HandlerArgs) => {
+    handleLoginStart = ({ client, buffer }: HandlerArgs) => {
         console.log('====================================', 'this.handleLogin')
+        // if unauthenticated
+        console.log(buffer)
+        console.log(String.write('"1234"'))
+        console.log(String.write('genji__'))
+
+        return LoginSuccess({
+            uuid: '"1234"',
+            username: 'genji__',
+        })
+
         // const serverId = crypto.randomBytes(4)
         // const verifyToken = crypto.randomBytes(4)
 
@@ -82,19 +95,10 @@ export class ConnectionHandler {
         const verifyToken = Buffer.from([188, 27, 63, 43])
 
         const packet = {
-            serverIdLen: serverId.length,
             serverId, // Server ID, appears to be empty
-            publicKeyLen: publicKey.length,
             publicKey,
-            verifyTokenLen: verifyToken.length,
             verifyToken,
         }
-
-        // const res = {
-        //     id: PacketNameToId.ping,
-        //     packet: EncryptionRequest(packet),
-        // }
-        //  console.log(res)
         return EncryptionRequest(packet)
     }
 
@@ -115,8 +119,6 @@ export class ConnectionHandler {
         console.log(this.MOJANG_AUTH_URL)
 
         client.encrypted = true
-
-        return Buffer.from('')
     }
 
     handleAuth = async ({}: HandlerArgs) => {
@@ -140,42 +142,39 @@ export class ConnectionHandler {
 
     handle = async (args: HandlerArgs) => {
         const { packetId, client } = args
-        console.log(client)
         const { state } = client
 
-        let responsePacketId = packetId
-        let responseBuffer: Buffer | undefined
+        let packet: ClientBoundPacket | undefined = undefined
 
         // 1) Handshake
         if (
             packetId == PacketNameToId.status &&
             state === ClientState.HANDSHAKING
         ) {
-            responseBuffer = this.handleHandshake(args)
+            this.handleHandshake(args)
+            if (client.state === ClientState.STATUS)
+                packet = this.handleStatus(args)
         }
         // 2) Status Request, send status response
         else if (
             packetId == PacketNameToId.status &&
             state === ClientState.STATUS
         ) {
-            responseBuffer = this.handleStatus(args)
+            packet = this.handleStatus(args)
         }
         // 3) Ping, send pong, ends handshake and closes connection
         else if (
             packetId == PacketNameToId.ping &&
             state === ClientState.STATUS
         ) {
-            responseBuffer = this.handlePing(args)
+            packet = this.handlePing(args)
         }
         // 4) Login Start, send encryption request
         else if (
             packetId == PacketNameToId.status &&
             state === ClientState.LOGIN
         ) {
-            responseBuffer = this.handleLogin(args)
-            // const res = this.handleLogin(args)
-            // responsePacketId = res.id
-            // responseBuffer = res.packet
+            packet = this.handleLoginStart(args)
         }
         // 5) Encryption Response
         else if (
@@ -187,6 +186,6 @@ export class ConnectionHandler {
             throw new Error('not supported')
         }
         // TODO: implement auth
-        return { responsePacketId, responseBuffer } as BufferResponse
+        return packet
     }
 }

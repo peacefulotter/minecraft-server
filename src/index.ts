@@ -1,3 +1,5 @@
+import chalk from 'chalk'
+import { log } from './logger'
 import { Server } from './server'
 
 const socket = Bun.listen({
@@ -5,4 +7,4 @@ const socket = Bun.listen({
     port: 25565,
     socket: new Server(),
 })
-console.log('Server listening on ', socket.hostname, ':', socket.port)
+log('Server listening on', chalk.cyan(`${socket.hostname}:${socket.port}`))

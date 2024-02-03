@@ -9,16 +9,19 @@
     "@types/bun": "latest",
     "@types/leb128": "^0.0.0",
     "@types/node-rsa": "^1.1.4",
-    "@types/shortid": "^0.0.32"
+    "@types/shortid": "^0.0.32",
+    "@types/uuid": "^9.0.8"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "chalk": "^5.3.0",
     "leb128": "^0.0.5",
     "long": "^5.2.3",
     "node-rsa": "^1.1.1",
     "shortid": "^2.2.16",
-    "type-fest": "^4.10.2"
+    "type-fest": "^4.10.2",
+    "uuid": "^9.0.1"
   }
 }

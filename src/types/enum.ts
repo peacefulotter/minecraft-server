@@ -1,0 +1,33 @@
+export const Colors = {
+    BLACK: { code: 0x0, name: 'black', hex: '#000000' },
+    DARK_BLUE: { code: 0x1, name: 'dark_blue', hex: '#0000AA' },
+    DARK_GREEN: { code: 0x2, name: 'dark_green', hex: '#00AA00' },
+    DARK_AQUA: { code: 0x3, name: 'dark_aqua', hex: '#00AAAA' },
+    DARK_RED: { code: 0x4, name: 'dark_red', hex: '#AA0000' },
+    DARK_PURPLE: { code: 0x5, name: 'dark_purple', hex: '#AA00AA' },
+    GOLD: { code: 0x6, name: 'gold', hex: '#FFAA00' },
+    GRAY: { code: 0x7, name: 'gray', hex: '#AAAAAA' },
+    DARK_GRAY: { code: 0x8, name: 'dark_gray', hex: '#555555' },
+    BLUE: { code: 0x9, name: 'blue', hex: '#5555FF' },
+    GREEN: { code: 0xa, name: 'green', hex: '#55FF55' },
+    AQUA: { code: 0xb, name: 'aqua', hex: '#55FFFF' },
+    RED: { code: 0xc, name: 'red', hex: '#FF5555' },
+    LIGHT_PURPLE: { code: 0xd, name: 'light_purple', hex: '#FF55FF' },
+    YELLOW: { code: 0xe, name: 'yellow', hex: '#FFFF55' },
+    WHITE: { code: 0xf, name: 'white', hex: '#FFFFFF' },
+} as const
+
+export const Styles = {
+    RANDOM: { code: 'k', name: 'obfuscated' },
+    BOLD: { code: 'l', name: 'bold' },
+    STRIKETHROUGH: { code: 'm', name: 'strikethrough' },
+    UNDERLINE: { code: 'n', name: 'underline' },
+    ITALIC: { code: 'o', name: 'italic' },
+} as const
+
+export const Fonts = {
+    DEFAULT: { identifier: 'minecraft:default' },
+    UNIFORM: { identifier: 'minecraft:uniform' },
+    ALT: { identifier: 'minecraft:alt' },
+    ILLAGERALT: { identifier: 'minecraft:illageralt' },
+} as const
