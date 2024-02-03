@@ -1,13 +1,5 @@
 import { Server } from './server'
 
-// const server = net.createServer((socket) => {
-//     new Server(socket)
-// })
-
-// server.listen(25565, () => {
-//     console.log('server is listening')
-// })
-
 const socket = Bun.listen({
     hostname: 'localhost',
     port: 25565,

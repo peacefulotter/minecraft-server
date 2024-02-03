@@ -17,7 +17,7 @@ export const HANDSHAKE_RESPONSE = Buffer.from(
         description: {
             text: WELCOME_MESSAGE,
         },
-        favicon: `data:image/png;base64,${IMAGE}`,
+        // favicon: `data:image/png;base64,${IMAGE}`,
     })
 )
 

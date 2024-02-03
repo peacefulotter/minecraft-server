@@ -1,6 +1,6 @@
 export enum ClientState {
-    NONE = 0,
-    HANDSHAKE = 1,
+    HANDSHAKING = 0,
+    STATUS = 1,
     LOGIN = 2,
 }
 
@@ -13,7 +13,7 @@ export class Client {
     publicKey: Buffer | undefined
 
     constructor() {
-        this.state = ClientState.NONE
+        this.state = ClientState.HANDSHAKING
         this.encrypted = false
     }
 }

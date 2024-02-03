@@ -38,7 +38,7 @@ export const Handshake = createReadPacket({
     port: short,
     // NOTE: custom varint to be able to cast the resulting varint to the proper type
     nextState: (args: { buffer: number[]; length: number }) =>
-        varint(args) as ClientState.HANDSHAKE | ClientState.LOGIN,
+        varint(args) as ClientState.STATUS | ClientState.LOGIN,
 })
 
 export const EncryptionResponse = createReadPacket({

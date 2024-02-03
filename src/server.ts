@@ -34,7 +34,7 @@ export class Server {
 
     isPingPacket = (client: Client, packetId: PacketId) =>
         packetId === PacketNameToId.ping &&
-        (client.state === ClientState.NONE || client.state === ClientState.HANDSHAKE)
+        (client.state === ClientState.HANDSHAKING || client.state === ClientState.STATUS)
 
     formatPacket = (client: Client, packetId: PacketId, packet: Buffer) => {
         return this.isPingPacket(client, packetId)

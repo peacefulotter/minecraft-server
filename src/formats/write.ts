@@ -6,8 +6,9 @@ const writeByte = (value: number) => Buffer.from([value])
 const writeBytes = (value: Buffer) => value
 
 const writeString = (value: string) => {
-    throw new Error('not implemented as per mc protocol')
-    return Buffer.from(value)
+    return value
+        .split('')
+        .reduce((acc, cur) => Buffer.concat([acc, writeVarInt(parseInt(cur))]), Buffer.from([]))
 }
 
 const writeShort = (value: number) => {
