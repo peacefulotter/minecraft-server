@@ -1,3 +1,4 @@
+import leb128 from 'leb128'
 import Long from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 
@@ -67,6 +68,7 @@ export const UUID: Type<string> = class UUID {
 
     static write = (t: string) => {
         const buffer = Buffer.from(t.replaceAll('-', ''), 'hex')
+        console.log('UUID WRITE', buffer, buffer.length)
         return buffer
     }
 }
@@ -81,6 +83,24 @@ export const String: Type<string> = class String {
         return VarIntPrefixedByteArray.write(buffer)
     }
 }
+
+// export const VarInt: Type<number> = class VarInt {
+//     static read = (buffer: number[]) => {
+//         console.log(Buffer.from(buffer))
+//         console.log(leb128.signed.decode(Buffer.from(buffer)))
+//         console.log(parseInt(leb128.signed.decode(Buffer.from(buffer)), 10))
+
+//         const res = parseInt(leb128.signed.decode(Buffer.from(buffer)), 10)
+//         buffer.shift()
+//         if (res >> 6 >= 1) buffer.shift() // remove the second byte
+//         if (res >> 13 >= 1) buffer.shift() // remove the third byte
+//         return res
+//     }
+
+//     static write = (val: number) => {
+//         return leb128.signed.encode(val)
+//     }
+// }
 
 export const VarInt: Type<number> = class VarInt {
     static read = (buffer: number[]) => {

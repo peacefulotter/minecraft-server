@@ -42,6 +42,7 @@ export class ConnectionHandler {
             '====================================',
             'this.handleHandshake'
         )
+        console.log(buffer)
         const packet = Handshake(buffer, client.encrypted)
         console.log({ packetId, ...packet })
         client.state = packet.nextState
@@ -77,24 +78,28 @@ export class ConnectionHandler {
         //     username: Buffer.from(packet.username),
         // })
 
-        // return LoginSuccess({
-        //     // uuid: packet.uuid, v > 1.8.0
-        //     // uuid: Buffer.from('1234-1234-1234-1234-1234'),
-        //     username: packet.username, // Buffer.from(packet.username),
-        // })
+        console.log(clientUuid)
 
-        const serverId = crypto.randomBytes(4).toString('utf-8')
-        const verifyToken = crypto.randomBytes(4)
+        return LoginSuccess({
+            uuid: clientUuid,
+            // uuid: packet.uuid, v > 1.8.0
+            // uuid: Buffer.from('1234-1234-1234-1234-1234'),
+            username: packet.username, // Buffer.from(packet.username),
+            numberOfProperties: 0,
+        })
 
-        const publicKeyStrArr = serverKeyRSA
-            .exportKey('pkcs8-public-pem')
-            .split('\n')
-        let publicKeyStr = ''
-        for (let i = 1; i < publicKeyStrArr.length - 1; i++) {
-            publicKeyStr += publicKeyStrArr[i]
-        }
-        const publicKey = Buffer.from(publicKeyStr, 'base64')
-        client.publicKey = publicKey
+        // const serverId = crypto.randomBytes(4).toString('utf-8')
+        // const verifyToken = crypto.randomBytes(4)
+
+        // const publicKeyStrArr = serverKeyRSA
+        //     .exportKey('pkcs8-public-pem')
+        //     .split('\n')
+        // let publicKeyStr = ''
+        // for (let i = 1; i < publicKeyStrArr.length - 1; i++) {
+        //     publicKeyStr += publicKeyStrArr[i]
+        // }
+        // const publicKey = Buffer.from(publicKeyStr, 'base64')
+        // client.publicKey = publicKey
 
         // const serverId = 'minecraft-serverrr'
         // const publicKey = Buffer.from([
@@ -112,13 +117,13 @@ export class ConnectionHandler {
         // ])
         // const verifyToken = Buffer.from([188, 27, 63, 43])
 
-        const p = {
-            serverId, // Server ID, appears to be empty
-            publicKey,
-            verifyToken,
-        }
-        console.log(p)
-        return EncryptionRequest(p)
+        // const p = {
+        //     serverId, // Server ID, appears to be empty
+        //     publicKey,
+        //     verifyToken,
+        // }
+        // console.log(p)
+        // return EncryptionRequest(p)
     }
 
     // right after handleLogin

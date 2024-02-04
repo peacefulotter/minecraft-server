@@ -10,22 +10,13 @@ import {
 } from '~/types/basic'
 import { HANDSHAKE_RESPONSE } from '~/constants'
 
-export const WrapPing = createWritePacket(
+export const WrapResponse = createWritePacket(
     {
         packetLen: VarInt,
         packetId: VarInt,
         buffer: ByteArray,
     },
-    0x01
-)
-
-export const WrapResponse = createWritePacket(
-    {
-        packetLen: VarInt,
-        packetId: VarInt,
-        buffer: VarIntPrefixedByteArray,
-    },
-    0x00
+    0x00 // Unused
 )
 
 export const Ping = createWritePacket(
@@ -38,7 +29,7 @@ export const Ping = createWritePacket(
 export const HandshakeResponse = () =>
     createWritePacket(
         {
-            json: ByteArray,
+            json: String,
         },
         0x00
     )({ json: HANDSHAKE_RESPONSE })
@@ -54,9 +45,9 @@ export const EncryptionRequest = createWritePacket(
 
 export const LoginSuccess = createWritePacket(
     {
-        // uuid: UUID, //
-        // uuid: ByteArray,
-        username: String, // ByteArray,
+        uuid: UUID,
+        username: String,
+        numberOfProperties: VarInt,
     },
     0x02
 )

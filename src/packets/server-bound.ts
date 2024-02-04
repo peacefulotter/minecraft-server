@@ -14,20 +14,25 @@ import { createReadPacket, type ServerBoundPacket } from './create'
 import { log } from '~/logger'
 
 const UnwrapSingle = (buffer: number[]) => {
-    const packetLen = VarInt.read(buffer)
-
     // Handle legacy server list ping
-    if (packetLen == PacketNameToId.legacy_server_list_ping) {
+    console.log(
+        'Unwrapping single',
+        buffer[0],
+        PacketNameToId.legacy_server_list_ping
+    )
+
+    if (buffer[0] == PacketNameToId.legacy_server_list_ping) {
         return {
-            packetLen: 0,
+            packetLen: buffer.length,
             packetId: PacketNameToId.legacy_server_list_ping as PacketId,
             buffer,
         }
     }
 
+    const packetLen = VarInt.read(buffer)
     const packetId = VarInt.read(buffer) as PacketId
     const newBuffer = buffer.slice(0, packetLen - 1) // - 1 to account for the packet id
-    console.log('Unwrapping single', packetLen, packetId, newBuffer)
+    console.log('Unwrapping single', { packetLen, packetId, newBuffer })
     return { packetId, buffer: newBuffer, packetLen }
 }
 
@@ -69,7 +74,7 @@ export const Handshake = createReadPacket({
 
 export const LoginStart = createReadPacket({
     username: String,
-    // uuid: UUID, v > 1.8.9
+    uuid: UUID,
 })
 
 export const EncryptionResponse = createReadPacket({

@@ -1,10 +1,10 @@
 import shortid from 'shortid'
-import { PacketIdToName, PacketNameToId, type PacketId } from './packet'
+import { PacketIdToName, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
-import { Client, ClientState } from './client'
+import { Client } from './client'
 import { Unwrap } from './packets/server-bound'
-import { WrapPing, WrapResponse } from './packets/client-bound'
+import { WrapResponse } from './packets/client-bound'
 import { VarInt } from './types/basic'
 import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
@@ -13,40 +13,17 @@ export class Server {
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
 
-    formatPing = ({ buffer }: ClientBoundPacket) => {
-        const packetLen = buffer.length + 1
-        return WrapPing({
-            packetLen,
-            packetId: PacketNameToId.ping,
-            buffer,
-        })
-    }
-
-    formatResponse = ({ packetId, buffer }: ClientBoundPacket) => {
-        const bufferLen = buffer.length
-        const packetLen = bufferLen + VarInt.write(bufferLen).length + 1
+    formatPacket = (response: ClientBoundPacket) => {
         log('2) Formatting response', {
-            packetId,
-            bufferLen,
-            packetLen,
-            buffer,
+            ...response,
+            bufferLen: response.buffer.length,
         })
+        const packetLen =
+            response.buffer.length + VarInt.write(response.packetId).length
         return WrapResponse({
             packetLen,
-            packetId,
-            buffer,
+            ...response,
         })
-    }
-
-    isPingPacket = (client: Client, packetId: number) =>
-        packetId === PacketNameToId.ping &&
-        (client.state === ClientState.HANDSHAKING ||
-            client.state === ClientState.STATUS)
-
-    formatPacket = (client: Client, response: ClientBoundPacket) => {
-        return this.isPingPacket(client, response.packetId)
-            ? this.formatPing(response)
-            : this.formatResponse(response)
     }
 
     handlePacket = async (
@@ -77,7 +54,7 @@ export class Server {
 
         if (!response || !response.buffer) return
 
-        const packet = this.formatPacket(client, response)
+        const packet = this.formatPacket(response)
 
         log('3) Responding packet', {
             socketId: client.socket.id,

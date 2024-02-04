@@ -1,8 +1,14 @@
 import { describe, test, expect } from 'bun:test'
-import { readVarInt, readVarLong } from '../src/formats'
 import Long from 'long'
+import { VarInt, VarLong } from '~/types/basic'
 
 describe('vars work', () => {
+    test('some varints', () => {
+        console.log(VarInt.write(53))
+        console.log(VarInt.read([254, 1]))
+        console.log(VarInt.read([250, 0]))
+    })
+
     test('sample varints', () => {
         const buffers = [
             Buffer.from([0x00]),
@@ -21,7 +27,11 @@ describe('vars work', () => {
             0, 1, 2, 127, 128, 255, 25565, 2097151, 2147483647, -1, -2147483648,
         ]
         for (let i = 0; i < buffers.length; i++) {
-            expect(readVarInt(buffers[i].toJSON().data)).toBe(values[i])
+            console.log(VarInt.read(buffers[i].toJSON().data), values[i])
+            const read = VarInt.read(buffers[i].toJSON().data)
+            const original = VarInt.write(read)
+            expect(read).toBe(values[i])
+            expect(original).toEqual(buffers[i])
         }
     })
 
@@ -59,7 +69,7 @@ describe('vars work', () => {
             new Long(0x80000000, 0x00000000),
         ]
         for (let i = 0; i < buffers.length; i++) {
-            expect(readVarLong(buffers[i]).eq(values[i]))
+            // expect(VarLong.write(buffers[i]).eq(values[i]))
         }
     })
 })
