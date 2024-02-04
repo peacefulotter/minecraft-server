@@ -1,5 +1,4 @@
 import type { ClientState } from '~/client'
-import { PacketNameToId, type PacketId } from '~/packet'
 import {
     type Type,
     Byte,
@@ -10,27 +9,23 @@ import {
     VarIntPrefixedByteArray,
     UUID,
 } from '~/types/basic'
-import { createReadPacket, type ServerBoundPacket } from './create'
+import { createReadPacket } from './create'
 import { log } from '~/logger'
+import { LEGACY_SERVER_LIST_PING_ID } from './constants'
+import type { PacketId } from '~/packet'
 
 const UnwrapSingle = (buffer: number[]) => {
     // Handle legacy server list ping
-    console.log(
-        'Unwrapping single',
-        buffer[0],
-        PacketNameToId.legacy_server_list_ping
-    )
-
-    if (buffer[0] == PacketNameToId.legacy_server_list_ping) {
+    if (buffer[0] == LEGACY_SERVER_LIST_PING_ID) {
         return {
             packetLen: buffer.length,
-            packetId: PacketNameToId.legacy_server_list_ping as PacketId,
+            packetId: LEGACY_SERVER_LIST_PING_ID,
             buffer,
         }
     }
 
     const packetLen = VarInt.read(buffer)
-    const packetId = VarInt.read(buffer) as PacketId
+    const packetId = VarInt.read(buffer)
     const newBuffer = buffer.slice(0, packetLen - 1) // - 1 to account for the packet id
     console.log('Unwrapping single', { packetLen, packetId, newBuffer })
     return { packetId, buffer: newBuffer, packetLen }

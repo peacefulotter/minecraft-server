@@ -1,5 +1,4 @@
 import { decrypt } from '~/auth'
-import type { PacketId } from '~/packet'
 import type { Type } from '~/types/basic'
 
 type PacketCreation = { [key: string]: Type<any> }

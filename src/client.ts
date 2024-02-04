@@ -1,10 +1,11 @@
 import type { SocketWithId } from './socket'
 
 export enum ClientState {
-    HANDSHAKING = 0,
-    STATUS = 1,
-    LOGIN = 2,
-    PLAY = 3,
+    HANDSHAKING,
+    STATUS,
+    LOGIN,
+    CONFIGURATION,
+    PLAY,
 }
 
 export class Client {

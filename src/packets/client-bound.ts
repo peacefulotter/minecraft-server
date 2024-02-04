@@ -1,14 +1,12 @@
-import { PacketNameToId } from '~/packet'
 import { createWritePacket } from './create'
 import {
-    Byte,
     ByteArray,
     String,
     UUID,
     VarInt,
     VarIntPrefixedByteArray,
 } from '~/types/basic'
-import { HANDSHAKE_RESPONSE } from '~/constants'
+import { STATUS_RESPONSE } from '~/constants'
 
 export const WrapResponse = createWritePacket(
     {
@@ -19,20 +17,20 @@ export const WrapResponse = createWritePacket(
     0x00 // Unused
 )
 
-export const Ping = createWritePacket(
+export const PingResponse = createWritePacket(
     {
         payload: ByteArray,
     },
     0x01
 )
 
-export const HandshakeResponse = () =>
+export const StatusResponse = () =>
     createWritePacket(
         {
             json: String,
         },
         0x00
-    )({ json: HANDSHAKE_RESPONSE })
+    )({ json: STATUS_RESPONSE })
 
 export const EncryptionRequest = createWritePacket(
     {

@@ -1,0 +1,1 @@
+export const LEGACY_SERVER_LIST_PING_ID = 254

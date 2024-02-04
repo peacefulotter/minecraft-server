@@ -1,5 +1,4 @@
 import shortid from 'shortid'
-import { PacketIdToName, type PacketId } from './packet'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client } from './client'
@@ -8,6 +7,7 @@ import { WrapResponse } from './packets/client-bound'
 import { VarInt } from './types/basic'
 import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
+import type { PacketId } from './packet'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
@@ -30,23 +30,12 @@ export class Server {
         client: Client,
         { packetId, buffer }: { packetId: PacketId; buffer: number[] }
     ) => {
-        const name = PacketIdToName.get(packetId)
         log('1) Received packet', {
             socketId: client.socket.id,
             packetId,
-            name,
         })
 
-        if (!name) {
-            log('2) Unknown packet', {
-                socketId: client.socket.id,
-                packetId,
-                name,
-            })
-            return
-        }
-
-        const response = await this.handler[name]({
+        const response = await this.handler.handle({
             client,
             packetId,
             buffer,
