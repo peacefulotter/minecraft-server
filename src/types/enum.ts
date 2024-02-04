@@ -31,3 +31,32 @@ export const Fonts = {
     ALT: { identifier: 'minecraft:alt' },
     ILLAGERALT: { identifier: 'minecraft:illageralt' },
 } as const
+
+export enum ChatMode {
+    ENABLED = 0,
+    COMMANDS_ONLY = 1,
+    HIDDEN = 2,
+}
+
+export enum MainHand {
+    LEFT = 0,
+    RIGHT = 1,
+}
+
+export enum ResourcePackResult {
+    SUCCESS,
+    DECLINED,
+    FAILED_DOWNLOAD,
+    ACCEPTED,
+    DOWNLOADED,
+    INVALID_URL,
+    FAILED_RELOAD,
+    DISCARDED,
+}
+
+export enum Difficulty {
+    PEACEFUL = 0,
+    EASY = 1,
+    NORMAL = 2,
+    HARD = 3,
+}

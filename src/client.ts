@@ -1,3 +1,4 @@
+import type { ClientInfo } from './packets/server'
 import type { SocketWithId } from './socket'
 
 export enum ClientState {
@@ -15,6 +16,8 @@ export class Client {
     username: string | undefined
     uuid: string | undefined
     publicKey: Buffer | undefined
+
+    info: ClientInfo | undefined
 
     constructor(public readonly socket: SocketWithId) {
         this.state = ClientState.HANDSHAKING

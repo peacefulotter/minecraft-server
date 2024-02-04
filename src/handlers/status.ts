@@ -1,25 +1,22 @@
-import { StatusResponse, PingResponse } from '~/packets/client-bound'
-import type { Handler, HandlerArgs } from '.'
+import { PingResponse, StatusResponse } from '~/packets/client/status'
+import { Handler, type Args, link } from '.'
+import { StatusPingRequest, StatusRequest } from '~/packets/server'
 
-export class StatusHandler implements Handler {
-    handle = async (args: HandlerArgs) => {
-        switch (args.packetId) {
-            case 0x00:
-                return this.handleStatusRequest()
-            case 0x01:
-                return this.handlePingRequest(args)
-            default:
-                throw new Error(
-                    `Unknown packet id: ${args.packetId} for state: status`
-                )
-        }
+export class StatusHandler extends Handler {
+    constructor() {
+        super('Status', [
+            link(StatusRequest, StatusHandler.onStatusRequest),
+            link(StatusPingRequest, StatusHandler.onPingRequest),
+        ])
     }
 
-    handleStatusRequest = () => {
+    static onStatusRequest = async () => {
         return StatusResponse()
     }
 
-    handlePingRequest = ({ buffer }: HandlerArgs) => {
-        return PingResponse({ payload: Buffer.from(buffer) })
+    static onPingRequest = async ({
+        packet,
+    }: Args<typeof StatusPingRequest>) => {
+        return PingResponse(packet)
     }
 }

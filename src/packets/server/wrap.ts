@@ -1,18 +1,8 @@
-import type { ClientState } from '~/client'
-import {
-    type Type,
-    Byte,
-    Int,
-    Short,
-    String,
-    VarInt,
-    VarIntPrefixedByteArray,
-    UUID,
-} from '~/types/basic'
-import { createReadPacket } from './create'
 import { log } from '~/logger'
-import { LEGACY_SERVER_LIST_PING_ID } from './constants'
 import type { PacketId } from '~/packet'
+import { VarInt } from '~/types/basic'
+
+const LEGACY_SERVER_LIST_PING_ID = 254
 
 const UnwrapSingle = (buffer: number[]) => {
     // Handle legacy server list ping
@@ -48,31 +38,3 @@ export const Unwrap = (data: Buffer) => {
 
     return packets
 }
-
-export const LegacyServerListPing = createReadPacket({
-    fa: Byte, // fa
-    // mcLen: Short, // 11
-    mc: String, // MC|PingHost
-    restLen: Short, // 7 + len(hostname)
-    protocol: Byte,
-    hostnameLen: Short, // len(hostname)
-    hostname: String,
-    port: Int, // TODO: check that this is indeed int and not varint
-})
-
-export const Handshake = createReadPacket({
-    protocol: VarInt,
-    hostname: String,
-    port: Short,
-    nextState: VarInt as Type<ClientState.STATUS | ClientState.LOGIN>,
-})
-
-export const LoginStart = createReadPacket({
-    username: String,
-    uuid: UUID,
-})
-
-export const EncryptionResponse = createReadPacket({
-    sharedSecret: VarIntPrefixedByteArray,
-    verifyToken: VarIntPrefixedByteArray,
-})

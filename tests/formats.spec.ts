@@ -1,6 +1,9 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
-import { createReadPacket, createWritePacket } from '~/packets/create'
+import {
+    createServerBoundPacket,
+    createClientBoundPacket,
+} from '~/packets/create'
 import {
     Byte,
     Int,
@@ -22,8 +25,8 @@ describe('formats', () => {
             f: VarInt,
             g: VarLong,
         }
-        const writePacket = createWritePacket(format)
-        const readPacket = createReadPacket(format)
+        const writePacket = createClientBoundPacket(format)
+        const readPacket = createServerBoundPacket(format)
         const packet = {
             a: 42,
             b: Buffer.from([1, 2, 3]),

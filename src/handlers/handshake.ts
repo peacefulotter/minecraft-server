@@ -1,29 +1,26 @@
-import { Handshake, LegacyServerListPing } from '~/packets/server-bound'
-import type { Handler, HandlerArgs } from '.'
+import { Handshake, LegacyServerListPing } from '~/packets/server'
+import { Handler, type Args, link } from '.'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
 
-export class HandshakeHandler implements Handler {
-    handle = async (args: HandlerArgs) => {
-        const { client, buffer, packetId } = args
-        console.log(
-            '====================================',
-            'this.handleHandshake'
-        )
-        console.log(buffer)
-        const packet = Handshake(buffer, client.encrypted)
-        console.log({ packetId, ...packet })
+export class HandshakeHandler extends Handler {
+    constructor() {
+        super('Handshake', [
+            link(Handshake, HandshakeHandler.onHandshake),
+            link(LegacyServerListPing, HandshakeHandler.onLegacyServerListPing),
+        ])
+    }
+
+    static onHandshake = async (args: Args<typeof Handshake>) => {
+        const { client, packet, packetId } = args
         client.state = packet.nextState
     }
 
     // https://wiki.vg/Server_List_Ping#1.6
     // TODO: implement
-    handleLegacyServerListPing = async ({
-        client,
+    static onLegacyServerListPing = async ({
         packetId,
-        buffer,
-    }: HandlerArgs) => {
-        const packet = LegacyServerListPing(buffer, client.encrypted)
-
+        packet,
+    }: Args<typeof LegacyServerListPing>) => {
         console.log({
             packetId,
             ...packet,

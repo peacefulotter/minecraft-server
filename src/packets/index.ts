@@ -1,7 +1,7 @@
 import { ByteArray, Int, VarInt } from '~/types/basic'
-import { createWritePacket } from './create'
+import { createClientBoundPacket } from './create'
 
-const WriteResponseFormat = createWritePacket(
+const WriteResponseFormat = createClientBoundPacket(
     {
         // NOTE: since packetLen needs bufferLen to be defined,
         // we compute bufferLen separately

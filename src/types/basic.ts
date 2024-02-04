@@ -1,10 +1,19 @@
 import leb128 from 'leb128'
-import Long from 'long'
+import InnerLong from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 
 export interface Type<T> {
     read: (buffer: number[], length?: number) => T
     write: (t: T) => Buffer
+}
+
+export const Boolean: Type<boolean> = class Boolean {
+    static read = (buffer: number[]) => {
+        return buffer.shift() === 1
+    }
+    static write = (t: boolean) => {
+        return Buffer.from([t ? 1 : 0])
+    }
 }
 
 export const Byte: Type<number> = class Byte {
@@ -59,16 +68,62 @@ export const Int: Type<number> = class Int {
     }
 }
 
-export const UUID: Type<string> = class UUID {
-    static UUID_SIZE = 16
+export const Long: Type<InnerLong> = class Long {
+    static read = (buffer: number[]) => {
+        const b1 = Int.read(buffer)
+        const b2 = Int.read(buffer)
+        return new InnerLong(b1, b2)
+    }
+
+    static write = (t: InnerLong) => {
+        console.log('Writing long', t.toNumber())
+        const res = Buffer.concat([Int.write(t.high), Int.write(t.low)])
+        console.log(res)
+        return res
+    }
+}
+
+export const Float: Type<number> = class Float {
+    static SIZE = 4
 
     static read = (buffer: number[]) => {
-        return ByteArray.read(buffer, UUID.UUID_SIZE).toString('hex')
+        return new DataView(
+            ByteArray.read(buffer, Float.SIZE).buffer
+        ).getFloat32(0)
+    }
+
+    static write = (t: number) => {
+        const buffer = new ArrayBuffer(Float.SIZE)
+        new DataView(buffer).setFloat32(0, t)
+        return Buffer.from(buffer)
+    }
+}
+
+export const Double: Type<number> = class Double {
+    static SIZE = 8
+
+    static read = (buffer: number[]) => {
+        return new DataView(
+            ByteArray.read(buffer, Double.SIZE).buffer
+        ).getFloat64(0)
+    }
+
+    static write = (t: number) => {
+        const buffer = new ArrayBuffer(Double.SIZE)
+        new DataView(buffer).setFloat64(0, t)
+        return Buffer.from(buffer)
+    }
+}
+
+export const UUID: Type<string> = class UUID {
+    static SIZE = 16
+
+    static read = (buffer: number[]) => {
+        return ByteArray.read(buffer, UUID.SIZE).toString('hex')
     }
 
     static write = (t: string) => {
         const buffer = Buffer.from(t.replaceAll('-', ''), 'hex')
-        console.log('UUID WRITE', buffer, buffer.length)
         return buffer
     }
 }
@@ -83,24 +138,6 @@ export const String: Type<string> = class String {
         return VarIntPrefixedByteArray.write(buffer)
     }
 }
-
-// export const VarInt: Type<number> = class VarInt {
-//     static read = (buffer: number[]) => {
-//         console.log(Buffer.from(buffer))
-//         console.log(leb128.signed.decode(Buffer.from(buffer)))
-//         console.log(parseInt(leb128.signed.decode(Buffer.from(buffer)), 10))
-
-//         const res = parseInt(leb128.signed.decode(Buffer.from(buffer)), 10)
-//         buffer.shift()
-//         if (res >> 6 >= 1) buffer.shift() // remove the second byte
-//         if (res >> 13 >= 1) buffer.shift() // remove the third byte
-//         return res
-//     }
-
-//     static write = (val: number) => {
-//         return leb128.signed.encode(val)
-//     }
-// }
 
 export const VarInt: Type<number> = class VarInt {
     static read = (buffer: number[]) => {
@@ -141,9 +178,9 @@ export const VarInt: Type<number> = class VarInt {
     }
 }
 
-export const VarLong: Type<Long> = class VarLong {
+export const VarLong: Type<InnerLong> = class VarLong {
     static read = (buffer: number[]) => {
-        let value = new Long(0)
+        let value = new InnerLong(0)
         let position = 0
         let idx = 0
 
@@ -151,7 +188,7 @@ export const VarLong: Type<Long> = class VarLong {
             const currentByte = buffer.at(idx)
             if (currentByte === undefined) throw new Error('VarLong is too big')
             value = value.or(
-                new Long(currentByte & SEGMENT_BITS).shiftLeft(position)
+                new InnerLong(currentByte & SEGMENT_BITS).shiftLeft(position)
             )
 
             if ((currentByte & CONTINUE_BIT) == 0) break
@@ -165,7 +202,7 @@ export const VarLong: Type<Long> = class VarLong {
         return value
     }
 
-    static write = (t: Long) => {
+    static write = (t: InnerLong) => {
         const buffer: number[] = []
         while (true) {
             if (t.and(~SEGMENT_BITS).eq(0)) {
@@ -175,7 +212,6 @@ export const VarLong: Type<Long> = class VarLong {
 
             buffer.push(t.and(SEGMENT_BITS).or(CONTINUE_BIT).toNumber())
 
-            // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
             t = t.shiftRight(7)
         }
         return Buffer.from(buffer)
@@ -191,5 +227,27 @@ export const VarIntPrefixedByteArray: Type<Buffer> = class VarIntPrefixedByteArr
     static write = (t: Buffer) => {
         const length = t.length
         return Buffer.concat([VarInt.write(length), t])
+    }
+}
+
+export const Position: Type<{
+    x: number
+    y: number
+    z: number
+}> = class Position {
+    static read = (buffer: number[]) => {
+        const val = Long.read(buffer).toNumber()
+        const x = val >> 38
+        const y = (val << 52) >> 52
+        const z = (val << 26) >> 38
+        return { x, y, z }
+    }
+
+    static write = (t: { x: number; y: number; z: number }) => {
+        const val =
+            ((t.x & 0x3ffffff) << 38) |
+            ((t.z & 0x3ffffff) << 12) |
+            (t.y & 0xfff)
+        return Long.write(InnerLong.fromNumber(val))
     }
 }

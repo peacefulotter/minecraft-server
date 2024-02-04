@@ -1,11 +1,16 @@
 import { v4 as uuid } from 'uuid'
 import { hexDigest } from '~/auth'
 import { ClientState } from '~/client'
-import { LoginSuccess } from '~/packets/client-bound'
-import { EncryptionResponse, LoginStart } from '~/packets/server-bound'
 import { log } from '~/logger'
 import chalk from 'chalk'
-import type { Handler, HandlerArgs } from '.'
+import { Handler, type Args, link } from '.'
+import {
+    EncryptionResponse,
+    LoginAcknowledged,
+    LoginPluginResponse,
+    LoginStart,
+} from '~/packets/server'
+import { LoginSuccess } from '~/packets/client'
 
 type AuthResponse = {
     id: string
@@ -17,35 +22,25 @@ type AuthResponse = {
     }[]
 }
 
-export class LoginHandler implements Handler {
-    MOJANG_AUTH_URL = new URL(
+export class LoginHandler extends Handler {
+    static MOJANG_AUTH_URL = new URL(
         '',
         'https://sessionserver.mojang.com/session/minecraft/hasJoined'
     )
 
-    handle = async (args: HandlerArgs) => {
-        const { packetId, client } = args
-
-        switch (packetId) {
-            case 0x00:
-                return this.handleLoginStart(args)
-            case 0x01:
-                return this.handleEncryptionResponse(args)
-            case 0x02:
-                return this.handleLoginPluginResponse(args)
-            case 0x03:
-                return this.handleLoginAcknowledged(args)
-            default:
-                throw new Error(
-                    `Unknown packet id: ${packetId} for state: status`
-                )
-        }
+    constructor() {
+        super('Login', [
+            link(LoginStart, LoginHandler.onLoginStart),
+            link(EncryptionResponse, LoginHandler.onEncryptionResponse),
+            link(LoginPluginResponse, LoginHandler.onLoginPluginResponse),
+            link(LoginAcknowledged, LoginHandler.onLoginAcknowledged),
+        ])
     }
 
-    handleLoginStart = ({ client, buffer }: HandlerArgs) => {
-        console.log('====================================', 'this.handleLogin')
-        const packet = LoginStart(buffer, client.encrypted)
-
+    static onLoginStart = async ({
+        client,
+        packet,
+    }: Args<typeof LoginStart>) => {
         client.username = packet.username
         client.uuid = uuid()
 
@@ -100,35 +95,39 @@ export class LoginHandler implements Handler {
         // return EncryptionRequest(p)
     }
 
-    handleEncryptionResponse = ({ client, buffer }: HandlerArgs) => {
+    static onEncryptionResponse = async ({
+        client,
+        packet,
+    }: Args<typeof EncryptionResponse>) => {
         console.log(
             '====================================',
             'this.handleEncryption'
         )
-        const response = EncryptionResponse(buffer, true)
-
-        console.log(response)
+        console.log(packet)
         client.encrypted = true
     }
 
     // TODO: implement
-    handleLoginPluginResponse = ({ client, buffer }: HandlerArgs) => {
+    static onLoginPluginResponse = async ({
+        client,
+        packet,
+    }: Args<typeof LoginPluginResponse>) => {
         console.log(
             '====================================',
             'this.handleLoginPluginResponse',
             '\n-------- TODO --------'
         )
-        console.log(buffer)
+        console.log(packet)
     }
 
     // TODO: implement
-    handleAuth = async ({}: HandlerArgs) => {
+    static onAuth = async ({}: Args<any>) => {
         const username = ''
         const ip = ''
         const secret = ''
         const hash = hexDigest(secret)
 
-        const url = new URL(this.MOJANG_AUTH_URL)
+        const url = new URL(LoginHandler.MOJANG_AUTH_URL)
         url.searchParams.set('username', username)
         url.searchParams.set('serverId', hash)
         url.searchParams.set('ip', ip)
@@ -140,11 +139,9 @@ export class LoginHandler implements Handler {
         console.log(json)
     }
 
-    handleLoginAcknowledged = ({ client }: HandlerArgs) => {
-        console.log(
-            '====================================',
-            'this.handleLoginAcknowledged'
-        )
+    static onLoginAcknowledged = async ({
+        client,
+    }: Args<typeof LoginAcknowledged>) => {
         client.state = ClientState.CONFIGURATION
     }
 }

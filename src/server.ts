@@ -2,12 +2,12 @@ import shortid from 'shortid'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client } from './client'
-import { Unwrap } from './packets/server-bound'
-import { WrapResponse } from './packets/client-bound'
 import { VarInt } from './types/basic'
 import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
 import type { PacketId } from './packet'
+import { WrapResponse } from './packets/client'
+import { Unwrap } from './packets/server'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}

@@ -1,29 +1,52 @@
 import { decrypt } from '~/auth'
+import type { PacketId } from '~/packet'
 import type { Type } from '~/types/basic'
 
-type PacketCreation = { [key: string]: Type<any> }
+export type PacketFormat = { [key: string]: Type<any> }
 
 // ========================== READ PACKET ==========================
 
-type PacketReturn<T extends PacketCreation> = {
-    [key in keyof T]: T[key]['read'] extends (buffer: number[]) => infer Ret
-        ? Ret
-        : never
-}
+// Get the packet return type format either from the format directly or from the packet
+export type ParsedServerBoundPacket<
+    T extends PacketFormat | ServerBoundPacket<number, string, any>
+> = T extends PacketFormat
+    ? {
+          [key in keyof T]: T[key]['read'] extends (
+              buffer: number[],
+              encrypted: boolean
+          ) => infer Ret
+              ? Ret
+              : never
+      }
+    : T extends ServerBoundPacket<number, string, infer U>
+    ? ParsedServerBoundPacket<U>
+    : never
 
-export type ServerBoundPacket<T extends PacketCreation> = (
+export type ServerBoundPacketParser<T extends PacketFormat> = (
     buf: number[],
     encripted: boolean
-) => PacketReturn<T>
+) => ParsedServerBoundPacket<T>
 
-export const createReadPacket = <T extends PacketCreation>(
-    types: T
-): ServerBoundPacket<T> => {
-    return (buf: number[], encripted: boolean) => {
+export class ServerBoundPacket<
+    I extends PacketId = number,
+    S extends string = string,
+    T extends PacketFormat = PacketFormat
+> {
+    constructor(
+        public readonly id: I,
+        public readonly name: S,
+        public readonly types: T
+    ) {
+        this.id = id
+        this.name = name
+        this.types = types
+    }
+
+    parse: ServerBoundPacketParser<T> = (buf: number[], encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
-        const computed = Object.entries(types).reduce(
+        const computed = Object.entries(this.types).reduce(
             (acc, [key, type]) => ({ ...acc, [key]: type.read(buffer) }),
-            {} as PacketReturn<T>
+            {} as ParsedServerBoundPacket<T>
         )
         return computed
     }
@@ -31,7 +54,7 @@ export const createReadPacket = <T extends PacketCreation>(
 
 // ========================== WRITE PACKET ==========================
 
-type PacketArguments<T extends PacketCreation> = {
+type PacketArguments<T extends PacketFormat> = {
     [key in keyof T]: T[key]['write'] extends (arg: infer Arg) => Buffer
         ? Arg
         : never
@@ -42,9 +65,9 @@ export type ClientBoundPacket = {
     buffer: Buffer
 }
 
-export const createWritePacket = <T extends PacketCreation>(
-    types: T,
-    packetId: number
+export const createClientBoundPacket = <T extends PacketFormat>(
+    packetId: number,
+    types: T
 ): ((args: PacketArguments<T>) => ClientBoundPacket) => {
     return (args: PacketArguments<T>) => ({
         packetId,
