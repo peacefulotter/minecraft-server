@@ -1,8 +1,10 @@
 import { PacketNameToId } from '~/packet'
 import { createWritePacket } from './create'
 import {
+    Byte,
     ByteArray,
     String,
+    UUID,
     VarInt,
     VarIntPrefixedByteArray,
 } from '~/types/basic'
@@ -52,8 +54,9 @@ export const EncryptionRequest = createWritePacket(
 
 export const LoginSuccess = createWritePacket(
     {
-        uuid: String,
-        username: String,
+        // uuid: UUID, //
+        // uuid: ByteArray,
+        username: String, // ByteArray,
     },
     0x02
 )

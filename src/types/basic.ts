@@ -21,7 +21,6 @@ export const ByteArray: Type<Buffer> = class Bytes {
         let i = 0
         while (length === undefined || i++ < length) {
             const element = Byte.read(buffer)
-            if (element === undefined) break
             acc.push(element)
         }
         return Buffer.from(acc)
@@ -59,21 +58,27 @@ export const Int: Type<number> = class Int {
     }
 }
 
+export const UUID: Type<string> = class UUID {
+    static UUID_SIZE = 16
+
+    static read = (buffer: number[]) => {
+        return ByteArray.read(buffer, UUID.UUID_SIZE).toString('hex')
+    }
+
+    static write = (t: string) => {
+        const buffer = Buffer.from(t.replaceAll('-', ''), 'hex')
+        return buffer
+    }
+}
+
 export const String: Type<string> = class String {
     static read = (buffer: number[]) => {
-        const length = VarInt.read(buffer)
-        const acc = []
-        for (let i = 0; i < length; i++) {
-            const element = Byte.read(buffer)
-            acc.push(element)
-        }
-        return Buffer.from(acc).toString('utf-8')
+        return VarIntPrefixedByteArray.read(buffer).toString('utf-8')
     }
 
     static write = (t: string) => {
         const buffer = Buffer.from(t)
-        const length = buffer.length
-        return Buffer.concat([VarInt.write(length), buffer])
+        return VarIntPrefixedByteArray.write(buffer)
     }
 }
 

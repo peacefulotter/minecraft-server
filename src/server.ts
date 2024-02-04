@@ -6,7 +6,7 @@ import { Client, ClientState } from './client'
 import { Unwrap } from './packets/server-bound'
 import { WrapPing, WrapResponse } from './packets/client-bound'
 import { VarInt } from './types/basic'
-import { log } from './logger'
+import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
 
 export class Server {
@@ -25,11 +25,11 @@ export class Server {
     formatResponse = ({ packetId, buffer }: ClientBoundPacket) => {
         const bufferLen = buffer.length
         const packetLen = bufferLen + VarInt.write(bufferLen).length + 1
-        log('Formatting response', {
+        log('2) Formatting response', {
             packetId,
             bufferLen,
             packetLen,
-            buffer: buffer.toJSON().data,
+            buffer,
         })
         return WrapResponse({
             packetLen,
@@ -74,7 +74,6 @@ export class Server {
             packetId,
             buffer,
         })
-        console.log('2) RESPONSE', response)
 
         if (!response || !response.buffer) return
 
@@ -82,10 +81,13 @@ export class Server {
 
         log('3) Responding packet', {
             socketId: client.socket.id,
-            packetId,
-            responsePacketId: response.packetId,
-            response,
-            packet,
+            packetId: `${byteToHex(packetId)} -> ${byteToHex(
+                response.packetId
+            )}`,
+            header: packet.buffer.subarray(
+                0,
+                packet.buffer.length - response.buffer.length
+            ),
         })
         client.write(packet.buffer)
     }
@@ -94,7 +96,7 @@ export class Server {
         const client = this.clients[socket.id]
         const packets = Unwrap(data)
         for (const packet of packets) {
-            this.handlePacket(client, packet)
+            await this.handlePacket(client, packet)
         }
     }
 

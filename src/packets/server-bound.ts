@@ -8,6 +8,7 @@ import {
     String,
     VarInt,
     VarIntPrefixedByteArray,
+    UUID,
 } from '~/types/basic'
 import { createReadPacket, type ServerBoundPacket } from './create'
 import { log } from '~/logger'
@@ -67,7 +68,8 @@ export const Handshake = createReadPacket({
 })
 
 export const LoginStart = createReadPacket({
-    name: String,
+    username: String,
+    // uuid: UUID, v > 1.8.9
 })
 
 export const EncryptionResponse = createReadPacket({
