@@ -1,9 +1,13 @@
-import { String, UUID, VarIntPrefixedByteArray } from '~/types/basic'
+import {
+    DataString,
+    DataUUID,
+    VarIntPrefixedByteArray,
+} from '~/data-types/basic'
 import { ServerBoundPacket } from '../create'
 
 export const LoginStart = new ServerBoundPacket(0x00, 'LoginStart', {
-    username: String,
-    uuid: UUID,
+    username: DataString,
+    uuid: DataUUID,
 })
 
 export const EncryptionResponse = new ServerBoundPacket(

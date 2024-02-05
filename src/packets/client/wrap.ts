@@ -1,4 +1,4 @@
-import { ByteArray, VarInt } from '~/types/basic'
+import { DataByteArray, VarInt } from '~/data-types/basic'
 import { createClientBoundPacket } from '../create'
 
 export const WrapResponse = createClientBoundPacket(
@@ -6,6 +6,6 @@ export const WrapResponse = createClientBoundPacket(
     {
         packetLen: VarInt,
         packetId: VarInt,
-        buffer: ByteArray,
+        buffer: DataByteArray,
     }
 )

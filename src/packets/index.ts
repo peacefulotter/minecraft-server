@@ -1,4 +1,4 @@
-import { ByteArray, Int, VarInt } from '~/types/basic'
+import { DataByteArray, DataInt, VarInt } from '~/data-types/basic'
 import { createClientBoundPacket } from './create'
 
 const WriteResponseFormat = createClientBoundPacket(
@@ -8,9 +8,9 @@ const WriteResponseFormat = createClientBoundPacket(
         // This is not ideal and if other packets need prev things as well
         // then consider refactor createWritePacket (implement a "construction" state, and concat at the end)
         bufferLen: VarInt,
-        packetId: Int,
+        packetId: DataInt,
         packetLen: VarInt,
-        packet: ByteArray,
+        packet: DataByteArray,
     },
     0x00
 )

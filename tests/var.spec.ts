@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
-import { VarInt, VarLong } from '~/types/basic'
+import { VarInt, VarLong } from '~/data-types/basic'
 
 describe('vars work', () => {
     test('some varints', () => {

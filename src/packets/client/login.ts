@@ -1,14 +1,19 @@
-import { String, UUID, VarInt, VarIntPrefixedByteArray } from '~/types/basic'
+import {
+    DataString,
+    DataUUID,
+    VarInt,
+    VarIntPrefixedByteArray,
+} from '~/data-types/basic'
 import { createClientBoundPacket } from '../create'
 
 export const EncryptionRequest = createClientBoundPacket(0x01, {
-    serverId: String,
+    serverId: DataString,
     publicKey: VarIntPrefixedByteArray,
     verifyToken: VarIntPrefixedByteArray,
 })
 
 export const LoginSuccess = createClientBoundPacket(0x02, {
-    uuid: UUID,
-    username: String,
+    uuid: DataUUID,
+    username: DataString,
     numberOfProperties: VarInt,
 })

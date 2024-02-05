@@ -61,6 +61,13 @@ export enum Difficulty {
     HARD = 3,
 }
 
+export enum GameMode {
+    SURVIVAL = 0,
+    CREATIVE = 1,
+    ADVENTURE = 2,
+    SPECTATOR = 3,
+}
+
 type MCPrefixed<T extends string> = `minecraft:${T}`
 type DebugPrefixed<T extends string> = `debug/${T}`
 
@@ -108,3 +115,7 @@ export type PluginChannel =
     | ReservedChannel
     | MCInternalChannel
     | CommunityChannel
+
+export type FeatureFlags = MCPrefixed<
+    'vanilla' | 'bundle' | 'trade_rebalance' | 'update_1_21'
+>

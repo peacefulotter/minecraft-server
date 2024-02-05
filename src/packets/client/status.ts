@@ -1,12 +1,12 @@
-import { ByteArray, Long, String } from '~/types/basic'
+import { DataByteArray, DataLong, DataString } from '~/data-types/basic'
 import { createClientBoundPacket } from '../create'
 import { STATUS_RESPONSE } from '~/constants'
 
 export const PingResponse = createClientBoundPacket(0x01, {
-    payload: Long,
+    payload: DataLong,
 })
 
 export const StatusResponse = () =>
     createClientBoundPacket(0x00, {
-        json: String,
+        json: DataString,
     })({ json: STATUS_RESPONSE })

@@ -1,6 +1,6 @@
 import { decrypt } from '~/auth'
 import type { PacketId } from '~/packet'
-import type { Type } from '~/types/basic'
+import type { Type } from '~/data-types/basic'
 
 export type PacketFormat = { [key: string]: Type<any> }
 

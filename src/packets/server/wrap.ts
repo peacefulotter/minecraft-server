@@ -1,8 +1,13 @@
 import { log } from '~/logger'
 import type { PacketId } from '~/packet'
-import { VarInt } from '~/types/basic'
+import { VarInt } from '~/data-types/basic'
 
 const LEGACY_SERVER_LIST_PING_ID = 254
+
+// function hasGzipHeader(data) {
+//     var head = new Uint8Array(data.slice(0, 2));
+//     return head.length === 2 && head[0] === 0x1f && head[1] === 0x8b;
+// }
 
 const UnwrapSingle = (buffer: number[]) => {
     // Handle legacy server list ping

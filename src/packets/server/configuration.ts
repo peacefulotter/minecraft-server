@@ -1,34 +1,34 @@
 import {
-    Byte,
-    String,
+    DataByte,
+    DataString,
     VarInt,
     type Type,
-    Boolean,
-    ByteArray,
-    Long,
-    Int,
-    UUID,
-} from '~/types/basic'
+    DataBoolean,
+    DataByteArray,
+    DataLong,
+    DataInt,
+    DataUUID,
+} from '~/data-types/basic'
 import type {
     ChatMode,
     MainHand,
     PluginChannel,
     ResourcePackResult,
-} from '~/types/enum'
+} from '~/data-types/enum'
 import { ServerBoundPacket, type ParsedServerBoundPacket } from '../create'
 
 export const ConfigurationClientInformation = new ServerBoundPacket(
     0x00,
     'ClientInformation' as const,
     {
-        locale: String,
-        viewDistance: Byte,
+        locale: DataString,
+        viewDistance: DataByte,
         chatMode: VarInt,
-        chatColors: Byte as Type<ChatMode>,
-        displayedSkinParts: Byte,
+        chatColors: DataByte as Type<ChatMode>,
+        displayedSkinParts: DataByte,
         mainHand: VarInt as Type<MainHand>,
-        enableTextFiltering: Boolean,
-        allowServerListings: Boolean,
+        enableTextFiltering: DataBoolean,
+        allowServerListings: DataBoolean,
     }
 )
 
@@ -40,8 +40,8 @@ export const PluginMessage = new ServerBoundPacket(
     0x01,
     'PluginMessage' as const,
     {
-        channel: String as Type<PluginChannel>,
-        data: ByteArray,
+        channel: DataString as Type<PluginChannel>,
+        data: DataByteArray,
     }
 )
 
@@ -52,18 +52,18 @@ export const FinishConfiguration = new ServerBoundPacket(
 )
 
 export const KeepAlive = new ServerBoundPacket(0x03, 'KeepAlive', {
-    id: Long,
+    id: DataLong,
 })
 
 export const Pong = new ServerBoundPacket(0x04, 'Pong', {
-    id: Int,
+    id: DataInt,
 })
 
 export const ResourcePackResponse = new ServerBoundPacket(
     0x05,
     'ResourcePackResponse',
     {
-        uuid: UUID,
+        uuid: DataUUID,
         result: VarInt as Type<ResourcePackResult>,
     }
 )

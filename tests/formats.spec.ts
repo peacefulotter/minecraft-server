@@ -5,23 +5,23 @@ import {
     createClientBoundPacket,
 } from '~/packets/create'
 import {
-    Byte,
-    Int,
-    Short,
-    String,
+    DataByte,
+    DataInt,
+    DataShort,
+    DataString,
     VarInt,
     VarIntPrefixedByteArray,
     VarLong,
-} from '~/types/basic'
+} from '~/data-types/basic'
 
 describe('formats', () => {
     test('is identity when writing -> reading', () => {
         const format = {
-            a: Byte,
+            a: DataByte,
             b: VarIntPrefixedByteArray,
-            c: Short,
-            d: Int,
-            e: String,
+            c: DataShort,
+            d: DataInt,
+            e: DataString,
             f: VarInt,
             g: VarLong,
         }

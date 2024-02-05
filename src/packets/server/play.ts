@@ -1,18 +1,18 @@
 import {
     VarInt,
     type Type,
-    Byte,
-    Float,
-    String,
-    Boolean,
-    Long,
-    Double,
-    Int,
-    Short,
-    UUID,
-} from '~/types/basic'
+    DataByte,
+    DataFloat,
+    DataString,
+    DataBoolean,
+    DataLong,
+    DataDouble,
+    DataInt,
+    DataShort,
+    DataUUID,
+} from '~/data-types/basic'
 import { ServerBoundPacket } from '../create'
-import type { Difficulty } from '~/types/enum'
+import type { Difficulty } from '~/data-types/enum'
 
 export const ConfirmTeleportation = new ServerBoundPacket(
     0x00,
@@ -31,7 +31,7 @@ export const ChangeDifficulty = new ServerBoundPacket(
     0x02,
     'ChangeDifficulty',
     {
-        difficulty: Byte as Type<Difficulty>,
+        difficulty: DataByte as Type<Difficulty>,
     }
 )
 
@@ -66,7 +66,7 @@ export const ChunkBatchReceived = new ServerBoundPacket(
     0x07,
     'ChunkBatchReceived',
     {
-        chunkPerTick: Float,
+        chunkPerTick: DataFloat,
     }
 )
 
@@ -78,29 +78,29 @@ export const PlayClientInformation = new ServerBoundPacket(
     0x09,
     'ClientInformation',
     {
-        locale: String,
-        viewDistance: Byte,
+        locale: DataString,
+        viewDistance: DataByte,
         chatMode: VarInt,
-        chatColors: Byte,
-        displayedSkinParts: Byte,
+        chatColors: DataByte,
+        displayedSkinParts: DataByte,
         mainHand: VarInt,
-        enableTextFiltering: Boolean,
-        allowServerListings: Boolean,
+        enableTextFiltering: DataBoolean,
+        allowServerListings: DataBoolean,
     }
 )
 
 export const PlayKeepAlive = new ServerBoundPacket(0x15, 'KeepAlive', {
-    id: Long,
+    id: DataLong,
 })
 
 export const SetPlayerPosition = new ServerBoundPacket(
     0x17,
     'SetPlayerPosition',
     {
-        x: Double,
-        y: Double,
-        z: Double,
-        onGround: Boolean,
+        x: DataDouble,
+        y: DataDouble,
+        z: DataDouble,
+        onGround: DataBoolean,
     }
 )
 
@@ -108,36 +108,36 @@ export const PlayerPositionAndRotation = new ServerBoundPacket(
     0x18,
     'PlayerPositionAndRotation',
     {
-        x: Double,
-        y: Double,
-        z: Double,
-        yaw: Float,
-        pitch: Float,
-        onGround: Boolean,
+        x: DataDouble,
+        y: DataDouble,
+        z: DataDouble,
+        yaw: DataFloat,
+        pitch: DataFloat,
+        onGround: DataBoolean,
     }
 )
 
 export const PlayerRotation = new ServerBoundPacket(0x19, 'PlayerRotation', {
-    yaw: Float,
-    pitch: Float,
-    onGround: Boolean,
+    yaw: DataFloat,
+    pitch: DataFloat,
+    onGround: DataBoolean,
 })
 
 export const PlayerOnGround = new ServerBoundPacket(0x1a, 'PlayerOnGround', {
-    onGround: Boolean,
+    onGround: DataBoolean,
 })
 
 export const MoveVehicle = new ServerBoundPacket(0x1b, 'MoveVehicle', {
-    x: Double,
-    y: Double,
-    z: Double,
-    yaw: Float,
-    pitch: Float,
+    x: DataDouble,
+    y: DataDouble,
+    z: DataDouble,
+    yaw: DataFloat,
+    pitch: DataFloat,
 })
 
 export const PaddleBoat = new ServerBoundPacket(0x1c, 'PaddleBoat', {
-    leftPaddle: Boolean,
-    rightPaddle: Boolean,
+    leftPaddle: DataBoolean,
+    rightPaddle: DataBoolean,
 })
 
 export const PickItem = new ServerBoundPacket(0x1d, 'PickItem', {
@@ -145,21 +145,21 @@ export const PickItem = new ServerBoundPacket(0x1d, 'PickItem', {
 })
 
 export const PingRequest = new ServerBoundPacket(0x1e, 'PingRequest', {
-    payload: Long,
+    payload: DataLong,
 })
 
 export const PlayPong = new ServerBoundPacket(0x24, 'Pong', {
-    id: Int,
+    id: DataInt,
 })
 
 export const SetHeldItem = new ServerBoundPacket(0x2c, 'SetHeldItem', {
-    slot: Short,
+    slot: DataShort,
 })
 
 export const TeleportToEntity = new ServerBoundPacket(
     0x34,
     'TeleportToEntity',
     {
-        target: UUID,
+        target: DataUUID,
     }
 )
