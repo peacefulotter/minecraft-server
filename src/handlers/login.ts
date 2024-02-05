@@ -98,10 +98,13 @@ export const LoginHandler = new HandlerBuilder({})
             'data-types',
             'registry_data_1.20.2.json'
         )
-        const file = await Bun.file(p).arrayBuffer()
-        return RegistryData({
-            codec: nbt.parseUncompressed(file),
+        const file = await Bun.file(p).json()
+        const root = nbt.writeUncompressed(file)
+        const res = RegistryData({
+            codec: nbt.parseUncompressed(root),
         })
+        console.log(res)
+        return res
     })
     .build('Login')
 

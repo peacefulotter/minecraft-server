@@ -119,3 +119,10 @@ export type PluginChannel =
 export type FeatureFlags = MCPrefixed<
     'vanilla' | 'bundle' | 'trade_rebalance' | 'update_1_21'
 >
+
+enum Test {
+    banner = 'banner',
+    barrel = 'barrel',
+}
+
+export type BlockType = `minecraft:${Test}`

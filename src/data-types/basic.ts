@@ -1,8 +1,10 @@
 import InnerLong from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
+import BitSet from 'bitset'
 
 const FLOAT_SIZE = 4
 const DOUBLE_SIZE = 8
+const LONG_SIZE = 8
 const UUID_SIZE = 16
 
 export type Type<T> = {
@@ -244,6 +246,31 @@ export const DataPosition: Type<{
     },
 }
 
+export const DataBitSet: Type<BitSet> = {
+    read: (buffer: number[]) => {
+        const nbLong = VarInt.read(buffer)
+        const length = Math.min(buffer.length, nbLong * LONG_SIZE)
+        console.log(length, buffer.length, nbLong, buffer)
+        const bits = DataByteArray.read(buffer, length)
+        return new BitSet(bits)
+    },
+    write: (t: BitSet) => {
+        const buffer = Buffer.from(
+            t
+                .toString()
+                .split('')
+                .reverse()
+                .join('')
+                .match(/.{1,8}/g)
+                ?.map((x) =>
+                    parseInt(x.split('').reverse().join(''), 2)
+                ) as number[]
+        )
+        const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
+        return Buffer.concat([VarInt.write(nbLongs), buffer])
+    },
+}
+
 // ============= Meta types =============
 export const Optional = <
     T extends Type<any>,
@@ -271,7 +298,7 @@ export const DataArray = <
 ) => ({
     read: (buffer: number[]) => {
         const length = VarInt.read(buffer)
-        return new Array(length).fill(0).map(() => type.read(buffer))
+        return new Array(length).fill(0).map(() => type.read(buffer)) as V[]
     },
 
     write: (t: V[]) => {
@@ -279,5 +306,24 @@ export const DataArray = <
             VarInt.write(t.length),
             ...t.map((e) => type.write(e)),
         ])
+    },
+})
+
+type DataTypeObject = { [key: string]: Type<any> }
+type ObjectResult<T extends DataTypeObject> = {
+    [key in keyof T]: T[key] extends Type<infer U> ? U : never
+}
+
+export const DataObject = <T extends DataTypeObject>(types: T) => ({
+    read: (buffer: number[]) => {
+        return Object.fromEntries(
+            Object.entries(types).map(([key, type]) => [key, type.read(buffer)])
+        ) as ObjectResult<T>
+    },
+
+    write: (t: ObjectResult<T>) => {
+        return Buffer.concat(
+            Object.entries(t).map(([key, value]) => types[key].write(value))
+        )
     },
 })
