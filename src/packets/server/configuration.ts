@@ -9,10 +9,15 @@ import {
     Int,
     UUID,
 } from '~/types/basic'
-import type { ChatMode, MainHand, ResourcePackResult } from '~/types/enum'
+import type {
+    ChatMode,
+    MainHand,
+    PluginChannel,
+    ResourcePackResult,
+} from '~/types/enum'
 import { ServerBoundPacket, type ParsedServerBoundPacket } from '../create'
 
-export const ClientInformation = new ServerBoundPacket(
+export const ConfigurationClientInformation = new ServerBoundPacket(
     0x00,
     'ClientInformation' as const,
     {
@@ -27,13 +32,15 @@ export const ClientInformation = new ServerBoundPacket(
     }
 )
 
-export type ClientInfo = ParsedServerBoundPacket<typeof ClientInformation>
+export type ClientInfo = ParsedServerBoundPacket<
+    typeof ConfigurationClientInformation
+>
 
 export const PluginMessage = new ServerBoundPacket(
     0x01,
     'PluginMessage' as const,
     {
-        channel: String, // TODO: Identifier type
+        channel: String as Type<PluginChannel>,
         data: ByteArray,
     }
 )

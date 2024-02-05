@@ -26,12 +26,12 @@ export type HandleFunc<T extends ServerBoundPacket> = (
     args: Args<T>
 ) => Promise<ClientBoundPacket | void>
 
-type PacketHandler<Packet extends ServerBoundPacket> = {
-    packet: Packet
-    handler: HandleFunc<Packet>
+type PacketHandler = {
+    packet: ServerBoundPacket
+    handler: HandleFunc<ServerBoundPacket>
 }
 
-export class HandlerBuilder<T extends { [key: PacketId]: any } = {}> {
+export class HandlerBuilder<T extends { [key: PacketId]: PacketHandler } = {}> {
     constructor(private readonly handlers: T) {}
 
     addPacket = <T extends ServerBoundPacket>(
@@ -47,7 +47,7 @@ export class HandlerBuilder<T extends { [key: PacketId]: any } = {}> {
     build = (name: string) => new Handler(name, this.handlers)
 }
 
-export class Handler<T extends { [key: PacketId]: any } = {}> {
+export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
     constructor(private readonly name: string, private readonly handlers: T) {
         console.log(
             `-------{  ${chalk.greenBright(name)}  }-------`,
@@ -94,7 +94,7 @@ export class Handler<T extends { [key: PacketId]: any } = {}> {
         return handler({
             packetId,
             client,
-            packet: parsed as unknown as ParsedServerBoundPacket<typeof packet>,
+            packet: parsed,
         })
     }
 }

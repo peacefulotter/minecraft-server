@@ -31,6 +31,10 @@ export const ByteArray: Type<Buffer> = class Bytes {
         let i = 0
         while (length === undefined || i++ < length) {
             const element = Byte.read(buffer)
+            if (element === undefined) {
+                if (length === undefined) break
+                throw new Error('Buffer is too small')
+            }
             acc.push(element)
         }
         return Buffer.from(acc)

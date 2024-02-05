@@ -60,3 +60,51 @@ export enum Difficulty {
     NORMAL = 2,
     HARD = 3,
 }
+
+type MCPrefixed<T extends string> = `minecraft:${T}`
+type DebugPrefixed<T extends string> = `debug/${T}`
+
+type ReservedChannel = MCPrefixed<'register' | 'unregister'>
+
+type MCInternalChannel =
+    | 'MC|PingHost'
+    | MCPrefixed<
+          | 'brand'
+          | DebugPrefixed<
+                | 'path'
+                | 'neighbors_update'
+                | 'structures'
+                | 'worldgen_attempt'
+                | 'poi_ticket_count'
+                | 'poi_added'
+                | 'poi_removed'
+                | 'village_sections'
+                | 'goal_selector'
+                | 'brain'
+                | 'bee'
+                | 'hive'
+                | 'game_test_add_marker'
+                | 'game_test_clear'
+                | 'raids'
+                | 'game_event'
+                | 'game_event_listeners'
+            >
+      >
+
+type CommunityChannel =
+    | 'bungeecord:main'
+    | 'fml:handshake'
+    | 'fml:play'
+    | 'ML|OpenTE'
+    | 'WECUI'
+    | 'wld:init'
+    | 'wld:control'
+    | 'wld:request'
+    | 'world_info'
+    | 'world_id'
+    | 'worldinfo:world_id'
+
+export type PluginChannel =
+    | ReservedChannel
+    | MCInternalChannel
+    | CommunityChannel
