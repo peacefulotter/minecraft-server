@@ -83,7 +83,6 @@ export const ConfigurationFeatureFlags = createClientBoundPacket(
     0x08,
     'ConfigurationFeatureFlags',
     {
-        totalFeatures: VarInt,
         featureFlags: DataArray(DataString as Type<FeatureFlags>),
     }
 )

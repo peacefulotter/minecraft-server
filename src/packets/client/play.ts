@@ -9,33 +9,15 @@ import {
     DataPosition,
     DataByteArray,
     DataArray,
+    DataObject,
+    DataShort,
+    DataBitSet,
+    VarIntPrefixedByteArray,
+    DataDouble,
+    DataFloat,
 } from '~/data-types/basic'
 import { createClientBoundPacket } from '../create'
 import { GameMode } from '~/data-types/enum'
-
-type BlockEntity = {
-    packedXZ: number,
-    y: number,
-    type: number,
-    data: NBT, // TODO
-}
-
-const BlockEntity: Type<BlockEntity> = {
-read: (buffer: number[]) => {
-    const packedXZ = DataInt.read(buffer)
-    const y = DataByte.read(buffer)
-    const type = DataByte.read(buffer)
-    const data = NBT.read(buffer)
-    return { packedXZ, y, type, data }
-},
-write: (t: BlockEntity) => {
-    return Buffer.concat([
-        DataInt.write(t.packedXZ),
-        DataByte.write(t.y),
-        DataByte.write(t.type),
-        NBT.write(t.data),
-    ])
-}
 
 export const ChunkDataAndUpdateLight = createClientBoundPacket(
     0x25,
@@ -43,11 +25,23 @@ export const ChunkDataAndUpdateLight = createClientBoundPacket(
     {
         chunkX: DataInt,
         chunkZ: DataInt,
-        heightMaps: NBT, // TODO
+        heightMaps: DataBoolean, // TODO: NBT
         size: VarInt,
         data: DataByteArray, // TODO
-        numberOfBlockEntities: VarInt,
-        blockEntity: DataArray<BlockEntity>
+        blockEntity: DataArray(
+            DataObject({
+                packedXZ: DataByte,
+                y: DataShort,
+                type: VarInt,
+                data: DataBoolean, // TODO: NBT
+            })
+        ),
+        skyLightMask: DataBitSet,
+        blockLightMask: DataBitSet,
+        emptySkyLightMask: DataBitSet,
+        emptyBlockLightMask: DataBitSet,
+        skyLightArray: DataArray(VarIntPrefixedByteArray),
+        blockLightArray: DataArray(VarIntPrefixedByteArray),
     }
 )
 
@@ -73,3 +67,34 @@ export const PlayLogin = createClientBoundPacket(0x29, 'PlayLogin', {
     deathLocation: DataPosition, // Optional
     portalCooldown: VarInt,
 })
+
+export enum PlayerPositionFlag {
+    X = 0x01,
+    Y = 0x02,
+    Z = 0x04,
+    Y_ROT = 0x08,
+    X_ROT = 0x10,
+}
+
+export const SynchronizePlayerPosition = createClientBoundPacket(
+    0x3e,
+    'SynchronizePlayerPosition',
+    {
+        x: DataDouble,
+        y: DataDouble,
+        z: DataDouble,
+        yaw: DataFloat,
+        pitch: DataFloat,
+        flags: DataByte as Type<PlayerPositionFlag>,
+        teleportId: VarInt,
+    }
+)
+
+export const SetDefaultSpawnPosition = createClientBoundPacket(
+    0x54,
+    'SetDefaultSpawnPosition',
+    {
+        location: DataPosition,
+        angle: DataFloat,
+    }
+)

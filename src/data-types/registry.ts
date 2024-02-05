@@ -8,7 +8,6 @@ import type {
     StringTag,
 } from 'nbt'
 import nbt from 'nbt'
-import registryData from './registry_data_1.20.2.json'
 import type { Type } from './basic'
 
 // type TagBuilder<

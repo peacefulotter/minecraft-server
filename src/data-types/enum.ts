@@ -68,10 +68,10 @@ export enum GameMode {
     SPECTATOR = 3,
 }
 
+type ReservedChannel = MCPrefixed<'register' | 'unregister'>
+
 type MCPrefixed<T extends string> = `minecraft:${T}`
 type DebugPrefixed<T extends string> = `debug/${T}`
-
-type ReservedChannel = MCPrefixed<'register' | 'unregister'>
 
 type MCInternalChannel =
     | 'MC|PingHost'
