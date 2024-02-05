@@ -6,35 +6,12 @@ import {
     PlayPong,
     ResourcePackResponse,
 } from '~/packets/server'
-import { Handler, type Args, link } from '.'
+import { HandlerBuilder } from '.'
 import { ClientState } from '~/client'
 import { FinishConfiguration as ClientFinishConfiguration } from '~/packets/client'
 
-export class ConfigurationHandler extends Handler {
-    constructor() {
-        super('Configuration', [
-            link(
-                PlayClientInformation,
-                ConfigurationHandler.onClientInformation
-            ),
-            link(PluginMessage, ConfigurationHandler.onPluginMessage),
-            link(
-                FinishConfiguration,
-                ConfigurationHandler.onFinishConfiguration
-            ),
-            link(PlayKeepAlive, ConfigurationHandler.onKeepAlive),
-            link(PlayPong, ConfigurationHandler.onPong),
-            link(
-                ResourcePackResponse,
-                ConfigurationHandler.onResourcePackResponse
-            ),
-        ])
-    }
-
-    static onClientInformation = async ({
-        client,
-        packet,
-    }: Args<typeof PlayClientInformation>) => {
+export const ConfigurationHandler = new HandlerBuilder({})
+    .addPacket(PlayClientInformation, async ({ client, packet }) => {
         console.log(
             '====================================',
             'handleClientInformation'
@@ -45,38 +22,20 @@ export class ConfigurationHandler extends Handler {
         const response = ClientFinishConfiguration({})
         client.state = ClientState.PLAY
         return response
-    }
-
-    static onPluginMessage = async (args: Args<typeof PluginMessage>) => {
-        console.log(
-            '====================================',
-            'handlePluginMessage'
-        )
-    }
-
-    static onFinishConfiguration = async (
-        args: Args<typeof FinishConfiguration>
-    ) => {
-        console.log(
-            '====================================',
-            'handleFinishConfiguration'
-        )
-    }
-
-    static onKeepAlive = async (args: Args<typeof PlayKeepAlive>) => {
-        console.log('====================================', 'handleKeepAlive')
-    }
-
-    static onPong = async (args: Args<typeof PlayPong>) => {
-        console.log('====================================', 'handlePong')
-    }
-
-    static onResourcePackResponse = async (
-        args: Args<typeof ResourcePackResponse>
-    ) => {
-        console.log(
-            '====================================',
-            'handleResourcePackResponse'
-        )
-    }
-}
+    })
+    .addPacket(PluginMessage, async (args) => {
+        console.log(args.packet)
+    })
+    .addPacket(FinishConfiguration, async (args) => {
+        console.log(args.packet)
+    })
+    .addPacket(PlayKeepAlive, async (args) => {
+        console.log(args.packet)
+    })
+    .addPacket(PlayPong, async (args) => {
+        console.log(args.packet)
+    })
+    .addPacket(ResourcePackResponse, async (args) => {
+        console.log(args.packet)
+    })
+    .build('Configuration')

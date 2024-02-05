@@ -3,7 +3,6 @@ import { hexDigest } from '~/auth'
 import { ClientState } from '~/client'
 import { log } from '~/logger'
 import chalk from 'chalk'
-import { Handler, type Args, link } from '.'
 import {
     EncryptionResponse,
     LoginAcknowledged,
@@ -11,6 +10,7 @@ import {
     LoginStart,
 } from '~/packets/server'
 import { LoginSuccess } from '~/packets/client'
+import { HandlerBuilder } from '.'
 
 type AuthResponse = {
     id: string
@@ -22,25 +22,13 @@ type AuthResponse = {
     }[]
 }
 
-export class LoginHandler extends Handler {
-    static MOJANG_AUTH_URL = new URL(
-        '',
-        'https://sessionserver.mojang.com/session/minecraft/hasJoined'
-    )
+const MOJANG_AUTH_URL = new URL(
+    '',
+    'https://sessionserver.mojang.com/session/minecraft/hasJoined'
+)
 
-    constructor() {
-        super('Login', [
-            link(LoginStart, LoginHandler.onLoginStart),
-            link(EncryptionResponse, LoginHandler.onEncryptionResponse),
-            link(LoginPluginResponse, LoginHandler.onLoginPluginResponse),
-            link(LoginAcknowledged, LoginHandler.onLoginAcknowledged),
-        ])
-    }
-
-    static onLoginStart = async ({
-        client,
-        packet,
-    }: Args<typeof LoginStart>) => {
+export const LoginHandler = new HandlerBuilder({})
+    .addPacket(LoginStart, async ({ client, packet }) => {
         client.username = packet.username
         client.uuid = uuid()
 
@@ -93,55 +81,34 @@ export class LoginHandler extends Handler {
         // }
         // console.log(p)
         // return EncryptionRequest(p)
-    }
-
-    static onEncryptionResponse = async ({
-        client,
-        packet,
-    }: Args<typeof EncryptionResponse>) => {
-        console.log(
-            '====================================',
-            'this.handleEncryption'
-        )
+    })
+    .addPacket(EncryptionResponse, async ({ client, packet }) => {
         console.log(packet)
         client.encrypted = true
-    }
-
-    // TODO: implement
-    static onLoginPluginResponse = async ({
-        client,
-        packet,
-    }: Args<typeof LoginPluginResponse>) => {
-        console.log(
-            '====================================',
-            'this.handleLoginPluginResponse',
-            '\n-------- TODO --------'
-        )
+    })
+    .addPacket(LoginPluginResponse, async ({ client, packet }) => {
         console.log(packet)
-    }
-
-    // TODO: implement
-    static onAuth = async ({}: Args<any>) => {
-        const username = ''
-        const ip = ''
-        const secret = ''
-        const hash = hexDigest(secret)
-
-        const url = new URL(LoginHandler.MOJANG_AUTH_URL)
-        url.searchParams.set('username', username)
-        url.searchParams.set('serverId', hash)
-        url.searchParams.set('ip', ip)
-        console.log(url)
-
-        const res = await fetch(url)
-        console.log(res)
-        const json = (await res.json()) as AuthResponse
-        console.log(json)
-    }
-
-    static onLoginAcknowledged = async ({
-        client,
-    }: Args<typeof LoginAcknowledged>) => {
+    })
+    .addPacket(LoginAcknowledged, async ({ client }) => {
         client.state = ClientState.CONFIGURATION
-    }
-}
+    })
+    .build('Login')
+
+// TODO: implement
+// onAuth = async ({}: Args<any>) => {
+//     const username = ''
+//     const ip = ''
+//     const secret = ''
+//     const hash = hexDigest(secret)
+
+//     const url = new URL(LoginHandler.MOJANG_AUTH_URL)
+//     url.searchParams.set('username', username)
+//     url.searchParams.set('serverId', hash)
+//     url.searchParams.set('ip', ip)
+//     console.log(url)
+
+//     const res = await fetch(url)
+//     console.log(res)
+//     const json = (await res.json()) as AuthResponse
+//     console.log(json)
+// }

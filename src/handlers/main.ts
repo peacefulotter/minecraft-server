@@ -8,11 +8,11 @@ import { PlayHandler } from './play'
 
 export class MainHandler {
     subhandlers: { [key in ClientState]: Handler } = {
-        [ClientState.HANDSHAKING]: new HandshakeHandler(),
-        [ClientState.STATUS]: new StatusHandler(),
-        [ClientState.LOGIN]: new LoginHandler(),
-        [ClientState.CONFIGURATION]: new ConfigurationHandler(),
-        [ClientState.PLAY]: new PlayHandler(),
+        [ClientState.HANDSHAKING]: HandshakeHandler,
+        [ClientState.STATUS]: StatusHandler,
+        [ClientState.LOGIN]: LoginHandler,
+        [ClientState.CONFIGURATION]: ConfigurationHandler,
+        [ClientState.PLAY]: PlayHandler,
     }
 
     handle = async (args: RawHandlerArgs) => {

@@ -12,8 +12,7 @@ export type ParsedServerBoundPacket<
 > = T extends PacketFormat
     ? {
           [key in keyof T]: T[key]['read'] extends (
-              buffer: number[],
-              encrypted: boolean
+              buffer: number[]
           ) => infer Ret
               ? Ret
               : never

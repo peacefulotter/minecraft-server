@@ -7,6 +7,7 @@ import type {
     ParsedServerBoundPacket,
     ServerBoundPacket,
 } from '~/packets/create'
+import type { PlayClientInformation } from '~/packets/server'
 
 export type RawHandlerArgs = {
     client: Client
@@ -30,25 +31,24 @@ type PacketHandler<Packet extends ServerBoundPacket> = {
     handler: HandleFunc<Packet>
 }
 
-type HandlerMapper = Record<string, PacketHandler<any>>
+export class HandlerBuilder<T extends { [key: PacketId]: any } = {}> {
+    constructor(private readonly handlers: T) {}
 
-// Utility function to create a packet handler, makes sure the packet and handler are of the same type
-export const link = <T extends ServerBoundPacket>(
-    packet: T,
-    handler: HandleFunc<T>
-): PacketHandler<T> => ({ packet, handler })
+    addPacket = <T extends ServerBoundPacket>(
+        packet: T,
+        handler: HandleFunc<T>
+    ) => {
+        return new HandlerBuilder({
+            ...this.handlers,
+            [packet.id]: { packet, handler },
+        })
+    }
 
-export abstract class Handler {
-    handlers: HandlerMapper
+    build = (name: string) => new Handler(name, this.handlers)
+}
 
-    constructor(private readonly name: string, handlers: PacketHandler<any>[]) {
-        this.handlers = handlers.reduce(
-            (acc, { packet, handler }) => ({
-                ...acc,
-                [packet.id]: { packet, handler },
-            }),
-            {} as HandlerMapper
-        )
+export class Handler<T extends { [key: PacketId]: any } = {}> {
+    constructor(private readonly name: string, private readonly handlers: T) {
         console.log(
             `-------{  ${chalk.greenBright(name)}  }-------`,
             '\n' +
@@ -67,40 +67,34 @@ export abstract class Handler {
         return packetId in this.handlers
     }
 
-    handle = async (args: RawHandlerArgs) => {
-        const { packetId, buffer, client } = args
+    getHandler = (packetId: number, client: Client) => {
         if (this.isSupportedPacket(packetId)) {
-            const { packet, handler } = this.handlers[packetId.toString()]
-            const parsed = packet.parse(buffer, client.encrypted)
-            log(
-                'Handling packet',
-                chalk.rgb(150, 255, 0)(packet.name),
-                'for state',
-                chalk.cyan(client.state),
-                'with data',
-                parsed
-            )
-
-            return handler({
-                packetId,
-                client,
-                packet: parsed as unknown as ParsedServerBoundPacket<
-                    typeof packet
-                >,
-            })
+            return this.handlers[packetId]
         }
         throw new Error(
-            `Unknown packet id: ${byteToHex(packetId)} for state: ${
-                args.client.state
-            }`
+            `Unknown packet for ${this.name} handler, id: ${byteToHex(
+                packetId
+            )}, state: ${client.state}`
         )
     }
-}
 
-class Test<A> {
-    constructor(a: A) {
-        console.log(a)
+    handle = async (args: RawHandlerArgs) => {
+        const { packetId, buffer, client } = args
+        const { packet, handler } = this.getHandler(packetId, client)
+        const parsed = packet.parse(buffer, client.encrypted)
+        log(
+            'Handling packet',
+            chalk.rgb(150, 255, 0)(packet.name),
+            'for state',
+            chalk.cyan(client.state),
+            'with data',
+            parsed
+        )
+
+        return handler({
+            packetId,
+            client,
+            packet: parsed as unknown as ParsedServerBoundPacket<typeof packet>,
+        })
     }
 }
-
-const a = new Test(1)

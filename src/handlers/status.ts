@@ -1,22 +1,12 @@
 import { PingResponse, StatusResponse } from '~/packets/client/status'
-import { Handler, type Args, link } from '.'
 import { StatusPingRequest, StatusRequest } from '~/packets/server'
+import { HandlerBuilder } from '.'
 
-export class StatusHandler extends Handler {
-    constructor() {
-        super('Status', [
-            link(StatusRequest, StatusHandler.onStatusRequest),
-            link(StatusPingRequest, StatusHandler.onPingRequest),
-        ])
-    }
-
-    static onStatusRequest = async () => {
+export const StatusHandler = new HandlerBuilder({})
+    .addPacket(StatusRequest, async () => {
         return StatusResponse()
-    }
-
-    static onPingRequest = async ({
-        packet,
-    }: Args<typeof StatusPingRequest>) => {
+    })
+    .addPacket(StatusPingRequest, async ({ packet }) => {
         return PingResponse(packet)
-    }
-}
+    })
+    .build('Status')
