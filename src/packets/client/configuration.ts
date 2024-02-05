@@ -7,9 +7,12 @@ import {
     DataString,
     DataUUID,
     VarInt,
+    DataArray,
+    type Type,
 } from '~/data-types/basic'
 import { createClientBoundPacket } from '../create'
 import { NBTCompoundTag } from '~/data-types/registry'
+import type { FeatureFlags } from '~/data-types/enum'
 
 export const ConfigurationPluginMessage = createClientBoundPacket(0x00, {
     channel: DataString,
@@ -48,7 +51,7 @@ export const ConfigurationAddResourcePack = createClientBoundPacket(0x07, {
     promptMessage: Optional(DataString), // TODO: This is a chat component
 })
 
-export const FeatureFlags = createClientBoundPacket(0x08, {
+export const ConfigurationFeatureFlags = createClientBoundPacket(0x08, {
     totalFeatures: VarInt,
-    featureFlags: DataByteArray, // TODO: Array<FeatureFlags>
+    featureFlags: DataArray(DataString as Type<FeatureFlags>),
 })
