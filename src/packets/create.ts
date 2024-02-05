@@ -1,6 +1,6 @@
 import { decrypt } from '~/auth'
-import type { PacketId } from '~/packet'
 import type { Type } from '~/data-types/basic'
+import type { PacketId } from '.'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
@@ -61,15 +61,22 @@ type PacketArguments<T extends PacketFormat> = {
 
 export type ClientBoundPacket = {
     packetId: number
+    name: string
     buffer: Buffer
 }
 
-export const createClientBoundPacket = <T extends PacketFormat>(
-    packetId: number,
+export const createClientBoundPacket = <
+    I extends number = number,
+    S extends string = string,
+    T extends PacketFormat = PacketFormat
+>(
+    packetId: I,
+    name: S,
     types: T
 ): ((args: PacketArguments<T>) => ClientBoundPacket) => {
     return (args: PacketArguments<T>) => ({
         packetId,
+        name,
         buffer: Object.keys(types).reduce(
             (acc, key) => Buffer.concat([acc, types[key].write(args[key])]),
             Buffer.from([])

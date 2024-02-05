@@ -1,4 +1,5 @@
 export * from './wrap'
+export * from './status'
 export * from './login'
 export * from './configuration'
-// export * from './play'
+export * from './play'

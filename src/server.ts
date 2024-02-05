@@ -1,28 +1,34 @@
 import shortid from 'shortid'
 import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
-import { Client } from './client'
+import { Client, ClientState } from './client'
 import { VarInt } from './data-types/basic'
 import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
-import type { PacketId } from './packet'
 import { WrapResponse } from './packets/client'
 import { Unwrap } from './packets/server'
+import chalk from 'chalk'
+import type { PacketId } from './packets'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
 
-    formatPacket = (response: ClientBoundPacket) => {
-        log('2) Formatting response', {
-            ...response,
-            bufferLen: response.buffer.length,
-        })
+    formatPacket = (packet: ClientBoundPacket, client: Client) => {
+        log(
+            chalk.redBright('Responding'),
+            'packet',
+            chalk.rgb(150, 255, 0)(packet.name),
+            'for state',
+            chalk.cyan(ClientState[client.state]),
+            packet
+        )
+
         const packetLen =
-            response.buffer.length + VarInt.write(response.packetId).length
+            packet.buffer.length + VarInt.write(packet.packetId).length
         return WrapResponse({
             packetLen,
-            ...response,
+            ...packet,
         })
     }
 
@@ -43,18 +49,8 @@ export class Server {
 
         if (!response || !response.buffer) return
 
-        const packet = this.formatPacket(response)
+        const packet = this.formatPacket(response, client)
 
-        log('3) Responding packet', {
-            socketId: client.socket.id,
-            packetId: `${byteToHex(packetId)} -> ${byteToHex(
-                response.packetId
-            )}`,
-            header: packet.buffer.subarray(
-                0,
-                packet.buffer.length - response.buffer.length
-            ),
-        })
         client.write(packet.buffer)
     }
 

@@ -1,5 +1,6 @@
+import path from 'path'
 import { v4 as uuid } from 'uuid'
-import { hexDigest } from '~/auth'
+import nbt from 'nbt'
 import { ClientState } from '~/client'
 import { log } from '~/logger'
 import chalk from 'chalk'
@@ -9,7 +10,7 @@ import {
     LoginPluginResponse,
     LoginStart,
 } from '~/packets/server'
-import { LoginSuccess } from '~/packets/client'
+import { LoginSuccess, RegistryData } from '~/packets/client'
 import { HandlerBuilder } from '.'
 
 type AuthResponse = {
@@ -91,6 +92,16 @@ export const LoginHandler = new HandlerBuilder({})
     })
     .addPacket(LoginAcknowledged, async ({ client }) => {
         client.state = ClientState.CONFIGURATION
+        const p = path.join(
+            import.meta.dir,
+            '..',
+            'data-types',
+            'registry_data_1.20.2.json'
+        )
+        const file = await Bun.file(p).arrayBuffer()
+        return RegistryData({
+            codec: nbt.parseUncompressed(file),
+        })
     })
     .build('Login')
 

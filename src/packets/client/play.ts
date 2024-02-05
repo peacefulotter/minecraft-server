@@ -11,7 +11,7 @@ import {
 import { createClientBoundPacket } from '../create'
 import { GameMode } from '~/data-types/enum'
 
-export const PlayLogin = createClientBoundPacket(0x29, {
+export const PlayLogin = createClientBoundPacket(0x29, 'PlayLogin', {
     entityId: DataInt,
     isHardcore: DataBoolean,
     dimensionNames: DataInt, // Array<DimensionName>,

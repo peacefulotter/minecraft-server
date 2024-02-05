@@ -1,7 +1,7 @@
 import chalk from 'chalk'
-import type { Client } from '~/client'
+import { ClientState, type Client } from '~/client'
 import { byteToHex, log } from '~/logger'
-import type { PacketId } from '~/packet'
+import type { PacketId } from '~/packets'
 import type {
     ClientBoundPacket,
     ParsedServerBoundPacket,
@@ -74,7 +74,7 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
         throw new Error(
             `Unknown packet for ${this.name} handler, id: ${byteToHex(
                 packetId
-            )}, state: ${client.state}`
+            )}, state: ${ClientState[client.state]}`
         )
     }
 
@@ -83,10 +83,11 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
         const { packet, handler } = this.getHandler(packetId, client)
         const parsed = packet.parse(buffer, client.encrypted)
         log(
-            'Handling packet',
+            chalk.redBright('Handling'),
+            'packet',
             chalk.rgb(150, 255, 0)(packet.name),
             'for state',
-            chalk.cyan(client.state),
+            chalk.cyan(ClientState[client.state]),
             'with data',
             parsed
         )

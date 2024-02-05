@@ -80,10 +80,7 @@ export const DataLong: Type<InnerLong> = {
         return new InnerLong(b1, b2)
     },
     write: (t: InnerLong) => {
-        console.log('Writing long', t.toNumber())
-        const res = Buffer.concat([DataInt.write(t.high), DataInt.write(t.low)])
-        console.log(res)
-        return res
+        return Buffer.concat([DataInt.write(t.high), DataInt.write(t.low)])
     },
 }
 

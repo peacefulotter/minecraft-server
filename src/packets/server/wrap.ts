@@ -1,6 +1,6 @@
 import { log } from '~/logger'
-import type { PacketId } from '~/packet'
 import { VarInt } from '~/data-types/basic'
+import type { PacketId } from '..'
 
 const LEGACY_SERVER_LIST_PING_ID = 254
 

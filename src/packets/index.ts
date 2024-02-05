@@ -1,7 +1,11 @@
 import { DataByteArray, DataInt, VarInt } from '~/data-types/basic'
 import { createClientBoundPacket } from './create'
 
+export type PacketId = number
+
 const WriteResponseFormat = createClientBoundPacket(
+    0x00, // unused
+    'WriteResponseFormat',
     {
         // NOTE: since packetLen needs bufferLen to be defined,
         // we compute bufferLen separately
@@ -11,8 +15,7 @@ const WriteResponseFormat = createClientBoundPacket(
         packetId: DataInt,
         packetLen: VarInt,
         packet: DataByteArray,
-    },
-    0x00
+    }
 )
 
 export const formatResponse = (packetId: number, packet: Buffer) => {
