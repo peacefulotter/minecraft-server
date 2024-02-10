@@ -36,7 +36,7 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
         data: VarIntPrefixedByteArray, // TODO: long array?
         blockEntity: DataArray(
             DataObject({
-                packedXZ: DataPackedXZ, // TODO
+                packedXZ: DataPackedXZ,
                 y: DataShort,
                 type: VarInt,
                 data: DataNBT,

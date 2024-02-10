@@ -301,21 +301,18 @@ export const Optional = <T>(type: Type<T>): Type<T | undefined> => ({
     },
 })
 
-export const DataArray = <
-    T extends Type<any>,
-    V = T extends Type<infer U> ? U : never
->(
-    type: T
-) => ({
-    read: (buffer: number[]) => {
+export const DataArray = <T>(type: Type<T> | AsyncType<T>) => ({
+    read: async (buffer: number[]) => {
         const length = VarInt.read(buffer)
-        return new Array(length).fill(0).map(() => type.read(buffer)) as V[]
+        return await Promise.all(
+            new Array(length).fill(0).map(async () => await type.read(buffer))
+        )
     },
 
-    write: (t: V[]) => {
+    write: async (t: T[]) => {
         return Buffer.concat([
             VarInt.write(t.length),
-            ...t.map((e) => type.write(e)),
+            ...(await Promise.all(t.map(async (e) => await type.write(e)))),
         ])
     },
 })
