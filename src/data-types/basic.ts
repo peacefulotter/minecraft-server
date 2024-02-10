@@ -320,29 +320,48 @@ export const DataArray = <
     },
 })
 
-type DataTypeObject = { [key: string]: Type<any> }
+type DataTypeObject = { [key: string]: Type<any> | AsyncType<any> }
 type ObjectResult<T extends DataTypeObject> = {
-    [key in keyof T]: T[key] extends Type<infer U> ? U : never
+    [key in keyof T]: T[key] extends Type<infer U> | AsyncType<infer U>
+        ? U
+        : never
 }
 
-export const DataObject = <T extends DataTypeObject>(types: T) => ({
-    read: (buffer: number[]) => {
+export const DataObject = <T extends DataTypeObject>(
+    types: T
+): AsyncType<ObjectResult<T>> => ({
+    read: async (buffer: number[]) => {
         return Object.fromEntries(
-            Object.entries(types).map(([key, type]) => [key, type.read(buffer)])
+            await Promise.all(
+                Object.entries(types).map(async ([key, type]) => [
+                    key,
+                    await type.read(buffer),
+                ])
+            )
         ) as ObjectResult<T>
     },
 
-    write: (t: ObjectResult<T>) => {
+    write: async (t: ObjectResult<T>) => {
         return Buffer.concat(
-            Object.entries(t).map(([key, value]) => types[key].write(value))
+            await Promise.all(
+                Object.entries(t).map(
+                    async ([key, value]) => await types[key].write(value)
+                )
+            )
         )
     },
 })
 
-export const DataCustom = <T>(
-    read: (buffer: number[]) => T,
-    write: (t: T) => Buffer
-): Type<T> => ({
-    read,
-    write,
-})
+export const DataPackedXZ: Type<{ x: number; z: number }> = {
+    read: (buffer: number[]) => {
+        const encoded = DataByte.read(buffer)
+        const x = encoded >> 4
+        const z = encoded & 15
+        return { x, z }
+    },
+
+    write: (t: { x: number; z: number }) => {
+        const encoded = ((t.x & 15) << 4) | (t.z & 15)
+        return DataByte.write(encoded)
+    },
+}

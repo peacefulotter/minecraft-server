@@ -9,7 +9,7 @@ import {
     DataArray,
     type Type,
 } from '~/data-types/basic'
-import { NBTCompoundTag } from '~/data-types/registry'
+import { DataNBT } from '~/data-types/registry'
 import type { FeatureFlags } from '~/data-types/enum'
 import { ClientBoundPacketCreator } from '../create'
 
@@ -53,7 +53,7 @@ export const ConfigurationPing = new ClientBoundPacketCreator(
 )
 
 export const RegistryData = new ClientBoundPacketCreator(0x05, 'RegistryData', {
-    codec: NBTCompoundTag,
+    codec: DataNBT,
 })
 
 export const ConfigurationRemoveResourcePack = new ClientBoundPacketCreator(

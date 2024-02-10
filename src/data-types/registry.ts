@@ -2,7 +2,6 @@ import nbt from 'nbt'
 import * as NBT from 'nbtify'
 import { Int32, type IntTag } from 'nbtify'
 import {
-    DataCustom,
     DataInt,
     DataObject,
     VarInt,
@@ -49,56 +48,60 @@ import type {
 //     }
 // }
 
+// TODO: replace this with fixed type
+type _IntegerDistribution = {
+    type: string
+    value: {
+        min: number
+        max: number
+    }
+}
+
 const isIntegerDistribution = (
-    t: DimensionMonsterSpawnLightLevel
-): t is IntegerDistribution => {
+    t: DimensionMonsterSpawnLightLevel | _IntegerDistribution
+): t is _IntegerDistribution => {
     return typeof t === 'object'
 }
 
-export const DataDimensionMonsterSpawnLightLevel = DataCustom(
-    (buffer: number[]): DimensionMonsterSpawnLightLevel => {
-        const tagId = VarInt.read(buffer)
-        if (tagId === 0) {
-            return new Int32(
-                DataInt.read(buffer) as DimensionMonsterSpawnLightLevelRange
-            ) // as unknown as IntTag<DimensionMonsterSpawnLightLevelRange>
-        } else {
-            return DataObject({
-                type: DataString,
-                value: DataObject({
-                    min: DataInt,
-                    max: DataInt,
-                }),
-            }).read(buffer) as IntegerDistribution
-        }
-    },
-    (t: DimensionMonsterSpawnLightLevel) => {
-        if (typeof t === 'number') {
-            return Buffer.concat([VarInt.write(0), DataInt.write(t as number)])
-        } else if (isIntegerDistribution(t)) {
-            return DataObject({
-                type: DataString,
-                value: DataObject({
-                    min: DataInt,
-                    max: DataInt,
-                }),
-            }).write(t as any)
-        }
-        throw new Error('Invalid DimensionMonsterSpawnLightLevel')
+const DataIntegerDistribution: AsyncType<_IntegerDistribution> = DataObject({
+    type: DataString,
+    value: DataObject({
+        min: DataInt,
+        max: DataInt,
+    }),
+})
+
+export const DataDimensionMonsterSpawnLightLevel: AsyncType<DimensionMonsterSpawnLightLevel> =
+    {
+        read: async (buffer: number[]) => {
+            const tagId = VarInt.read(buffer)
+            if (tagId === 0) {
+                return new Int32(
+                    DataInt.read(buffer) as DimensionMonsterSpawnLightLevelRange
+                ) // as unknown as IntTag<DimensionMonsterSpawnLightLevelRange>
+            } else {
+                return (await DataIntegerDistribution.read(
+                    buffer
+                )) as DimensionMonsterSpawnLightLevel
+            }
+        },
+        write: async (t: DimensionMonsterSpawnLightLevel) => {
+            if (typeof t === 'number') {
+                return Buffer.concat([
+                    VarInt.write(0),
+                    DataInt.write(t as number),
+                ])
+            } else if (isIntegerDistribution(t)) {
+                return Buffer.concat([
+                    VarInt.write(1),
+                    await DataIntegerDistribution.write(t),
+                ])
+            }
+            throw new Error('Invalid DimensionMonsterSpawnLightLevel')
+        },
     }
-)
 
-// export const NBTCompoundTag: Type<nbt.RootTag> = class NBTCompoundTag {
-//     static read = (buffer: number[]) => {
-//         return nbt.parseUncompressed(Buffer.from(buffer))
-//     }
-
-//     static write = (t: nbt.RootTag) => {
-//         return Buffer.from(nbt.writeUncompressed(t))
-//     }
-// }
-
-export const NBTCompoundTag: AsyncType<
+export const DataNBT: AsyncType<
     NBT.NBTData<NBT.RootTag>
 > = class NBTCompoundTag {
     static read = async (buffer: number[]) => {

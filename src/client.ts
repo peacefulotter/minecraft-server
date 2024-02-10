@@ -1,3 +1,4 @@
+import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
 import type { Position, Rotation } from './position'
@@ -28,7 +29,8 @@ export class Client {
         this.encrypted = false
     }
 
-    write(packet: ClientBoundPacket) {
-        this.socket.write(packet.data)
+    async write(packet: ClientBoundPacket) {
+        const formatted = await formatPacket(packet, this)
+        this.socket.write(formatted.data)
     }
 }

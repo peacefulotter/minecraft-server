@@ -7,7 +7,6 @@ import {
     VarInt,
     type Type,
     DataPosition,
-    DataByteArray,
     DataArray,
     DataObject,
     DataShort,
@@ -16,7 +15,7 @@ import {
     DataDouble,
     DataFloat,
     Optional,
-    DataCustom,
+    DataPackedXZ,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type {
@@ -25,6 +24,7 @@ import type {
     DimensionMonsterSpawnLightLevelRange,
 } from 'region-types'
 import { ClientBoundPacketCreator } from '../create'
+import { DataNBT } from '~/data-types/registry'
 
 export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     0x25,
@@ -32,15 +32,14 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     {
         chunkX: DataInt,
         chunkZ: DataInt,
-        heightMaps: DataBoolean, // TODO: NBT
-        size: VarInt,
-        data: DataByteArray, // TODO
+        heightMaps: DataNBT,
+        data: VarIntPrefixedByteArray, // TODO: long array?
         blockEntity: DataArray(
             DataObject({
-                packedXZ: DataByte, // TODO
+                packedXZ: DataPackedXZ, // TODO
                 y: DataShort,
                 type: VarInt,
-                data: DataBoolean, // TODO: NBT
+                data: DataNBT,
             })
         ),
         skyLightMask: DataBitSet,
