@@ -48,9 +48,7 @@ export const ConfigurationHandler = new HandlerBuilder({})
             previousGameMode: GameMode.UNDEFINED,
             isDebug: false,
             isFlat: true,
-            hasDeathLocation: false,
-            deathDimensionName: null,
-            deathLocation: null,
+            death: undefined,
             portalCooldown: 0,
         })
     })

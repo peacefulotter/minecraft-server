@@ -287,19 +287,13 @@ export const DataBitSet: Type<BitSet> = {
 }
 
 // ============= Meta types =============
-export const Optional = <
-    T extends Type<any>,
-    V = T extends Type<infer U> ? U : never
->(
-    type: T
-) => ({
+export const Optional = <T>(type: Type<T>): Type<T | undefined> => ({
     read: (buffer: number[], length?: number) => {
-        if (DataBoolean.read(buffer, length))
-            return type.read(buffer, length) as V
+        if (DataBoolean.read(buffer, length)) return type.read(buffer, length)
         return undefined
     },
 
-    write: (t: V | undefined) => {
+    write: (t: T | undefined) => {
         if (t === undefined) {
             return DataBoolean.write(false)
         }
