@@ -20,7 +20,8 @@
         "forceConsistentCasingInFileNames": true,
 
         "paths": {
-            "~/*": ["./src/*"]
+            "~/*": ["./src/*"],
+            "region-types": ["./Region-Types/src/java/"]
         },
         "typeRoots": ["./node_modules/@types", "src/@types"]
     }

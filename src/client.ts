@@ -1,3 +1,4 @@
+import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
 import type { SocketWithId } from './socket'
 
@@ -24,7 +25,7 @@ export class Client {
         this.encrypted = false
     }
 
-    write(packet: Buffer) {
-        this.socket.write(packet)
+    write(packet: ClientBoundPacket) {
+        this.socket.write(packet.data)
     }
 }

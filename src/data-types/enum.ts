@@ -62,6 +62,7 @@ export enum Difficulty {
 }
 
 export enum GameMode {
+    UNDEFINED = -1,
     SURVIVAL = 0,
     CREATIVE = 1,
     ADVENTURE = 2,
@@ -119,10 +120,3 @@ export type PluginChannel =
 export type FeatureFlags = MCPrefixed<
     'vanilla' | 'bundle' | 'trade_rebalance' | 'update_1_21'
 >
-
-enum Test {
-    banner = 'banner',
-    barrel = 'barrel',
-}
-
-export type BlockType = `minecraft:${Test}`

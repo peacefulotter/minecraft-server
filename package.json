@@ -23,6 +23,7 @@
     "nbt": "^0.8.1",
     "nbtify": "^1.85.0",
     "node-rsa": "^1.1.1",
+    "region-types": "Offroaders123/Region-Types",
     "shortid": "^2.2.16",
     "type-fest": "^4.10.2",
     "uuid": "^9.0.1"

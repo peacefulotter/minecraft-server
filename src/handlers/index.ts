@@ -7,7 +7,6 @@ import type {
     ParsedServerBoundPacket,
     ServerBoundPacket,
 } from '~/packets/create'
-import type { PlayClientInformation } from '~/packets/server'
 
 export type RawHandlerArgs = {
     client: Client

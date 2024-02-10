@@ -1,8 +1,20 @@
 import { decrypt } from '~/auth'
-import type { Type } from '~/data-types/basic'
+import type { AsyncType, Type } from '~/data-types/basic'
 import type { PacketId } from '.'
 
-export type PacketFormat = { [key: string]: Type<any> }
+export type PacketFormat = { [key: string]: Type<any> | AsyncType<any> }
+
+abstract class Packet<
+    I extends PacketId = number,
+    S extends string = string,
+    T extends PacketFormat = PacketFormat
+> {
+    constructor(
+        public readonly id: I,
+        public readonly name: S,
+        public readonly types: T
+    ) {}
+}
 
 // ========================== READ PACKET ==========================
 
@@ -30,18 +42,8 @@ export class ServerBoundPacket<
     I extends PacketId = number,
     S extends string = string,
     T extends PacketFormat = PacketFormat
-> {
-    constructor(
-        public readonly id: I,
-        public readonly name: S,
-        public readonly types: T
-    ) {
-        this.id = id
-        this.name = name
-        this.types = types
-    }
-
-    parse: ServerBoundPacketParser<T> = (buf: number[], encripted: boolean) => {
+> extends Packet<I, S, T> {
+    parse = (buf: number[], encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
         const computed = Object.entries(this.types).reduce(
             (acc, [key, type]) => ({ ...acc, [key]: type.read(buffer) }),
@@ -54,32 +56,40 @@ export class ServerBoundPacket<
 // ========================== WRITE PACKET ==========================
 
 type PacketArguments<T extends PacketFormat> = {
-    [key in keyof T]: T[key]['write'] extends (arg: infer Arg) => Buffer
+    [key in keyof T]: T[key]['write'] extends (arg: infer Arg) => any
         ? Arg
         : never
 }
 
-export type ClientBoundPacket = {
-    packetId: number
-    name: string
-    buffer: Buffer
+export class ClientBoundPacket {
+    constructor(
+        public readonly id: number,
+        public readonly name: string,
+        public readonly data: Buffer
+    ) {}
 }
 
-export const createClientBoundPacket = <
-    I extends number = number,
+export class ClientBoundPacketCreator<
+    I extends PacketId = number,
     S extends string = string,
     T extends PacketFormat = PacketFormat
->(
-    packetId: I,
-    name: S,
-    types: T
-): ((args: PacketArguments<T>) => ClientBoundPacket) => {
-    return (args: PacketArguments<T>) => ({
-        packetId,
-        name,
-        buffer: Object.keys(types).reduce(
-            (acc, key) => Buffer.concat([acc, types[key].write(args[key])]),
-            Buffer.from([])
-        ),
-    })
+> extends Packet<I, S, T> {
+    constructor(id: I, name: S, types: T) {
+        super(id, name, types)
+    }
+
+    reducer =
+        (args: PacketArguments<T>) =>
+        async (acc: Promise<Buffer>, key: keyof T): Promise<Buffer> => {
+            const part = await this.types[key].write(args[key])
+            return Buffer.concat([await acc, part])
+        }
+
+    create = async (args: PacketArguments<T>) => {
+        const data = await Object.keys(this.types).reduce(
+            this.reducer(args),
+            Promise.resolve(Buffer.from([]))
+        )
+        return new ClientBoundPacket(this.id, this.name, data)
+    }
 }

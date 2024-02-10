@@ -1,12 +1,12 @@
 import { DataByteArray, VarInt } from '~/data-types/basic'
-import { createClientBoundPacket } from '../create'
+import { ClientBoundPacketCreator } from '../create'
 
-export const WrapResponse = createClientBoundPacket(
+export const WrapResponse = new ClientBoundPacketCreator(
     0x00, // Unused
     'WrapResponse',
     {
         packetLen: VarInt,
-        packetId: VarInt,
-        buffer: DataByteArray,
+        id: VarInt,
+        data: DataByteArray,
     }
 )

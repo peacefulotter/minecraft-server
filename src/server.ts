@@ -3,7 +3,7 @@ import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
 import { VarInt } from './data-types/basic'
-import { byteToHex, log } from './logger'
+import { log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
 import { WrapResponse } from './packets/client'
 import { Unwrap } from './packets/server'
@@ -14,22 +14,23 @@ export class Server {
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
 
-    formatPacket = (packet: ClientBoundPacket, client: Client) => {
+    formatPacket = async (packet: ClientBoundPacket, client: Client) => {
+        const packetLen = packet.data.length + VarInt.write(packet.id).length
+        const res = await WrapResponse.create({
+            packetLen,
+            ...packet,
+        })
+
         log(
             chalk.redBright('Responding'),
             'packet',
             chalk.rgb(150, 255, 0)(packet.name),
             'for state',
             chalk.cyan(ClientState[client.state]),
-            packet
+            res.data
         )
 
-        const packetLen =
-            packet.buffer.length + VarInt.write(packet.packetId).length
-        return WrapResponse({
-            packetLen,
-            ...packet,
-        })
+        return res
     }
 
     handlePacket = async (
@@ -47,11 +48,11 @@ export class Server {
             buffer,
         })
 
-        if (!response || !response.buffer) return
+        if (!response || !response.data) return
 
-        const packet = this.formatPacket(response, client)
+        const packet = await this.formatPacket(response, client)
 
-        client.write(packet.buffer)
+        client.write(packet)
     }
 
     data = async (socket: SocketWithId, data: Buffer) => {

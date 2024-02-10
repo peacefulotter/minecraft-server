@@ -15,11 +15,18 @@ import {
     VarIntPrefixedByteArray,
     DataDouble,
     DataFloat,
+    Optional,
 } from '~/data-types/basic'
-import { createClientBoundPacket } from '../create'
 import { GameMode } from '~/data-types/enum'
+import type {
+    DimensionInfiniburn,
+    DimensionResource,
+    DimensionMonsterSpawnLightLevelRange,
+} from 'region-types'
+import type { IntTag } from 'nbtify'
+import { ClientBoundPacketCreator } from '../create'
 
-export const ChunkDataAndUpdateLight = createClientBoundPacket(
+export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     0x25,
     'ChunkDataAndUpdateLight',
     {
@@ -45,26 +52,68 @@ export const ChunkDataAndUpdateLight = createClientBoundPacket(
     }
 )
 
-export const PlayLogin = createClientBoundPacket(0x29, 'PlayLogin', {
+// fixed_time?: LongTag;
+//   has_skylight: BooleanTag;
+//   has_ceiling: BooleanTag;
+//   ultrawarm: BooleanTag;
+//   natural: BooleanTag;
+//   coordinate_scale: DoubleTag;
+//   bed_works: BooleanTag;
+//   respawn_anchor_works: BooleanTag;
+//   min_y: IntTag;
+//   height: IntTag;
+//   logical_height: IntTag;
+//   infiniburn: DimensionInfiniburn;
+//   effects: StringTag; // `DimensionResource`
+//   ambient_light: FloatTag;
+//   piglin_safe: BooleanTag;
+//   has_raids_safe: BooleanTag;
+//   monster_spawn_light_level: DimensionMonsterSpawnLightLevel;
+//   monster_spawn_block_light_limit: IntTag<DimensionMonsterSpawnLightLevelRange>;
+
+// DataObject({
+//     fixed_time: DataLong,
+//     has_skylight: DataBoolean,
+//     has_ceiling: DataBoolean,
+//     ultrawarm: DataBoolean,
+//     natural: DataBoolean,
+//     coordinate_scale: DataDouble,
+//     bed_works: DataBoolean,
+//     respawn_anchor_works: DataBoolean,
+//     min_y: DataInt,
+//     height: DataInt,
+//     logical_height: DataInt,
+//     infiniburn: DataString as Type<DimensionInfiniburn>,
+//     effects: DataString, // TODO: `DimensionResource`
+//     ambient_light: DataFloat,
+//     piglin_safe: DataBoolean,
+//     has_raids_safe: DataBoolean,
+//     monster_spawn_light_level: ,
+//     monster_spawn_block_light_limit: DataInt as Type<
+//         IntTag<DimensionMonsterSpawnLightLevelRange>
+//     >,
+// })
+
+export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     entityId: DataInt,
     isHardcore: DataBoolean,
-    dimensionNames: DataInt, // Array<DimensionName>,
+    dimensionNames: DataArray(DataString as Type<DimensionResource>),
     maxPlayers: VarInt,
     viewDistance: VarInt,
     simulationDistance: VarInt,
     reducedDebugInfo: DataBoolean,
     enableRespawnScreen: DataBoolean,
     doLimitedCrafting: DataBoolean,
-    dimensionType: DataInt, // Identifier
-    dimensionName: DataString, // Identifier
+    dimensionType: DataString as Type<DimensionResource>,
+    dimensionName: DataString as Type<DimensionResource>,
     hashedSeed: DataLong,
     gameMode: DataByte as Type<GameMode>,
-    previousGameMode: DataByte as Type<-1 | GameMode>,
+    previousGameMode: DataByte as Type<GameMode>,
     isDebug: DataBoolean,
     isFlat: DataBoolean,
     hasDeathLocation: DataBoolean,
-    deathDimensionName: DataString, // Optional, Identifier
-    deathLocation: DataPosition, // Optional
+    deathDimensionName: Optional(DataString as Type<DimensionResource>),
+    deathLocation: Optional(DataPosition),
     portalCooldown: VarInt,
 })
 
@@ -76,7 +125,7 @@ export enum PlayerPositionFlag {
     X_ROT = 0x10,
 }
 
-export const SynchronizePlayerPosition = createClientBoundPacket(
+export const SynchronizePlayerPosition = new ClientBoundPacketCreator(
     0x3e,
     'SynchronizePlayerPosition',
     {
@@ -90,7 +139,7 @@ export const SynchronizePlayerPosition = createClientBoundPacket(
     }
 )
 
-export const SetDefaultSpawnPosition = createClientBoundPacket(
+export const SetDefaultSpawnPosition = new ClientBoundPacketCreator(
     0x54,
     'SetDefaultSpawnPosition',
     {

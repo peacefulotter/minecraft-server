@@ -1,0 +1,3 @@
+[submodule "Region-Types"]
+	path = Region-Types
+	url = https://github.com/Offroaders123/Region-Types.git

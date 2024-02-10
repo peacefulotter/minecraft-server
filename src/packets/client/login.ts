@@ -4,9 +4,9 @@ import {
     VarInt,
     VarIntPrefixedByteArray,
 } from '~/data-types/basic'
-import { createClientBoundPacket } from '../create'
+import { ClientBoundPacketCreator } from '../create'
 
-export const EncryptionRequest = createClientBoundPacket(
+export const EncryptionRequest = new ClientBoundPacketCreator(
     0x01,
     'EncryptionRequest',
     {
@@ -16,7 +16,7 @@ export const EncryptionRequest = createClientBoundPacket(
     }
 )
 
-export const LoginSuccess = createClientBoundPacket(0x02, 'LoginSuccess', {
+export const LoginSuccess = new ClientBoundPacketCreator(0x02, 'LoginSuccess', {
     uuid: DataUUID,
     username: DataString,
     numberOfProperties: VarInt,

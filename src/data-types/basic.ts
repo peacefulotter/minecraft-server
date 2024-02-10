@@ -7,10 +7,25 @@ const DOUBLE_SIZE = 8
 const LONG_SIZE = 8
 const UUID_SIZE = 16
 
+type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
+    ...a: Parameters<T>
+) => TNewReturn
+
 export type Type<T> = {
     size?: number
     read: (buffer: number[], length?: number) => T
     write: (t: T) => Buffer
+}
+
+export type AsyncType<T> = Omit<Type<T>, 'read' | 'write'> & {
+    read: ReplaceReturnType<
+        Type<T>['read'],
+        Promise<ReturnType<Type<T>['read']>>
+    >
+    write: ReplaceReturnType<
+        Type<T>['write'],
+        Promise<ReturnType<Type<T>['write']>>
+    >
 }
 
 export const DataBoolean: Type<boolean> = {
@@ -279,11 +294,16 @@ export const Optional = <
     type: T
 ) => ({
     read: (buffer: number[], length?: number) => {
+        throw new Error('Find a way to know if the field is present or not')
+        // TODO: Whether or not the field is present must be known from the context.
         return type.read(buffer, length) as V
     },
 
-    write: (t: V | null) => {
-        if (t === null) {
+    write: (t: V | undefined) => {
+        // FIXME: what if there are more than one field optional in a row based on a
+        // single boolean value?
+        throw new Error('Find a way to know if the field is present or not')
+        if (t === undefined) {
             return Buffer.from([])
         }
         return Buffer.concat([DataBoolean.write(true), type.write(t)])
@@ -326,4 +346,12 @@ export const DataObject = <T extends DataTypeObject>(types: T) => ({
             Object.entries(t).map(([key, value]) => types[key].write(value))
         )
     },
+})
+
+export const DataCustom = <T>(
+    read: (buffer: number[]) => T,
+    write: (t: T) => Buffer
+): Type<T> => ({
+    read,
+    write,
 })

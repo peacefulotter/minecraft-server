@@ -1,6 +1,5 @@
 import path from 'path'
 import { v4 as uuid } from 'uuid'
-import nbt from 'nbt'
 import { ClientState } from '~/client'
 import { log } from '~/logger'
 import chalk from 'chalk'
@@ -12,21 +11,22 @@ import {
 } from '~/packets/server'
 import { LoginSuccess, RegistryData } from '~/packets/client'
 import { HandlerBuilder } from '.'
+import * as NBT from 'nbtify'
 
-type AuthResponse = {
-    id: string
-    name: string
-    properties: {
-        name: string
-        value: string
-        signature: string
-    }[]
-}
+// type AuthResponse = {
+//     id: string
+//     name: string
+//     properties: {
+//         name: string
+//         value: string
+//         signature: string
+//     }[]
+// }
 
-const MOJANG_AUTH_URL = new URL(
-    '',
-    'https://sessionserver.mojang.com/session/minecraft/hasJoined'
-)
+// const MOJANG_AUTH_URL = new URL(
+//     '',
+//     'https://sessionserver.mojang.com/session/minecraft/hasJoined'
+// )
 
 export const LoginHandler = new HandlerBuilder({})
     .addPacket(LoginStart, async ({ client, packet }) => {
@@ -40,7 +40,7 @@ export const LoginHandler = new HandlerBuilder({})
             chalk.green('successfully')
         )
 
-        return LoginSuccess({
+        return LoginSuccess.create({
             uuid: client.uuid,
             username: client.username,
             numberOfProperties: 0,
@@ -96,15 +96,15 @@ export const LoginHandler = new HandlerBuilder({})
             import.meta.dir,
             '..',
             'data-types',
-            'registry_data_1.20.2.json'
+            'registry-data-packet.nbt'
+            // 'loginPacket.nbt'
+            // 'registry_data_1.20.2.nbt'
         )
-        const file = await Bun.file(p).json()
-        const root = nbt.writeUncompressed(file)
-        const res = RegistryData({
-            codec: nbt.parseUncompressed(root),
+        const file = await Bun.file(p).arrayBuffer()
+        const root = await NBT.read(file)
+        return RegistryData.create({
+            codec: root,
         })
-        console.log(res)
-        return res
     })
     .build('Login')
 
