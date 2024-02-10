@@ -24,9 +24,12 @@ export class Server {
         log(
             chalk.redBright('Responding'),
             'packet',
-            chalk.rgb(150, 255, 0)(packet.name),
+            chalk.rgb(150, 255, 0)(packet.id + ' : ' + packet.name),
             'for state',
             chalk.cyan(ClientState[client.state]),
+            'packet length:',
+            packetLen,
+            'data:',
             res.data
         )
 

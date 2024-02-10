@@ -294,17 +294,14 @@ export const Optional = <
     type: T
 ) => ({
     read: (buffer: number[], length?: number) => {
-        throw new Error('Find a way to know if the field is present or not')
-        // TODO: Whether or not the field is present must be known from the context.
-        return type.read(buffer, length) as V
+        if (DataBoolean.read(buffer, length))
+            return type.read(buffer, length) as V
+        return undefined
     },
 
     write: (t: V | undefined) => {
-        // FIXME: what if there are more than one field optional in a row based on a
-        // single boolean value?
-        throw new Error('Find a way to know if the field is present or not')
         if (t === undefined) {
-            return Buffer.from([])
+            return DataBoolean.write(false)
         }
         return Buffer.concat([DataBoolean.write(true), type.write(t)])
     },

@@ -60,7 +60,6 @@ export const ConfigurationRemoveResourcePack = new ClientBoundPacketCreator(
     0x06,
     'ConfigurationRemoveResourcePack',
     {
-        hasUUID: DataBoolean,
         uuid: Optional(DataUUID),
     }
 )
@@ -73,7 +72,6 @@ export const ConfigurationAddResourcePack = new ClientBoundPacketCreator(
         url: DataString,
         hash: DataString,
         forced: DataBoolean,
-        hasPromptMessage: DataBoolean,
         promptMessage: Optional(DataString), // TODO: This is a chat component
     }
 )

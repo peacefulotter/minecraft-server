@@ -16,6 +16,7 @@ import {
     DataDouble,
     DataFloat,
     Optional,
+    DataCustom,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type {
@@ -111,9 +112,12 @@ export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     previousGameMode: DataByte as Type<GameMode>,
     isDebug: DataBoolean,
     isFlat: DataBoolean,
-    hasDeathLocation: DataBoolean,
-    deathDimensionName: Optional(DataString as Type<DimensionResource>),
-    deathLocation: Optional(DataPosition),
+    death: Optional(
+        DataObject({
+            dimensionName: DataString as Type<DimensionResource>,
+            location: DataPosition,
+        })
+    ),
     portalCooldown: VarInt,
 })
 
