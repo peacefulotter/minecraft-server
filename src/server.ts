@@ -3,7 +3,7 @@ import type { SocketId, SocketWithId } from './socket'
 import { MainHandler } from './handlers/main'
 import { Client, ClientState } from './client'
 import { VarInt } from './data-types/basic'
-import { log } from './logger'
+import { byteToHex, log } from './logger'
 import type { ClientBoundPacket } from './packets/create'
 import { WrapResponse } from './packets/client'
 import { Unwrap } from './packets/server'
@@ -24,7 +24,7 @@ export class Server {
         log(
             chalk.redBright('Responding'),
             'packet',
-            chalk.rgb(150, 255, 0)(packet.id + ' : ' + packet.name),
+            chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
             'for state',
             chalk.cyan(ClientState[client.state]),
             'packet length:',

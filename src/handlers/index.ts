@@ -84,7 +84,7 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
         log(
             chalk.redBright('Handling'),
             'packet',
-            chalk.rgb(150, 255, 0)(packet.name),
+            chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
             'for state',
             chalk.cyan(ClientState[client.state]),
             'with data',

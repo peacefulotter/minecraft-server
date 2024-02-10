@@ -106,7 +106,7 @@ export const NBTCompoundTag: AsyncType<
     }
 
     static write = async (t: NBT.NBTData<NBT.RootTag>) => {
-        return Buffer.from(await NBT.write(t))
+        return Buffer.from(await NBT.write(t, { rootName: null }))
     }
 }
 

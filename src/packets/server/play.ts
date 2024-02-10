@@ -104,7 +104,7 @@ export const SetPlayerPosition = new ServerBoundPacket(
     }
 )
 
-export const PlayerPositionAndRotation = new ServerBoundPacket(
+export const SetPlayerPositionAndRotation = new ServerBoundPacket(
     0x18,
     'PlayerPositionAndRotation',
     {
@@ -117,13 +117,13 @@ export const PlayerPositionAndRotation = new ServerBoundPacket(
     }
 )
 
-export const PlayerRotation = new ServerBoundPacket(0x19, 'PlayerRotation', {
+export const SetPlayerRotation = new ServerBoundPacket(0x19, 'PlayerRotation', {
     yaw: DataFloat,
     pitch: DataFloat,
     onGround: DataBoolean,
 })
 
-export const PlayerOnGround = new ServerBoundPacket(0x1a, 'PlayerOnGround', {
+export const SetPlayerOnGround = new ServerBoundPacket(0x1a, 'PlayerOnGround', {
     onGround: DataBoolean,
 })
 

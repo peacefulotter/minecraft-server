@@ -24,7 +24,6 @@ import type {
     DimensionResource,
     DimensionMonsterSpawnLightLevelRange,
 } from 'region-types'
-import type { IntTag } from 'nbtify'
 import { ClientBoundPacketCreator } from '../create'
 
 export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
@@ -38,7 +37,7 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
         data: DataByteArray, // TODO
         blockEntity: DataArray(
             DataObject({
-                packedXZ: DataByte,
+                packedXZ: DataByte, // TODO
                 y: DataShort,
                 type: VarInt,
                 data: DataBoolean, // TODO: NBT

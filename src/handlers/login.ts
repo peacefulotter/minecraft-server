@@ -97,8 +97,6 @@ export const LoginHandler = new HandlerBuilder({})
             '..',
             'data-types',
             'registry-data-packet.nbt'
-            // 'loginPacket.nbt'
-            // 'registry_data_1.20.2.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
         const root = await NBT.read(file)
