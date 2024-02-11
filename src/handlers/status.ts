@@ -1,13 +1,14 @@
 import { PingResponse, StatusResponse } from '~/packets/client/status'
 import { StatusPingRequest, StatusRequest } from '~/packets/server'
-import { HandlerBuilder } from '.'
 import { STATUS_RESPONSE } from '~/constants'
+import { Handler } from '.'
 
-export const StatusHandler = new HandlerBuilder({})
-    .addPacket(StatusRequest, async () => {
-        return StatusResponse.create({ json: STATUS_RESPONSE })
+export const StatusHandler = Handler.init('Status')
+
+    .register(StatusRequest, async () => {
+        return StatusResponse({ json: STATUS_RESPONSE })
     })
-    .addPacket(StatusPingRequest, async ({ packet }) => {
-        return PingResponse.create(packet)
+
+    .register(StatusPingRequest, async ({ packet }) => {
+        return PingResponse(packet)
     })
-    .build('Status')

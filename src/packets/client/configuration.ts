@@ -3,7 +3,7 @@ import {
     DataByteArray,
     DataInt,
     DataLong,
-    Optional,
+    DataOptional,
     DataString,
     DataUUID,
     DataArray,
@@ -13,7 +13,7 @@ import { DataNBT } from '~/data-types/registry'
 import type { FeatureFlags } from '~/data-types/enum'
 import { ClientBoundPacketCreator } from '../create'
 
-export const ConfigurationPluginMessage = new ClientBoundPacketCreator(
+export const ConfigurationPluginMessage = ClientBoundPacketCreator(
     0x00,
     'ConfigurationPluginMessage',
     {
@@ -22,7 +22,7 @@ export const ConfigurationPluginMessage = new ClientBoundPacketCreator(
     }
 )
 
-export const DisconnectConfiguration = new ClientBoundPacketCreator(
+export const DisconnectConfiguration = ClientBoundPacketCreator(
     0x01,
     'DisconnectConfiguration',
     {
@@ -30,13 +30,13 @@ export const DisconnectConfiguration = new ClientBoundPacketCreator(
     }
 )
 
-export const FinishConfiguration = new ClientBoundPacketCreator(
+export const FinishConfiguration = ClientBoundPacketCreator(
     0x02,
     'FinishConfiguration',
     {}
 )
 
-export const ConfigurationKeepAlive = new ClientBoundPacketCreator(
+export const ConfigurationKeepAlive = ClientBoundPacketCreator(
     0x03,
     'ConfigurationKeepAlive',
     {
@@ -44,7 +44,7 @@ export const ConfigurationKeepAlive = new ClientBoundPacketCreator(
     }
 )
 
-export const ConfigurationPing = new ClientBoundPacketCreator(
+export const ConfigurationPing = ClientBoundPacketCreator(
     0x04,
     'ConfigurationPing',
     {
@@ -52,19 +52,19 @@ export const ConfigurationPing = new ClientBoundPacketCreator(
     }
 )
 
-export const RegistryData = new ClientBoundPacketCreator(0x05, 'RegistryData', {
+export const RegistryData = ClientBoundPacketCreator(0x05, 'RegistryData', {
     codec: DataNBT,
 })
 
-export const ConfigurationRemoveResourcePack = new ClientBoundPacketCreator(
+export const ConfigurationRemoveResourcePack = ClientBoundPacketCreator(
     0x06,
     'ConfigurationRemoveResourcePack',
     {
-        uuid: Optional(DataUUID),
+        uuid: DataOptional(DataUUID),
     }
 )
 
-export const ConfigurationAddResourcePack = new ClientBoundPacketCreator(
+export const ConfigurationAddResourcePack = ClientBoundPacketCreator(
     0x07,
     'ConfigurationAddResourcePack',
     {
@@ -72,11 +72,11 @@ export const ConfigurationAddResourcePack = new ClientBoundPacketCreator(
         url: DataString,
         hash: DataString,
         forced: DataBoolean,
-        promptMessage: Optional(DataString), // TODO: This is a chat component
+        promptMessage: DataOptional(DataString), // TODO: This is a chat component
     }
 )
 
-export const ConfigurationFeatureFlags = new ClientBoundPacketCreator(
+export const ConfigurationFeatureFlags = ClientBoundPacketCreator(
     0x08,
     'ConfigurationFeatureFlags',
     {

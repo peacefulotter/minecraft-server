@@ -14,7 +14,7 @@ import {
     VarIntPrefixedByteArray,
     DataDouble,
     DataFloat,
-    Optional,
+    DataOptional,
     DataPackedXZ,
     DataUUID,
 } from '~/data-types/basic'
@@ -27,7 +27,13 @@ import type {
 import { ClientBoundPacketCreator } from '../create'
 import { DataNBT } from '~/data-types/registry'
 
-export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
+export const BundleDelimiter = ClientBoundPacketCreator(
+    0x00,
+    'BundleDelimiter',
+    {}
+)
+
+export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
     0x25,
     'ChunkDataAndUpdateLight',
     {
@@ -52,7 +58,7 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     }
 )
 
-export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
+export const PlayLogin = ClientBoundPacketCreator(0x29, 'PlayLogin', {
     entityId: DataInt,
     isHardcore: DataBoolean,
     dimensionNames: DataArray(DataString as Type<DimensionResource>),
@@ -69,7 +75,7 @@ export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     previousGameMode: DataByte as Type<GameMode>,
     isDebug: DataBoolean,
     isFlat: DataBoolean,
-    death: Optional(
+    death: DataOptional(
         DataObject({
             dimensionName: DataString as Type<DimensionResource>,
             location: DataPosition,
@@ -78,7 +84,7 @@ export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     portalCooldown: VarInt,
 })
 
-// export const PlayerInfoUpdate = new ClientBoundPacketCreator(
+// export const PlayerInfoUpdate =  ClientBoundPacketCreator(
 //     0x32,
 //     'PlayerInfoUpdate',
 //     {
@@ -107,7 +113,7 @@ export enum PlayerPositionFlag {
     X_ROT = 0x10,
 }
 
-export const SynchronizePlayerPosition = new ClientBoundPacketCreator(
+export const SynchronizePlayerPosition = ClientBoundPacketCreator(
     0x3e,
     'SynchronizePlayerPosition',
     {
@@ -121,20 +127,16 @@ export const SynchronizePlayerPosition = new ClientBoundPacketCreator(
     }
 )
 
-export const SetHeldItem = new ClientBoundPacketCreator(0x51, 'SetHeldItem', {
+export const SetHeldItem = ClientBoundPacketCreator(0x51, 'SetHeldItem', {
     slot: DataByte,
 })
 
-export const SetCenterChunk = new ClientBoundPacketCreator(
-    0x52,
-    'SetCenterChunk',
-    {
-        chunkX: VarInt,
-        chunkZ: VarInt,
-    }
-)
+export const SetCenterChunk = ClientBoundPacketCreator(0x52, 'SetCenterChunk', {
+    chunkX: VarInt,
+    chunkZ: VarInt,
+})
 
-export const SetRenderDistance = new ClientBoundPacketCreator(
+export const SetRenderDistance = ClientBoundPacketCreator(
     0x53,
     'SetRenderDistance',
     {
@@ -142,7 +144,7 @@ export const SetRenderDistance = new ClientBoundPacketCreator(
     }
 )
 
-export const SetDefaultSpawnPosition = new ClientBoundPacketCreator(
+export const SetDefaultSpawnPosition = ClientBoundPacketCreator(
     0x54,
     'SetDefaultSpawnPosition',
     {

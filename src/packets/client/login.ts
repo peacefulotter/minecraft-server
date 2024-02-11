@@ -1,12 +1,15 @@
 import {
+    DataArray,
+    DataObject,
     DataString,
     DataUUID,
+    DataOptional,
     VarInt,
     VarIntPrefixedByteArray,
 } from '~/data-types/basic'
 import { ClientBoundPacketCreator } from '../create'
 
-export const EncryptionRequest = new ClientBoundPacketCreator(
+export const EncryptionRequest = ClientBoundPacketCreator(
     0x01,
     'EncryptionRequest',
     {
@@ -16,8 +19,14 @@ export const EncryptionRequest = new ClientBoundPacketCreator(
     }
 )
 
-export const LoginSuccess = new ClientBoundPacketCreator(0x02, 'LoginSuccess', {
+export const LoginSuccess = ClientBoundPacketCreator(0x02, 'LoginSuccess', {
     uuid: DataUUID,
     username: DataString,
-    numberOfProperties: VarInt,
+    properties: DataArray(
+        DataObject({
+            name: DataString,
+            value: DataString,
+            signature: DataOptional(DataString),
+        })
+    ),
 })

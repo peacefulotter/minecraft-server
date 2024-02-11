@@ -1,3 +1,4 @@
+import { logClientBoundPacket } from './logger'
 import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
@@ -34,6 +35,7 @@ export class Client {
 
     async write(packet: ClientBoundPacket | ClientBoundPacket[]) {
         const formatted = await formatPacket(packet, this)
+        logClientBoundPacket(formatted, this)
         this.socket.write(formatted.data)
     }
 

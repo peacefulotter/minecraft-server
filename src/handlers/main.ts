@@ -5,6 +5,7 @@ import { HandshakeHandler } from './handshake'
 import { LoginHandler } from './login'
 import { StatusHandler } from './status'
 import { PlayHandler } from './play'
+import { logHandler } from '~/logger'
 
 export class MainHandler {
     subhandlers: {
@@ -15,6 +16,14 @@ export class MainHandler {
         [ClientState.LOGIN]: LoginHandler,
         [ClientState.CONFIGURATION]: ConfigurationHandler,
         [ClientState.PLAY]: PlayHandler,
+    }
+
+    constructor() {
+        for (const key in this.subhandlers) {
+            logHandler(
+                this.subhandlers[parseInt(key) as keyof typeof this.subhandlers]
+            )
+        }
     }
 
     handle = async (args: RawHandlerArgs) => {

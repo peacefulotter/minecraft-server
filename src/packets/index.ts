@@ -1,32 +1,16 @@
-import { DataByteArray, DataInt, VarInt } from '~/data-types/basic'
+import { VarInt } from '~/data-types/basic'
 import type { ClientBoundPacket } from './create'
-import { ClientState, type Client } from '~/client'
-import { WrapResponse } from './client'
-import { byteToHex, log } from '~/logger'
-import chalk from 'chalk'
+import { type Client } from '~/client'
+import { BundleDelimiter, WrapResponse } from './client'
 
 export type PacketId = number
 
 const format = async (packet: ClientBoundPacket, client: Client) => {
     const packetLen = packet.data.length + VarInt.write(packet.id).length
-    const res = await WrapResponse.create({
+    return await WrapResponse({
         packetLen,
         ...packet,
     })
-
-    log(
-        chalk.redBright('Responding'),
-        'packet',
-        chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
-        'for state',
-        chalk.cyan(ClientState[client.state]),
-        'packet length:',
-        packetLen,
-        'data:',
-        res.data
-    )
-
-    return res
 }
 
 export const formatPacket = async (
@@ -34,10 +18,16 @@ export const formatPacket = async (
     client: Client
 ) => {
     if (Array.isArray(packet)) {
+        const delimiter = await BundleDelimiter({})
+        const delimiterBuffer = await format(delimiter, client)
         const data = await Promise.all(packet.map((p) => format(p, client)))
         return {
-            data: Buffer.concat(data.map((d) => d.data)),
-        }
+            // id: packet.map((p) => p.id).join(' + '),
+            name: packet.map((p) => p.name).join(' + '),
+            data: Buffer.concat(
+                data.map((d) => Buffer.concat([d.data, delimiterBuffer.data]))
+            ),
+        } as ClientBoundPacket
     }
     return format(packet, client)
 }

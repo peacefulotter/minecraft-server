@@ -1,8 +1,8 @@
 import { DataLong } from '~/data-types/basic'
-import { ServerBoundPacket } from '../create'
+import { ServerBoundPacketCreator } from '../create'
 
-export const StatusRequest = new ServerBoundPacket(0x00, 'StatusRequest', {})
+export const StatusRequest = ServerBoundPacketCreator(0x00, 'StatusRequest', {})
 
-export const StatusPingRequest = new ServerBoundPacket(0x01, 'Ping', {
+export const StatusPingRequest = ServerBoundPacketCreator(0x01, 'Ping', {
     payload: DataLong,
 })

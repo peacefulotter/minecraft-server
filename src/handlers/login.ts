@@ -10,7 +10,7 @@ import {
     LoginStart,
 } from '~/packets/server'
 import { LoginSuccess, RegistryData } from '~/packets/client'
-import { HandlerBuilder } from '.'
+import { Handler } from '.'
 import * as NBT from 'nbtify'
 
 // type AuthResponse = {
@@ -28,8 +28,9 @@ import * as NBT from 'nbtify'
 //     'https://sessionserver.mojang.com/session/minecraft/hasJoined'
 // )
 
-export const LoginHandler = new HandlerBuilder({})
-    .addPacket(LoginStart, async ({ client, packet }) => {
+export const LoginHandler = Handler.init('Login')
+
+    .register(LoginStart, async ({ client, packet }) => {
         client.username = packet.username
         client.uuid = uuid()
 
@@ -40,10 +41,10 @@ export const LoginHandler = new HandlerBuilder({})
             chalk.green('successfully')
         )
 
-        return LoginSuccess.create({
+        return LoginSuccess({
             uuid: client.uuid,
             username: client.username,
-            numberOfProperties: 0,
+            properties: [],
         })
 
         // const serverId = crypto.randomBytes(4).toString('utf-8')
@@ -83,14 +84,17 @@ export const LoginHandler = new HandlerBuilder({})
         // console.log(p)
         // return EncryptionRequest(p)
     })
-    .addPacket(EncryptionResponse, async ({ client, packet }) => {
+
+    .register(EncryptionResponse, async ({ client, packet }) => {
         console.log(packet)
         client.encrypted = true
     })
-    .addPacket(LoginPluginResponse, async ({ client, packet }) => {
+
+    .register(LoginPluginResponse, async ({ client, packet }) => {
         console.log(packet)
     })
-    .addPacket(LoginAcknowledged, async ({ client }) => {
+
+    .register(LoginAcknowledged, async ({ client }) => {
         client.state = ClientState.CONFIGURATION
         const p = path.join(
             import.meta.dir,
@@ -100,11 +104,10 @@ export const LoginHandler = new HandlerBuilder({})
         )
         const file = await Bun.file(p).arrayBuffer()
         const root = await NBT.read(file)
-        return RegistryData.create({
+        return RegistryData({
             codec: root,
         })
     })
-    .build('Login')
 
 // TODO: implement
 // onAuth = async ({}: Args<any>) => {

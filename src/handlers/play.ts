@@ -7,7 +7,6 @@ import {
     SetPlayerPositionAndRotation,
     SetPlayerRotation,
 } from '~/packets/server'
-import { HandlerBuilder } from '.'
 import {
     ChunkDataAndUpdateLight,
     PlayerPositionFlag,
@@ -20,6 +19,7 @@ import { terrainMap } from '~/world/parse'
 import { DataNBT } from '~/data-types/registry'
 import { DataBitSet } from '~/data-types/basic'
 import type { ClientBoundPacket } from '~/packets/create'
+import { Handler } from '.'
 
 let state = -1
 
@@ -220,18 +220,21 @@ const chunk = [
     0,
 ]
 
-export const PlayHandler = new HandlerBuilder({})
-    .addPacket(ConfirmTeleportation, async ({ packet }) => {
+export const PlayHandler = Handler.init('Play')
+
+    .register(ConfirmTeleportation, async ({ packet }) => {
         console.log(packet)
     })
-    .addPacket(AcknowledgeMessage, async ({ packet }) => {
+
+    .register(AcknowledgeMessage, async ({ packet }) => {
         console.log(packet)
     })
-    .addPacket(SetPlayerPosition, async ({ client, packet }) => {
+
+    .register(SetPlayerPosition, async ({ client, packet }) => {
         client.position = packet
         state++
         if (state === 0) {
-            return SetCenterChunk.create({ chunkX: 0, chunkZ: 0 })
+            return SetCenterChunk({ chunkX: 0, chunkZ: 0 })
         }
         if (state === 1) {
             console.log(
@@ -244,7 +247,7 @@ export const PlayHandler = new HandlerBuilder({})
             for (let i = -size; i <= size; i++) {
                 for (let j = -size; j <= size; j++) {
                     packets.push(
-                        await ChunkDataAndUpdateLight.create({
+                        await ChunkDataAndUpdateLight({
                             chunkX: i,
                             chunkZ: j,
                             heightMaps: new NBT.NBTData({}, { rootName: null }),
@@ -262,8 +265,8 @@ export const PlayHandler = new HandlerBuilder({})
             }
             return packets
         }
-        if (state === 2) {
-            return SynchronizePlayerPosition.create({
+        if (state === 3) {
+            return SynchronizePlayerPosition({
                 x: client.x,
                 y: client.y,
                 z: client.z,
@@ -278,25 +281,27 @@ export const PlayHandler = new HandlerBuilder({})
                 teleportId: 0,
             })
         }
-        if (state === 3) {
-            return SetDefaultSpawnPosition.create({
+        if (state === 2) {
+            return SetDefaultSpawnPosition({
                 location: { x: 8.5, y: 0, z: 8.5 },
                 angle: 0,
             })
         }
     })
-    .addPacket(SetPlayerPositionAndRotation, async ({ client, packet }) => {
+
+    .register(SetPlayerPositionAndRotation, async ({ client, packet }) => {
         const { yaw, pitch, ...position } = packet
         client.position = position
         client.rotation = { yaw, pitch }
     })
-    .addPacket(SetPlayerRotation, async ({ client, packet }) => {
+
+    .register(SetPlayerRotation, async ({ client, packet }) => {
         const { onGround, ...rotation } = packet
         client.rotation = rotation
         if (client.position !== undefined) client.position.onGround = onGround
     })
-    .addPacket(SetPlayerOnGround, async ({ client, packet }) => {
+
+    .register(SetPlayerOnGround, async ({ client, packet }) => {
         if (client.position !== undefined)
             client.position.onGround = packet.onGround
     })
-    .build('Play')

@@ -3,14 +3,14 @@ import {
     DataUUID,
     VarIntPrefixedByteArray,
 } from '~/data-types/basic'
-import { ServerBoundPacket } from '../create'
+import { ServerBoundPacketCreator } from '../create'
 
-export const LoginStart = new ServerBoundPacket(0x00, 'LoginStart', {
+export const LoginStart = ServerBoundPacketCreator(0x00, 'LoginStart', {
     username: DataString,
     uuid: DataUUID,
 })
 
-export const EncryptionResponse = new ServerBoundPacket(
+export const EncryptionResponse = ServerBoundPacketCreator(
     0x01,
     'EncryptionResponse',
     {
@@ -19,7 +19,7 @@ export const EncryptionResponse = new ServerBoundPacket(
     }
 )
 
-export const LoginPluginResponse = new ServerBoundPacket(
+export const LoginPluginResponse = ServerBoundPacketCreator(
     0x02,
     'LoginPluginResponse',
     {
@@ -27,7 +27,7 @@ export const LoginPluginResponse = new ServerBoundPacket(
     }
 )
 
-export const LoginAcknowledged = new ServerBoundPacket(
+export const LoginAcknowledged = ServerBoundPacketCreator(
     0x03,
     'LoginAcknowledged',
     {

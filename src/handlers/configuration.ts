@@ -7,7 +7,7 @@ import {
     ResourcePackResponse,
     ConfigurationClientInformation,
 } from '~/packets/server'
-import { HandlerBuilder } from '.'
+import { Handler } from '.'
 import { ClientState } from '~/client'
 import {
     FinishConfiguration as ClientFinishConfiguration,
@@ -16,18 +16,21 @@ import {
 import { GameMode } from '~/data-types/enum'
 import { hashSeed } from '~/seed'
 
-export const ConfigurationHandler = new HandlerBuilder({})
-    .addPacket(ConfigurationClientInformation, async ({ client, packet }) => {
+export const ConfigurationHandler = Handler.init('Configuration')
+
+    .register(ConfigurationClientInformation, async ({ client, packet }) => {
         client.info = packet
-        return ClientFinishConfiguration.create({})
+        return ClientFinishConfiguration({})
     })
-    .addPacket(PluginMessage, async (args) => {})
-    .addPacket(FinishConfiguration, async ({ client }) => {
+
+    .register(PluginMessage, async (args) => {})
+
+    .register(FinishConfiguration, async ({ client }) => {
         client.state = ClientState.PLAY
 
         const seed = '42'
 
-        return PlayLogin.create({
+        return PlayLogin({
             entityId: 0,
             isHardcore: false,
             dimensionNames: [
@@ -52,7 +55,8 @@ export const ConfigurationHandler = new HandlerBuilder({})
             portalCooldown: 0,
         })
     })
-    .addPacket(PlayKeepAlive, async (args) => {})
-    .addPacket(PlayPong, async (args) => {})
-    .addPacket(ResourcePackResponse, async (args) => {})
-    .build('Configuration')
+    .register(PlayKeepAlive, async (args) => {})
+
+    .register(PlayPong, async (args) => {})
+
+    .register(ResourcePackResponse, async (args) => {})

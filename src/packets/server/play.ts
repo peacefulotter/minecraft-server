@@ -11,10 +11,10 @@ import {
     DataShort,
     DataUUID,
 } from '~/data-types/basic'
-import { ServerBoundPacket } from '../create'
+import { ServerBoundPacketCreator } from '../create'
 import type { Difficulty } from '~/data-types/enum'
 
-export const ConfirmTeleportation = new ServerBoundPacket(
+export const ConfirmTeleportation = ServerBoundPacketCreator(
     0x00,
     'ConfirmTeleportation',
     {
@@ -22,12 +22,12 @@ export const ConfirmTeleportation = new ServerBoundPacket(
     }
 )
 
-// export const QueryBlockEntityTag = new ServerBoundPacket(0x01, {
+// export const QueryBlockEntityTag =  ServerBoundPacket(0x01, {
 //     transactionId: VarInt,
 //     location: Position,
 // })
 
-export const ChangeDifficulty = new ServerBoundPacket(
+export const ChangeDifficulty = ServerBoundPacketCreator(
     0x02,
     'ChangeDifficulty',
     {
@@ -35,7 +35,7 @@ export const ChangeDifficulty = new ServerBoundPacket(
     }
 )
 
-export const AcknowledgeMessage = new ServerBoundPacket(
+export const AcknowledgeMessage = ServerBoundPacketCreator(
     0x03,
     'AcknowledgeMessage',
     {
@@ -43,7 +43,7 @@ export const AcknowledgeMessage = new ServerBoundPacket(
     }
 )
 
-// export const ChatCommand = new ServerBoundPacket(0x04,'ChatCommand', {
+// export const ChatCommand =  ServerBoundPacket(0x04,'ChatCommand', {
 //     command: String,
 //     timestamp: Long,
 //     salt: Long,
@@ -54,15 +54,15 @@ export const AcknowledgeMessage = new ServerBoundPacket(
 //     }>
 // })
 
-export const ChatMessage = new ServerBoundPacket(0x05, 'ChatMessage', {
+export const ChatMessage = ServerBoundPacketCreator(0x05, 'ChatMessage', {
     // TODO: Implement
 })
 
-export const PlayerSession = new ServerBoundPacket(0x06, 'PlayerSession', {
+export const PlayerSession = ServerBoundPacketCreator(0x06, 'PlayerSession', {
     // TODO: Implement
 })
 
-export const ChunkBatchReceived = new ServerBoundPacket(
+export const ChunkBatchReceived = ServerBoundPacketCreator(
     0x07,
     'ChunkBatchReceived',
     {
@@ -70,11 +70,11 @@ export const ChunkBatchReceived = new ServerBoundPacket(
     }
 )
 
-export const ClientStatus = new ServerBoundPacket(0x08, 'ClientStatus', {
+export const ClientStatus = ServerBoundPacketCreator(0x08, 'ClientStatus', {
     actionId: VarInt as Type<0 | 1>,
 })
 
-export const PlayClientInformation = new ServerBoundPacket(
+export const PlayClientInformation = ServerBoundPacketCreator(
     0x09,
     'ClientInformation',
     {
@@ -89,11 +89,11 @@ export const PlayClientInformation = new ServerBoundPacket(
     }
 )
 
-export const PlayKeepAlive = new ServerBoundPacket(0x15, 'KeepAlive', {
+export const PlayKeepAlive = ServerBoundPacketCreator(0x15, 'KeepAlive', {
     id: DataLong,
 })
 
-export const SetPlayerPosition = new ServerBoundPacket(
+export const SetPlayerPosition = ServerBoundPacketCreator(
     0x17,
     'SetPlayerPosition',
     {
@@ -104,7 +104,7 @@ export const SetPlayerPosition = new ServerBoundPacket(
     }
 )
 
-export const SetPlayerPositionAndRotation = new ServerBoundPacket(
+export const SetPlayerPositionAndRotation = ServerBoundPacketCreator(
     0x18,
     'PlayerPositionAndRotation',
     {
@@ -117,17 +117,25 @@ export const SetPlayerPositionAndRotation = new ServerBoundPacket(
     }
 )
 
-export const SetPlayerRotation = new ServerBoundPacket(0x19, 'PlayerRotation', {
-    yaw: DataFloat,
-    pitch: DataFloat,
-    onGround: DataBoolean,
-})
+export const SetPlayerRotation = ServerBoundPacketCreator(
+    0x19,
+    'PlayerRotation',
+    {
+        yaw: DataFloat,
+        pitch: DataFloat,
+        onGround: DataBoolean,
+    }
+)
 
-export const SetPlayerOnGround = new ServerBoundPacket(0x1a, 'PlayerOnGround', {
-    onGround: DataBoolean,
-})
+export const SetPlayerOnGround = ServerBoundPacketCreator(
+    0x1a,
+    'PlayerOnGround',
+    {
+        onGround: DataBoolean,
+    }
+)
 
-export const MoveVehicle = new ServerBoundPacket(0x1b, 'MoveVehicle', {
+export const MoveVehicle = ServerBoundPacketCreator(0x1b, 'MoveVehicle', {
     x: DataDouble,
     y: DataDouble,
     z: DataDouble,
@@ -135,28 +143,28 @@ export const MoveVehicle = new ServerBoundPacket(0x1b, 'MoveVehicle', {
     pitch: DataFloat,
 })
 
-export const PaddleBoat = new ServerBoundPacket(0x1c, 'PaddleBoat', {
+export const PaddleBoat = ServerBoundPacketCreator(0x1c, 'PaddleBoat', {
     leftPaddle: DataBoolean,
     rightPaddle: DataBoolean,
 })
 
-export const PickItem = new ServerBoundPacket(0x1d, 'PickItem', {
+export const PickItem = ServerBoundPacketCreator(0x1d, 'PickItem', {
     slotToUse: VarInt,
 })
 
-export const PingRequest = new ServerBoundPacket(0x1e, 'PingRequest', {
+export const PingRequest = ServerBoundPacketCreator(0x1e, 'PingRequest', {
     payload: DataLong,
 })
 
-export const PlayPong = new ServerBoundPacket(0x24, 'Pong', {
+export const PlayPong = ServerBoundPacketCreator(0x24, 'Pong', {
     id: DataInt,
 })
 
-export const SetHeldItem = new ServerBoundPacket(0x2c, 'SetHeldItem', {
+export const SetHeldItem = ServerBoundPacketCreator(0x2c, 'SetHeldItem', {
     slot: DataShort,
 })
 
-export const TeleportToEntity = new ServerBoundPacket(
+export const TeleportToEntity = ServerBoundPacketCreator(
     0x34,
     'TeleportToEntity',
     {

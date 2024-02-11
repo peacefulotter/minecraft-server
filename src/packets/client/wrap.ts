@@ -1,7 +1,7 @@
 import { DataByteArray, VarInt } from '~/data-types/basic'
 import { ClientBoundPacketCreator } from '../create'
 
-export const WrapResponse = new ClientBoundPacketCreator(
+export const WrapResponse = ClientBoundPacketCreator(
     0x00, // Unused
     'WrapResponse',
     {

@@ -1,11 +1,11 @@
-import chalk from 'chalk'
 import { ClientState, type Client } from '~/client'
-import { byteToHex, log } from '~/logger'
+import { byteToHex, logServerBoundPacket } from '~/logger'
 import type { PacketId } from '~/packets'
 import type {
     ClientBoundPacket,
-    ParsedServerBoundPacket,
     ServerBoundPacket,
+    ServerBoundPacketData,
+    ServerBoundPacketDeserializer,
 } from '~/packets/create'
 
 export type RawHandlerArgs = {
@@ -14,52 +14,38 @@ export type RawHandlerArgs = {
     buffer: number[]
 }
 
-export type Args<T extends ServerBoundPacket> = Omit<
+type Args<Packet extends ServerBoundPacketDeserializer> = Omit<
     RawHandlerArgs,
     'buffer'
 > & {
-    packet: ParsedServerBoundPacket<T>
+    packet: ServerBoundPacketData<Packet>
 }
 
-export type HandleFunc<T extends ServerBoundPacket> = (
-    args: Args<T>
+type HandleFunc<Packet extends ServerBoundPacketDeserializer> = (
+    args: Args<Packet>
 ) => Promise<ClientBoundPacket | ClientBoundPacket[] | void>
 
-type PacketHandler = {
-    packet: ServerBoundPacket
-    handler: HandleFunc<ServerBoundPacket>
-}
-
-export class HandlerBuilder<T extends { [key: PacketId]: PacketHandler } = {}> {
-    constructor(private readonly handlers: T) {}
-
-    addPacket = <T extends ServerBoundPacket>(
-        packet: T,
-        handler: HandleFunc<T>
-    ) => {
-        return new HandlerBuilder({
-            ...this.handlers,
-            [packet.id]: { packet, handler },
-        })
-    }
-
-    build = (name: string) => new Handler(name, this.handlers)
+export type PacketHandler<
+    Packet extends ServerBoundPacketDeserializer = ServerBoundPacketDeserializer
+> = {
+    packet: Packet
+    callback: HandleFunc<Packet>
 }
 
 export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
-    constructor(private readonly name: string, private readonly handlers: T) {
-        console.log(
-            `-------{  ${chalk.greenBright(name)}  }-------`,
-            '\n' +
-                Object.values(this.handlers)
-                    .map(
-                        ({ packet }) =>
-                            `${chalk.yellowBright(byteToHex(packet.id))} - ${
-                                packet.name
-                            }`
-                    )
-                    .join('\n')
-        )
+    private constructor(readonly name: string, readonly handlers: T) {}
+
+    static init = (name: string) => new Handler(name, {})
+
+    register = <Packet extends ServerBoundPacketDeserializer>(
+        packet: Packet,
+        callback: HandleFunc<Packet>
+    ) => {
+        this.handlers[packet.id] = {
+            packet,
+            callback: callback as HandleFunc<ServerBoundPacketDeserializer>,
+        }
+        return this
     }
 
     isSupportedPacket = (packetId: number): packetId is number => {
@@ -79,22 +65,18 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
 
     handle = async (args: RawHandlerArgs) => {
         const { packetId, buffer, client } = args
-        const { packet, handler } = this.getHandler(packetId, client)
-        const parsed = packet.parse(buffer, client.encrypted)
-        log(
-            chalk.redBright('Handling'),
-            'packet',
-            chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
-            'for state',
-            chalk.cyan(ClientState[client.state]),
-            'with data',
-            parsed
-        )
+        const { packet, callback } = this.getHandler(packetId, client)
+        const parsed = (await packet.deserialize(
+            buffer,
+            client.encrypted
+        )) as ServerBoundPacket
 
-        return handler({
+        logServerBoundPacket(parsed, client)
+
+        return callback({
             packetId,
             client,
-            packet: parsed,
+            packet: parsed.data,
         })
     }
 }

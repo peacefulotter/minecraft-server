@@ -289,7 +289,7 @@ export const DataBitSet: Type<BitSet> = {
 }
 
 // ============= Meta types =============
-export const Optional = <T>(
+export const DataOptional = <T>(
     type: Type<T> | AsyncType<T>
 ): AsyncType<T | undefined> => ({
     read: async (buffer: number[], length?: number) => {

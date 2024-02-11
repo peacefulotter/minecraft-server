@@ -1,15 +1,18 @@
 import { Handshake, LegacyServerListPing } from '~/packets/server'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
-import { HandlerBuilder } from '.'
+import { Handler } from '.'
 
-export const HandshakeHandler = new HandlerBuilder({})
-    .addPacket(Handshake, async (args) => {
+export const HandshakeHandler = Handler.init('Handshake')
+
+    .register(Handshake, async (args) => {
         const { client, packet } = args
+        console.log(packet)
         client.state = packet.nextState
     })
+
     // https://wiki.vg/Server_List_Ping#1.6
     // TODO: fix this
-    .addPacket(LegacyServerListPing, async ({ packetId, packet }) => {
+    .register(LegacyServerListPing, async ({ packetId, packet }) => {
         console.log({
             packetId,
             ...packet,
@@ -40,4 +43,3 @@ export const HandshakeHandler = new HandlerBuilder({})
         console.log(res)
         console.log(hex)
     })
-    .build('Handshake')

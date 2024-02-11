@@ -1,4 +1,12 @@
 import chalk from 'chalk'
+import type {
+    ClientBoundPacket,
+    ServerBoundPacket,
+    ServerBoundPacketDeserializer,
+} from './packets/create'
+import { ClientState, type Client } from './client'
+import type { Handler, PacketHandler } from './handlers'
+import type { PacketId } from './packets'
 
 export const log = (...message: any[]) => {
     const d = new Date()
@@ -19,3 +27,39 @@ export const byteToHex = (byte: number) => {
     }
     return '0x' + newHex
 }
+
+export const logHandler = <
+    T extends { [key: PacketId]: PacketHandler<ServerBoundPacketDeserializer> }
+>(
+    handler: Handler<T>
+) => {
+    console.log(
+        `-------{  ${chalk.greenBright(handler.name)}  }-------`,
+        '\n' +
+            Object.values(handler.handlers)
+                .map(
+                    ({ packet }) =>
+                        `${chalk.yellowBright(byteToHex(packet.id))} - ${
+                            packet.name
+                        }`
+                )
+                .join('\n')
+    )
+}
+
+const logPacket =
+    (side: string) =>
+    (packet: ClientBoundPacket | ServerBoundPacket, client: Client) => {
+        log(
+            chalk.redBright(side),
+            'packet',
+            chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
+            'for state',
+            chalk.cyan(ClientState[client.state]),
+            'data:',
+            packet.data
+        )
+    }
+
+export const logClientBoundPacket = logPacket('Sending')
+export const logServerBoundPacket = logPacket('Handling')

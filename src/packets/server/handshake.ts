@@ -6,17 +6,17 @@ import {
     VarInt,
     type Type,
 } from '~/data-types/basic'
-import { ServerBoundPacket } from '../create'
 import type { ClientState } from '~/client'
+import { ServerBoundPacketCreator } from '../create'
 
-export const Handshake = new ServerBoundPacket(0x00, 'Handshake', {
+export const Handshake = ServerBoundPacketCreator(0x00, 'Handshake', {
     protocol: VarInt,
     hostname: DataString,
     port: DataShort,
     nextState: VarInt as Type<ClientState.STATUS | ClientState.LOGIN>,
 })
 
-export const LegacyServerListPing = new ServerBoundPacket(
+export const LegacyServerListPing = ServerBoundPacketCreator(
     0xfe,
     'LegacyServerListPing',
     {

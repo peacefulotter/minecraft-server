@@ -15,9 +15,9 @@ import type {
     PluginChannel,
     ResourcePackResult,
 } from '~/data-types/enum'
-import { ServerBoundPacket, type ParsedServerBoundPacket } from '../create'
+import { type ServerBoundPacketData, ServerBoundPacketCreator } from '../create'
 
-export const ConfigurationClientInformation = new ServerBoundPacket(
+export const ConfigurationClientInformation = ServerBoundPacketCreator(
     0x00,
     'ClientInformation' as const,
     {
@@ -32,11 +32,11 @@ export const ConfigurationClientInformation = new ServerBoundPacket(
     }
 )
 
-export type ClientInfo = ParsedServerBoundPacket<
+export type ClientInfo = ServerBoundPacketData<
     typeof ConfigurationClientInformation
 >
 
-export const PluginMessage = new ServerBoundPacket(
+export const PluginMessage = ServerBoundPacketCreator(
     0x01,
     'PluginMessage' as const,
     {
@@ -45,21 +45,21 @@ export const PluginMessage = new ServerBoundPacket(
     }
 )
 
-export const FinishConfiguration = new ServerBoundPacket(
+export const FinishConfiguration = ServerBoundPacketCreator(
     0x02,
     'FinishConfiguration',
     {}
 )
 
-export const KeepAlive = new ServerBoundPacket(0x03, 'KeepAlive', {
+export const KeepAlive = ServerBoundPacketCreator(0x03, 'KeepAlive', {
     id: DataLong,
 })
 
-export const Pong = new ServerBoundPacket(0x04, 'Pong', {
+export const Pong = ServerBoundPacketCreator(0x04, 'Pong', {
     id: DataInt,
 })
 
-export const ResourcePackResponse = new ServerBoundPacket(
+export const ResourcePackResponse = ServerBoundPacketCreator(
     0x05,
     'ResourcePackResponse',
     {
