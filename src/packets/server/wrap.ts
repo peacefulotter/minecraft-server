@@ -22,14 +22,11 @@ const UnwrapSingle = (buffer: number[]) => {
     const packetLen = VarInt.read(buffer)
     const packetId = VarInt.read(buffer)
     const newBuffer = buffer.slice(0, packetLen - 1) // - 1 to account for the packet id
-    console.log('Unwrapping single', { packetLen, packetId, newBuffer })
     return { packetId, buffer: newBuffer, packetLen }
 }
 
 export const Unwrap = (data: Buffer) => {
     let buffer = data.toJSON().data
-
-    log('Unwrapping', data)
 
     const packets: { packetId: PacketId; buffer: number[] }[] = []
     while (buffer.length > 0) {
@@ -39,7 +36,5 @@ export const Unwrap = (data: Buffer) => {
             buffer = buffer.slice(packetLen - 1)
         }
     }
-    log('Unwrapping', packets)
-
     return packets
 }

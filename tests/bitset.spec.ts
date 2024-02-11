@@ -1,20 +1,6 @@
 import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
 import { DataBitSet } from '~/data-types/basic'
-import { byteToHex } from '~/logger'
-
-// export const DataBitSet: Type<BitSet> = {
-//     read: (buffer: number[]) => {
-//         const length = VarInt.read(buffer)
-//         const bits = DataByteArray.read(buffer, length)
-//         return new BitSet(bits)
-//     },
-//     write: (t: BitSet) => {
-//         const buffer = t.toArray()
-//         const length = buffer.length
-//         return Buffer.concat([VarInt.write(length), buffer])
-//     },
-// }
 
 describe('BitSet', () => {
     test('should be encoded into a compact buffer', () => {
@@ -41,6 +27,14 @@ describe('BitSet', () => {
         const write = DataBitSet.write(bitset)
         const read = DataBitSet.read(write.toJSON().data)
         // console.log(bitset.toString(), read.toString())
+        expect(read.toString()).toEqual(bitset.toString())
+    })
+
+    test('empty bitset should be encoded as 0', () => {
+        const bitset = new BitSet(0)
+        const write = DataBitSet.write(bitset)
+        expect(write).toEqual(Buffer.from([0]))
+        const read = DataBitSet.read(write.toJSON().data)
         expect(read.toString()).toEqual(bitset.toString())
     })
 })

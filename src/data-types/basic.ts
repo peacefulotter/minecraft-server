@@ -1,4 +1,4 @@
-import InnerLong from 'long'
+import Long from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 import BitSet from 'bitset'
 
@@ -90,13 +90,13 @@ export const DataInt: Type<number> = {
     },
 }
 
-export const DataLong: Type<InnerLong> = {
+export const DataLong: Type<Long> = {
     read: (buffer: number[]) => {
         const b1 = DataInt.read(buffer)
         const b2 = DataInt.read(buffer)
-        return new InnerLong(b1, b2)
+        return new Long(b1, b2)
     },
-    write: (t: InnerLong) => {
+    write: (t: Long) => {
         return Buffer.concat([DataInt.write(t.high), DataInt.write(t.low)])
     },
 }
@@ -187,9 +187,9 @@ export const VarInt: Type<number> = {
     },
 }
 
-export const VarLong: Type<InnerLong> = {
+export const VarLong: Type<Long> = {
     read: (buffer: number[]) => {
-        let value = new InnerLong(0)
+        let value = new Long(0)
         let position = 0
         let idx = 0
 
@@ -197,7 +197,7 @@ export const VarLong: Type<InnerLong> = {
             const currentByte = buffer.at(idx)
             if (currentByte === undefined) throw new Error('VarLong is too big')
             value = value.or(
-                new InnerLong(currentByte & SEGMENT_BITS).shiftLeft(position)
+                new Long(currentByte & SEGMENT_BITS).shiftLeft(position)
             )
 
             if ((currentByte & CONTINUE_BIT) == 0) break
@@ -211,7 +211,7 @@ export const VarLong: Type<InnerLong> = {
         return value
     },
 
-    write: (t: InnerLong) => {
+    write: (t: Long) => {
         const buffer: number[] = []
         while (true) {
             if (t.and(~SEGMENT_BITS).eq(0)) {
@@ -257,19 +257,21 @@ export const DataPosition: Type<{
             ((t.x & 0x3ffffff) << 38) |
             ((t.z & 0x3ffffff) << 12) |
             (t.y & 0xfff)
-        return DataLong.write(InnerLong.fromNumber(val))
+        return DataLong.write(Long.fromNumber(val))
     },
 }
 
 export const DataBitSet: Type<BitSet> = {
     read: (buffer: number[]) => {
         const nbLong = VarInt.read(buffer)
+        if (nbLong === 0) return new BitSet(0)
         const length = Math.min(buffer.length, nbLong * LONG_SIZE)
         console.log(length, buffer.length, nbLong, buffer)
         const bits = DataByteArray.read(buffer, length)
         return new BitSet(bits)
     },
     write: (t: BitSet) => {
+        if (t.toArray().length === 0) return Buffer.from([0])
         const buffer = Buffer.from(
             t
                 .toString()
@@ -287,33 +289,34 @@ export const DataBitSet: Type<BitSet> = {
 }
 
 // ============= Meta types =============
-export const Optional = <T>(type: Type<T>): Type<T | undefined> => ({
-    read: (buffer: number[], length?: number) => {
-        if (DataBoolean.read(buffer, length)) return type.read(buffer, length)
+export const Optional = <T>(
+    type: Type<T> | AsyncType<T>
+): AsyncType<T | undefined> => ({
+    read: async (buffer: number[], length?: number) => {
+        if (DataBoolean.read(buffer, length))
+            return await type.read(buffer, length)
         return undefined
     },
 
-    write: (t: T | undefined) => {
+    write: async (t: T | undefined) => {
         if (t === undefined) {
             return DataBoolean.write(false)
         }
-        return Buffer.concat([DataBoolean.write(true), type.write(t)])
+        return Buffer.concat([DataBoolean.write(true), await type.write(t)])
     },
 })
 
 export const DataArray = <T>(type: Type<T> | AsyncType<T>) => ({
     read: async (buffer: number[]) => {
         const length = VarInt.read(buffer)
-        return await Promise.all(
-            new Array(length).fill(0).map(async () => await type.read(buffer))
-        )
+        const decoded = new Array(length).fill(0).map(() => type.read(buffer))
+        return await Promise.all(decoded)
     },
 
     write: async (t: T[]) => {
-        return Buffer.concat([
-            VarInt.write(t.length),
-            ...(await Promise.all(t.map(async (e) => await type.write(e)))),
-        ])
+        const length = VarInt.write(t.length)
+        const encoded = await Promise.all(t.map((e) => type.write(e)))
+        return Buffer.concat([length, ...encoded])
     },
 })
 
@@ -341,9 +344,7 @@ export const DataObject = <T extends DataTypeObject>(
     write: async (t: ObjectResult<T>) => {
         return Buffer.concat(
             await Promise.all(
-                Object.entries(t).map(
-                    async ([key, value]) => await types[key].write(value)
-                )
+                Object.entries(t).map(([key, value]) => types[key].write(value))
             )
         )
     },

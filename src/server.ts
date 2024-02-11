@@ -4,7 +4,7 @@ import { MainHandler } from './handlers/main'
 import { Client } from './client'
 import { log } from './logger'
 import { Unwrap } from './packets/server'
-import { formatPacket, type PacketId } from './packets'
+import { type PacketId } from './packets'
 
 export class Server {
     private clients: Record<SocketId, Client> = {}
@@ -20,7 +20,8 @@ export class Server {
             buffer,
         })
 
-        if (!response || !response.data) return
+        if (!response) return
+
         client.write(response)
     }
 

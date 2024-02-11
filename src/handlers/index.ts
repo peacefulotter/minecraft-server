@@ -23,7 +23,7 @@ export type Args<T extends ServerBoundPacket> = Omit<
 
 export type HandleFunc<T extends ServerBoundPacket> = (
     args: Args<T>
-) => Promise<ClientBoundPacket | void>
+) => Promise<ClientBoundPacket | ClientBoundPacket[] | void>
 
 type PacketHandler = {
     packet: ServerBoundPacket

@@ -7,10 +7,7 @@ import chalk from 'chalk'
 
 export type PacketId = number
 
-export const formatPacket = async (
-    packet: ClientBoundPacket,
-    client: Client
-) => {
+const format = async (packet: ClientBoundPacket, client: Client) => {
     const packetLen = packet.data.length + VarInt.write(packet.id).length
     const res = await WrapResponse.create({
         packetLen,
@@ -30,4 +27,17 @@ export const formatPacket = async (
     )
 
     return res
+}
+
+export const formatPacket = async (
+    packet: ClientBoundPacket | ClientBoundPacket[],
+    client: Client
+) => {
+    if (Array.isArray(packet)) {
+        const data = await Promise.all(packet.map((p) => format(p, client)))
+        return {
+            data: Buffer.concat(data.map((d) => d.data)),
+        }
+    }
+    return format(packet, client)
 }

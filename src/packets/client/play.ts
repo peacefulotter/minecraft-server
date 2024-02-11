@@ -16,6 +16,7 @@ import {
     DataFloat,
     Optional,
     DataPackedXZ,
+    DataUUID,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type {
@@ -51,48 +52,6 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     }
 )
 
-// fixed_time?: LongTag;
-//   has_skylight: BooleanTag;
-//   has_ceiling: BooleanTag;
-//   ultrawarm: BooleanTag;
-//   natural: BooleanTag;
-//   coordinate_scale: DoubleTag;
-//   bed_works: BooleanTag;
-//   respawn_anchor_works: BooleanTag;
-//   min_y: IntTag;
-//   height: IntTag;
-//   logical_height: IntTag;
-//   infiniburn: DimensionInfiniburn;
-//   effects: StringTag; // `DimensionResource`
-//   ambient_light: FloatTag;
-//   piglin_safe: BooleanTag;
-//   has_raids_safe: BooleanTag;
-//   monster_spawn_light_level: DimensionMonsterSpawnLightLevel;
-//   monster_spawn_block_light_limit: IntTag<DimensionMonsterSpawnLightLevelRange>;
-
-// DataObject({
-//     fixed_time: DataLong,
-//     has_skylight: DataBoolean,
-//     has_ceiling: DataBoolean,
-//     ultrawarm: DataBoolean,
-//     natural: DataBoolean,
-//     coordinate_scale: DataDouble,
-//     bed_works: DataBoolean,
-//     respawn_anchor_works: DataBoolean,
-//     min_y: DataInt,
-//     height: DataInt,
-//     logical_height: DataInt,
-//     infiniburn: DataString as Type<DimensionInfiniburn>,
-//     effects: DataString, // TODO: `DimensionResource`
-//     ambient_light: DataFloat,
-//     piglin_safe: DataBoolean,
-//     has_raids_safe: DataBoolean,
-//     monster_spawn_light_level: ,
-//     monster_spawn_block_light_limit: DataInt as Type<
-//         IntTag<DimensionMonsterSpawnLightLevelRange>
-//     >,
-// })
-
 export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     entityId: DataInt,
     isHardcore: DataBoolean,
@@ -119,7 +78,28 @@ export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     portalCooldown: VarInt,
 })
 
+// export const PlayerInfoUpdate = new ClientBoundPacketCreator(
+//     0x32,
+//     'PlayerInfoUpdate',
+//     {
+//         action: DataByte,
+//         data: DataArray(
+//             DataObject({
+//                 uuid: DataUUID,
+//                 name: DataString,
+//                 properties: DataArray(
+//                     DataObject({
+//                         uuid: DataUUID,
+//                         actions: DataArray(DataPlayerActions),
+//                     })
+//                 ),
+//             })
+//         ),
+//     }
+// )
+
 export enum PlayerPositionFlag {
+    NONE = 0x00,
     X = 0x01,
     Y = 0x02,
     Z = 0x04,
@@ -138,6 +118,27 @@ export const SynchronizePlayerPosition = new ClientBoundPacketCreator(
         pitch: DataFloat,
         flags: DataByte as Type<PlayerPositionFlag>,
         teleportId: VarInt,
+    }
+)
+
+export const SetHeldItem = new ClientBoundPacketCreator(0x51, 'SetHeldItem', {
+    slot: DataByte,
+})
+
+export const SetCenterChunk = new ClientBoundPacketCreator(
+    0x52,
+    'SetCenterChunk',
+    {
+        chunkX: VarInt,
+        chunkZ: VarInt,
+    }
+)
+
+export const SetRenderDistance = new ClientBoundPacketCreator(
+    0x53,
+    'SetRenderDistance',
+    {
+        viewDistance: VarInt, // 2 - 32
     }
 )
 

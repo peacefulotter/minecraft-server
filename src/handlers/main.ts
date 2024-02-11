@@ -7,7 +7,9 @@ import { StatusHandler } from './status'
 import { PlayHandler } from './play'
 
 export class MainHandler {
-    subhandlers: { [key in ClientState]: Handler } = {
+    subhandlers: {
+        [key in Exclude<ClientState, ClientState.DISCONNECTED>]: Handler
+    } = {
         [ClientState.HANDSHAKING]: HandshakeHandler,
         [ClientState.STATUS]: StatusHandler,
         [ClientState.LOGIN]: LoginHandler,
@@ -16,6 +18,9 @@ export class MainHandler {
     }
 
     handle = async (args: RawHandlerArgs) => {
+        if (args.client.state === ClientState.DISCONNECTED) {
+            throw new Error('Client is disconnected')
+        }
         // Dispatch to the appropriate subhandler based on the client's state
         return await this.subhandlers[args.client.state].handle(args)
     }
