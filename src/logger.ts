@@ -3,29 +3,19 @@ import type {
     ClientBoundPacket,
     ServerBoundPacket,
     ServerBoundPacketDeserializer,
-} from './packets/create'
-import { ClientState, type Client } from './client'
+} from './net/packets/create'
+import { ClientState, type Client } from './net/client'
 import type { Handler, PacketHandler } from './handlers'
-import type { PacketId } from './packets'
+import type { PacketId } from './net/packets'
 
 export const log = (...message: any[]) => {
     const d = new Date()
     console.log(chalk.gray(`[${d.toISOString()}]`), ...message)
 }
 
-export const byteToHex = (byte: number) => {
-    const key = '0123456789abcdef'
-    let bytes = Buffer.from([byte])
-    let newHex = ''
-    let currentChar = 0
-    for (let i = 0; i < bytes.length; i++) {
-        // Go over each 8-bit byte
-        currentChar = bytes[i] >> 4 // First 4-bits for first hex char
-        newHex += key[currentChar] // Add first hex char to string
-        currentChar = bytes[i] & 15 // Erase first 4-bits, get last 4-bits for second hex char
-        newHex += key[currentChar] // Add second hex char to string
-    }
-    return '0x' + newHex
+export const hex = (byte: number) => {
+    const hex = byte.toString(16)
+    return '0x' + (hex.length % 2 === 1 ? '0' : '') + hex
 }
 
 export const logHandler = <
@@ -39,9 +29,7 @@ export const logHandler = <
             Object.values(handler.handlers)
                 .map(
                     ({ packet }) =>
-                        `${chalk.yellowBright(byteToHex(packet.id))} - ${
-                            packet.name
-                        }`
+                        `${chalk.yellowBright(hex(packet.id))} - ${packet.name}`
                 )
                 .join('\n')
     )
@@ -53,7 +41,7 @@ const logPacket =
         log(
             chalk.redBright(side),
             'packet',
-            chalk.rgb(150, 255, 0)(byteToHex(packet.id) + ':' + packet.name),
+            chalk.rgb(150, 255, 0)(hex(packet.id) + ' : ' + packet.name),
             'for state',
             chalk.cyan(ClientState[client.state]),
             'data:',

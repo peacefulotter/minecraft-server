@@ -1,9 +1,9 @@
-import { logClientBoundPacket } from './logger'
+import { logClientBoundPacket } from '../logger'
 import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
-import type { Position, Rotation } from './position'
-import type { SocketWithId } from './socket'
+import type { Position, Rotation } from '../position'
+import type { SocketWithId } from '../socket'
 
 export enum ClientState {
     HANDSHAKING,
@@ -34,7 +34,7 @@ export class Client {
     }
 
     async write(packet: ClientBoundPacket | ClientBoundPacket[]) {
-        const formatted = await formatPacket(packet, this)
+        const formatted = await formatPacket(packet)
         logClientBoundPacket(formatted, this)
         this.socket.write(formatted.data)
     }

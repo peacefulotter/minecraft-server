@@ -6,7 +6,7 @@ import {
     VarInt,
     type Type,
 } from '~/data-types/basic'
-import type { ClientState } from '~/client'
+import type { ClientState } from '~/net/client'
 import { ServerBoundPacketCreator } from '../create'
 
 export const Handshake = ServerBoundPacketCreator(0x00, 'Handshake', {

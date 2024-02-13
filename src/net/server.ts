@@ -1,9 +1,9 @@
 import shortid from 'shortid'
-import type { SocketId, SocketWithId } from './socket'
-import { MainHandler } from './handlers/main'
+import type { SocketId, SocketWithId } from '../socket'
+import { MainHandler } from '../handlers/main'
 import { Client } from './client'
-import { log } from './logger'
-import { Unwrap } from './packets/server'
+import { log } from '../logger'
+import { unwrap } from './packets/server'
 import { type PacketId } from './packets'
 
 export class Server {
@@ -27,7 +27,7 @@ export class Server {
 
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]
-        const packets = Unwrap(data)
+        const packets = unwrap(data)
         for (const packet of packets) {
             await this.handlePacket(client, packet)
         }

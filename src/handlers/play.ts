@@ -2,23 +2,25 @@ import * as NBT from 'nbtify'
 import {
     AcknowledgeMessage,
     ConfirmTeleportation,
+    PlayerAction,
     SetPlayerOnGround,
     SetPlayerPosition,
     SetPlayerPositionAndRotation,
     SetPlayerRotation,
-} from '~/packets/server'
+} from '~/net/packets/server'
 import {
     ChunkDataAndUpdateLight,
+    GameEvent,
     PlayerPositionFlag,
     SetCenterChunk,
     SetDefaultSpawnPosition,
     SynchronizePlayerPosition,
-} from '~/packets/client'
+} from '~/net/packets/client'
 import BitSet from 'bitset'
 import { terrainMap } from '~/world/parse'
 import { DataNBT } from '~/data-types/registry'
 import { DataBitSet } from '~/data-types/basic'
-import type { ClientBoundPacket } from '~/packets/create'
+import type { ClientBoundPacket } from '~/net/packets/create'
 import { Handler } from '.'
 
 let state = -1
@@ -233,20 +235,12 @@ export const PlayHandler = Handler.init('Play')
     .register(SetPlayerPosition, async ({ client, packet }) => {
         client.position = packet
         state++
-        if (state === 0) {
-            return SetCenterChunk({ chunkX: 0, chunkZ: 0 })
-        }
         if (state === 1) {
-            console.log(
-                'EMPTY NBT',
-                await DataNBT.write(new NBT.NBTData({}, { rootName: null }))
-            )
-            console.log('EMPTY Bitset', DataBitSet.write(new BitSet(0)))
-            const packets: ClientBoundPacket[] = []
+            const chunks: ClientBoundPacket[] = []
             const size = 3
             for (let i = -size; i <= size; i++) {
                 for (let j = -size; j <= size; j++) {
-                    packets.push(
+                    chunks.push(
                         await ChunkDataAndUpdateLight({
                             chunkX: i,
                             chunkZ: j,
@@ -263,30 +257,40 @@ export const PlayHandler = Handler.init('Play')
                     )
                 }
             }
-            return packets
+            return [
+                await GameEvent({
+                    event: {
+                        effect: 13,
+                        value: 0,
+                    },
+                }),
+                ...chunks,
+                await SynchronizePlayerPosition({
+                    x: client.x,
+                    y: client.y,
+                    z: client.z,
+                    yaw: client.yaw,
+                    pitch: client.pitch,
+                    // PlayerPositionFlag.NONE,
+                    flags:
+                        PlayerPositionFlag.X |
+                        PlayerPositionFlag.Y |
+                        PlayerPositionFlag.Z |
+                        PlayerPositionFlag.Y_ROT |
+                        PlayerPositionFlag.X_ROT,
+                    teleportId: 0,
+                }),
+                await SetDefaultSpawnPosition({
+                    location: { x: 8.5, y: 0, z: 8.5 },
+                    angle: 0,
+                }),
+                await SetCenterChunk({ chunkX: 0, chunkZ: 0 }),
+            ]
         }
-        if (state === 3) {
-            return SynchronizePlayerPosition({
-                x: client.x,
-                y: client.y,
-                z: client.z,
-                yaw: client.yaw,
-                pitch: client.pitch,
-                flags: PlayerPositionFlag.NONE,
-                // PlayerPositionFlag.X |
-                // PlayerPositionFlag.Y |
-                // PlayerPositionFlag.Z |
-                // PlayerPositionFlag.Y_ROT |
-                // PlayerPositionFlag.X_ROT,
-                teleportId: 0,
-            })
-        }
-        if (state === 2) {
-            return SetDefaultSpawnPosition({
-                location: { x: 8.5, y: 0, z: 8.5 },
-                angle: 0,
-            })
-        }
+    })
+
+    .register(PlayerAction, async ({ client, packet }) => {
+        // TODO: handle player actions
     })
 
     .register(SetPlayerPositionAndRotation, async ({ client, packet }) => {

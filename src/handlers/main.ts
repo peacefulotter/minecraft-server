@@ -1,5 +1,5 @@
 import { ConfigurationHandler } from './configuration'
-import { ClientState } from '~/client'
+import { ClientState } from '~/net/client'
 import { Handler, type RawHandlerArgs } from '.'
 import { HandshakeHandler } from './handshake'
 import { LoginHandler } from './login'

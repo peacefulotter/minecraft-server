@@ -321,7 +321,7 @@ export const DataArray = <T>(type: Type<T> | AsyncType<T>) => ({
 })
 
 type DataTypeObject = { [key: string]: Type<any> | AsyncType<any> }
-type ObjectResult<T extends DataTypeObject> = {
+export type ObjectResult<T extends DataTypeObject> = {
     [key in keyof T]: T[key] extends Type<infer U> | AsyncType<infer U>
         ? U
         : never

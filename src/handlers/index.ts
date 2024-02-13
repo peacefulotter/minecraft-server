@@ -1,12 +1,12 @@
-import { ClientState, type Client } from '~/client'
-import { byteToHex, logServerBoundPacket } from '~/logger'
-import type { PacketId } from '~/packets'
+import { ClientState, type Client } from '~/net/client'
+import { hex, logServerBoundPacket } from '~/logger'
+import type { PacketId } from '~/net/packets'
 import type {
     ClientBoundPacket,
     ServerBoundPacket,
     ServerBoundPacketData,
     ServerBoundPacketDeserializer,
-} from '~/packets/create'
+} from '~/net/packets/create'
 
 export type RawHandlerArgs = {
     client: Client
@@ -57,7 +57,7 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
             return this.handlers[packetId]
         }
         throw new Error(
-            `Unknown packet for ${this.name} handler, id: ${byteToHex(
+            `Unknown packet for ${this.name} handler, id: ${hex(
                 packetId
             )}, state: ${ClientState[client.state]}`
         )

@@ -1,5 +1,5 @@
-import { PingResponse, StatusResponse } from '~/packets/client/status'
-import { StatusPingRequest, StatusRequest } from '~/packets/server'
+import { PingResponse, StatusResponse } from '~/net/packets/client/status'
+import { StatusPingRequest, StatusRequest } from '~/net/packets/server'
 import { STATUS_RESPONSE } from '~/constants'
 import { Handler } from '.'
 

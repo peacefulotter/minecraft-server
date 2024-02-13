@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { log } from './logger'
-import { Server } from './server'
+import { Server } from './net/server'
 
 const socket = Bun.listen({
     hostname: 'localhost',

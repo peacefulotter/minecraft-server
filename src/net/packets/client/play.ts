@@ -17,6 +17,8 @@ import {
     DataOptional,
     DataPackedXZ,
     DataUUID,
+    type AsyncType,
+    type ObjectResult,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type {
@@ -26,12 +28,46 @@ import type {
 } from 'region-types'
 import { ClientBoundPacketCreator } from '../create'
 import { DataNBT } from '~/data-types/registry'
+import type { ValueOf } from 'type-fest'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
     'BundleDelimiter',
     {}
 )
+
+type GameEffect<N extends string, E extends number, V extends number> = {
+    name: N
+    effect: E
+    value: V
+}
+
+type GameEventEffect =
+    | GameEffect<'NO_RESPAWN_BLOCK_AVAILABLE', 0, number>
+    | GameEffect<'END_RAINING', 1, number>
+    | GameEffect<'BEGIN_RAINING', 2, number>
+    | GameEffect<'CHANGE_GAME_MODE', 3, GameMode>
+    | GameEffect<'WIN_GAME', 4, 0 | 1>
+    | GameEffect<'DEMO_EVENT', 5, 0 | 101 | 102 | 103 | 104>
+    | GameEffect<'ARROW_HIT_PLAYER', 6, number>
+    | GameEffect<'RAIN_LEVEL_CHANGE', 7, number> // [0, 1]
+    | GameEffect<'THUNDER_LEVEL_CHANGE', 8, number> // [0, 1]
+    | GameEffect<'PUFFER_FISH_STING', 9, number>
+    | GameEffect<'GUARDIAN_ELDER_APPEARANCE', 10, number>
+    | GameEffect<'ENABLE_RESPAWN_SCREEN', 11, 0 | 1>
+    | GameEffect<'LIMITED_CRAFTING', 12, 0 | 1>
+    | GameEffect<'START_WAITING_CHUNKS', 13, number>
+
+type GameEvents = ValueOf<{
+    [K in GameEventEffect as K['name']]: Omit<K, 'name'>
+}>
+
+export const GameEvent = ClientBoundPacketCreator(0x20, 'GameEvent', {
+    event: DataObject({
+        effect: DataByte,
+        value: DataFloat,
+    }) as AsyncType<GameEvents>,
+})
 
 export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
     0x25,

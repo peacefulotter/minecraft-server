@@ -1,4 +1,4 @@
-import { Handshake, LegacyServerListPing } from '~/packets/server'
+import { Handshake, LegacyServerListPing } from '~/net/packets/server'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
 import { Handler } from '.'
 

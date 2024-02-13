@@ -3,7 +3,7 @@ import Long from 'long'
 import {
     createServerBoundPacket,
     createClientBoundPacket,
-} from '~/packets/create'
+} from '~/net/packets/create'
 import {
     DataByte,
     DataInt,

@@ -1,6 +1,6 @@
 import path from 'path'
 import { v4 as uuid } from 'uuid'
-import { ClientState } from '~/client'
+import { ClientState } from '~/net/client'
 import { log } from '~/logger'
 import chalk from 'chalk'
 import {
@@ -8,8 +8,8 @@ import {
     LoginAcknowledged,
     LoginPluginResponse,
     LoginStart,
-} from '~/packets/server'
-import { LoginSuccess, RegistryData } from '~/packets/client'
+} from '~/net/packets/server'
+import { LoginSuccess, RegistryData } from '~/net/packets/client'
 import { Handler } from '.'
 import * as NBT from 'nbtify'
 

@@ -6,13 +6,13 @@ import {
     PlayPong,
     ResourcePackResponse,
     ConfigurationClientInformation,
-} from '~/packets/server'
+} from '~/net/packets/server'
 import { Handler } from '.'
-import { ClientState } from '~/client'
+import { ClientState } from '~/net/client'
 import {
     FinishConfiguration as ClientFinishConfiguration,
     PlayLogin,
-} from '~/packets/client'
+} from '~/net/packets/client'
 import { GameMode } from '~/data-types/enum'
 import { hashSeed } from '~/seed'
 

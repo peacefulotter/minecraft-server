@@ -10,6 +10,7 @@ import {
     DataInt,
     DataShort,
     DataUUID,
+    DataPosition,
 } from '~/data-types/basic'
 import { ServerBoundPacketCreator } from '../create'
 import type { Difficulty } from '~/data-types/enum'
@@ -156,12 +157,65 @@ export const PingRequest = ServerBoundPacketCreator(0x1e, 'PingRequest', {
     payload: DataLong,
 })
 
+enum ActionStatus {
+    STARTED_DIGGING = 0,
+    CANCELLED_DIGGING,
+    FINISHED_DIGGING,
+    DROP_ITEM_STACK,
+    DROP_ITEM,
+    SHOOT_ARROW_OR_FINISH_EATING,
+    SWAP_ITEM_IN_HAND,
+}
+
+enum Face {
+    BOTTOM = 0,
+    TOP,
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST,
+}
+
+export const PlayerAction = ServerBoundPacketCreator(0x21, 'PlayerAction', {
+    status: VarInt as Type<ActionStatus>,
+    location: DataPosition,
+    face: DataByte as Type<Face>,
+    sequence: VarInt,
+})
+
+enum PlayerCommandAction {
+    START_SNEAKING = 0,
+    STOP_SNEAKING,
+    LEAVE_BED,
+    START_SPRINTING,
+    STOP_SPRINTING,
+    START_HORSE_JUMP,
+    STOP_HORSE_JUMP,
+    OPEN_VEHICLE_INVENTORY,
+    START_FLYING_WITH_ELYTRA,
+}
+
+export const PlayerCommand = ServerBoundPacketCreator(0x22, 'PlayerCommand', {
+    entity: VarInt,
+    action: VarInt as Type<PlayerCommandAction>,
+    jump_boost: VarInt,
+})
+
 export const PlayPong = ServerBoundPacketCreator(0x24, 'Pong', {
     id: DataInt,
 })
 
 export const SetHeldItem = ServerBoundPacketCreator(0x2c, 'SetHeldItem', {
     slot: DataShort,
+})
+
+enum Hand {
+    MAIN_HAND = 0,
+    OFF_HAND,
+}
+
+export const SwingHand = ServerBoundPacketCreator(0x33, 'SwingHand', {
+    hand: VarInt as Type<Hand>,
 })
 
 export const TeleportToEntity = ServerBoundPacketCreator(
