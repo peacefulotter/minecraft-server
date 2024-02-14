@@ -46,6 +46,8 @@ export const DataByte: Type<number> = {
     },
 }
 
+export const DataAngle = DataByte
+
 export const DataByteArray: Type<Buffer> = {
     read: (buffer: number[], length?: number) => {
         const acc: number[] = []

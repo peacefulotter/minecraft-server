@@ -51,9 +51,13 @@ export const FinishConfiguration = ServerBoundPacketCreator(
     {}
 )
 
-export const KeepAlive = ServerBoundPacketCreator(0x03, 'KeepAlive', {
-    id: DataLong,
-})
+export const ConfigurationServerBoundKeepAlive = ServerBoundPacketCreator(
+    0x03,
+    'KeepAlive',
+    {
+        id: DataLong,
+    }
+)
 
 export const Pong = ServerBoundPacketCreator(0x04, 'Pong', {
     id: DataInt,

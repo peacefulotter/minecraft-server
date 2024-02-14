@@ -7,8 +7,10 @@ import type {
     ServerBoundPacketData,
     ServerBoundPacketDeserializer,
 } from '~/net/packets/create'
+import type { Server } from '~/net/server'
 
 export type RawHandlerArgs = {
+    server: Server
     client: Client
     packetId: number
     buffer: number[]
@@ -64,7 +66,7 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
     }
 
     handle = async (args: RawHandlerArgs) => {
-        const { packetId, buffer, client } = args
+        const { server, client, packetId, buffer } = args
         const { packet, callback } = this.getHandler(packetId, client)
         const parsed = (await packet.deserialize(
             buffer,
@@ -74,8 +76,9 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
         logServerBoundPacket(parsed, client)
 
         return callback({
-            packetId,
+            server,
             client,
+            packetId,
             packet: parsed.data,
         })
     }

@@ -18,23 +18,40 @@ import {
     DataPackedXZ,
     DataUUID,
     type AsyncType,
-    type ObjectResult,
+    DataAngle,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
-import type {
-    DimensionInfiniburn,
-    DimensionResource,
-    DimensionMonsterSpawnLightLevelRange,
-} from 'region-types'
+import type { DimensionResource } from 'region-types'
 import { ClientBoundPacketCreator } from '../create'
 import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
+import type { EntityId } from '~/data-types/entities'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
     'BundleDelimiter',
     {}
 )
+
+export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
+    id: VarInt,
+    uuid: DataUUID,
+    type: VarInt as Type<EntityId>,
+    x: DataDouble,
+    y: DataDouble,
+    z: DataDouble,
+    pitch: DataAngle,
+    yaw: DataAngle,
+    headYaw: DataAngle,
+    data: VarInt,
+    velocityX: DataShort,
+    velocityY: DataShort,
+    velocityZ: DataShort,
+})
+
+export const PlayDisconnect = ClientBoundPacketCreator(0x19, 'PlayDisconnect', {
+    reason: DataNBT,
+})
 
 type GameEffect<N extends string, E extends number, V extends number> = {
     name: N
@@ -68,6 +85,14 @@ export const GameEvent = ClientBoundPacketCreator(0x20, 'GameEvent', {
         value: DataFloat,
     }) as AsyncType<GameEvents>,
 })
+
+export const PlayClientBoundKeepAlive = ClientBoundPacketCreator(
+    0x24,
+    'KeepAlive',
+    {
+        id: DataLong,
+    }
+)
 
 export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
     0x25,

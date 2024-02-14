@@ -36,7 +36,7 @@ export const FinishConfiguration = ClientBoundPacketCreator(
     {}
 )
 
-export const ConfigurationKeepAlive = ClientBoundPacketCreator(
+export const ConfigurationClientBoundKeepAlive = ClientBoundPacketCreator(
     0x03,
     'ConfigurationKeepAlive',
     {

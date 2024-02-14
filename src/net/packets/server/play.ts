@@ -90,9 +90,13 @@ export const PlayClientInformation = ServerBoundPacketCreator(
     }
 )
 
-export const PlayKeepAlive = ServerBoundPacketCreator(0x15, 'KeepAlive', {
-    id: DataLong,
-})
+export const PlayServerBoundKeepAlive = ServerBoundPacketCreator(
+    0x15,
+    'KeepAlive',
+    {
+        id: DataLong,
+    }
+)
 
 export const SetPlayerPosition = ServerBoundPacketCreator(
     0x17,

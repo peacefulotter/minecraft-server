@@ -105,7 +105,7 @@ export const DataNBT: AsyncType<
     NBT.NBTData<NBT.RootTag>
 > = class NBTCompoundTag {
     static read = async (buffer: number[]) => {
-        return await NBT.read(Buffer.from(buffer))
+        return await NBT.read(Buffer.from(buffer), { rootName: null })
     }
 
     static write = async (t: NBT.NBTData<NBT.RootTag>) => {
