@@ -17,15 +17,17 @@ import {
     DataOptional,
     DataPackedXZ,
     DataUUID,
-    type AsyncType,
     DataAngle,
+    DataObjectOptional,
+    type ObjectTypeInner,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type { DimensionResource } from 'region-types'
 import { ClientBoundPacketCreator } from '../create'
 import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
-import type { EntityId } from '~/data-types/entities'
+import type { EntityType } from '~/data-types/entities'
+import type { UUID } from '@minecraft-js/uuid'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
@@ -34,9 +36,9 @@ export const BundleDelimiter = ClientBoundPacketCreator(
 )
 
 export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
-    id: VarInt,
-    uuid: DataUUID,
-    type: VarInt as Type<EntityId>,
+    entityId: VarInt,
+    entityUUID: DataUUID,
+    type: VarInt as Type<EntityType>,
     x: DataDouble,
     y: DataDouble,
     z: DataDouble,
@@ -83,7 +85,7 @@ export const GameEvent = ClientBoundPacketCreator(0x20, 'GameEvent', {
     event: DataObject({
         effect: DataByte,
         value: DataFloat,
-    }) as AsyncType<GameEvents>,
+    }) as Type<GameEvents>,
 })
 
 export const PlayClientBoundKeepAlive = ClientBoundPacketCreator(
@@ -145,25 +147,131 @@ export const PlayLogin = ClientBoundPacketCreator(0x29, 'PlayLogin', {
     portalCooldown: VarInt,
 })
 
-// export const PlayerInfoUpdate =  ClientBoundPacketCreator(
-//     0x32,
-//     'PlayerInfoUpdate',
-//     {
-//         action: DataByte,
-//         data: DataArray(
-//             DataObject({
-//                 uuid: DataUUID,
-//                 name: DataString,
-//                 properties: DataArray(
-//                     DataObject({
-//                         uuid: DataUUID,
-//                         actions: DataArray(DataPlayerActions),
-//                     })
-//                 ),
-//             })
-//         ),
-//     }
-// )
+// TODO: be able to concatenate packets to avoid repetition
+
+export const UpdateEntityPosition = ClientBoundPacketCreator(
+    0x2c,
+    'UpdateEntityPosition',
+    {
+        entityId: VarInt,
+        deltaX: DataShort, // (currentX * 32 - prevX * 32) * 128
+        deltaY: DataShort, // (currentY * 32 - prevY * 32) * 128
+        deltaZ: DataShort, // (currentZ * 32 - prevZ * 32) * 128
+        onGround: DataBoolean,
+    }
+)
+
+export const UpdateEntityPositionAndRotation = ClientBoundPacketCreator(
+    0x2d,
+    'UpdateEntityPositionRotation',
+    {
+        entityId: VarInt,
+        deltaX: DataShort, // (currentX * 32 - prevX * 32) * 128
+        deltaY: DataShort, // (currentY * 32 - prevY * 32) * 128
+        deltaZ: DataShort, // (currentZ * 32 - prevZ * 32) * 128
+        yaw: DataAngle,
+        pitch: DataAngle,
+        onGround: DataBoolean,
+    }
+)
+
+export const UpdateEntityRotation = ClientBoundPacketCreator(
+    0x2e,
+    'UpdateEntityRotation',
+    {
+        entityId: VarInt,
+        yaw: DataAngle,
+        pitch: DataAngle,
+        onGround: DataBoolean,
+    }
+)
+
+const AddPlayerAction = DataObject({
+    name: DataUUID,
+    properties: DataArray(
+        DataObject({
+            name: DataString,
+            value: DataString,
+            signature: DataOptional(DataString),
+        })
+    ),
+})
+
+const InitializeChatAction = DataObject({
+    signatureData: DataOptional(
+        DataObject({
+            chatSessionId: DataUUID,
+            publicKeyExpiryTime: DataLong,
+            encodedPublicKey: VarIntPrefixedByteArray,
+            publicKeySignature: VarIntPrefixedByteArray,
+        })
+    ),
+})
+
+const UpdateGameModeAction = DataObject({
+    gameMode: VarInt as Type<GameMode>,
+})
+
+const UpdateListedAction = DataObject({
+    listed: DataBoolean,
+})
+
+const UpdateLatencyAction = DataObject({
+    ping: VarInt,
+})
+
+const UpdateDisplayNameAction = DataObject({
+    displayName: DataOptional(DataString),
+})
+
+const PlayerActions = {
+    addPlayer: AddPlayerAction,
+    inializeChat: InitializeChatAction,
+    updateGameMode: UpdateGameModeAction,
+    updateListed: UpdateListedAction,
+    updateLatency: UpdateLatencyAction,
+    updateDisplayName: UpdateDisplayNameAction,
+}
+
+const PlayerActionsMask: Record<keyof typeof PlayerActions, number> = {
+    addPlayer: 0x01,
+    inializeChat: 0x02,
+    updateGameMode: 0x04,
+    updateListed: 0x08,
+    updateLatency: 0x10,
+    updateDisplayName: 0x20,
+}
+
+const _PlayerInfoUpdate = ClientBoundPacketCreator(0x3c, 'PlayerInfoUpdate', {
+    actions: DataByte,
+    players: DataArray(
+        DataObject({
+            // TODO: check uuid v3 (see spawn entity below table)
+            uuid: DataUUID, // player uuid
+            playerActions: DataObjectOptional(PlayerActions),
+        })
+    ),
+})
+
+// Wrapper for private PlayerInfoUpdate to compute the actions byte
+export const PlayerInfoUpdate = <
+    // Enforce all player actions to be the same type (same keys defined)
+    P extends Partial<ObjectTypeInner<typeof PlayerActions>>
+>(
+    players: {
+        uuid: UUID
+        // Enforce all player actions to be the same type (same keys defined)
+        playerActions: { [K in keyof P]: P[K] }
+    }[]
+) => {
+    const actions = Object.keys(players[0].playerActions).reduce((acc, key) => {
+        return acc | PlayerActionsMask[key as keyof typeof PlayerActions]
+    }, 0)
+    return _PlayerInfoUpdate({
+        actions,
+        players,
+    })
+}
 
 export enum PlayerPositionFlag {
     NONE = 0x00,
@@ -185,6 +293,15 @@ export const SynchronizePlayerPosition = ClientBoundPacketCreator(
         pitch: DataFloat,
         flags: DataByte as Type<PlayerPositionFlag>,
         teleportId: VarInt,
+    }
+)
+
+export const SetHeadRotation = ClientBoundPacketCreator(
+    0x46,
+    'SetHeadRotation',
+    {
+        entityId: VarInt,
+        headYaw: DataAngle,
     }
 )
 

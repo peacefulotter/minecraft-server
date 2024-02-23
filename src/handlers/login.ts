@@ -1,5 +1,4 @@
 import path from 'path'
-import { v4 as uuid } from 'uuid'
 import { ClientState } from '~/net/client'
 import { log } from '~/logger'
 import chalk from 'chalk'
@@ -32,7 +31,6 @@ export const LoginHandler = Handler.init('Login')
 
     .register(LoginStart, async ({ client, packet }) => {
         client.username = packet.username
-        client.uuid = uuid()
 
         log(
             'User',

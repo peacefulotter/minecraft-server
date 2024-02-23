@@ -7,14 +7,15 @@ const ResponseFormat = {
     data: DataByteArray,
 }
 
-export const wrap = (packet: ClientBoundPacket) => {
+export const wrap = async (packet: ClientBoundPacket) => {
     const creator = ClientBoundPacketCreator(
         packet.id,
         packet.name,
         ResponseFormat
     )
 
-    const packetLen = packet.data.length + VarInt.write(packet.id).length
+    const packetId = await VarInt.write(packet.id)
+    const packetLen = packet.data.length + packetId.length
 
     return creator({
         packetLen,

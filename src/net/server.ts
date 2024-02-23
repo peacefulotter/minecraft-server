@@ -1,14 +1,13 @@
-import shortid from 'shortid'
-import path from 'path'
 import type { SocketId, SocketWithId } from '../socket'
 import { MainHandler } from '../handlers/main'
 import { Client } from './client'
 import { log } from '../logger'
 import { unwrap } from './packets/server'
 import { type PacketId } from './packets'
-import type { WorkerMessage } from '~/worker/message'
 import { GameLoop } from '~/worker/loop'
 import type { ClientBoundPacket } from './packets/create'
+import { EntityHandler } from '~/entity/Handler'
+import { nanoid } from 'nanoid'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -36,7 +35,8 @@ export class Server {
     // private worker: ServerWorker = new ServerWorker()
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
-    private loop = new GameLoop(this.clients)
+    // private loop = new GameLoop(this.clients)
+    entities: EntityHandler = new EntityHandler()
 
     handlePacket = async (
         client: Client,
@@ -55,11 +55,11 @@ export class Server {
     }
 
     broadcast = (
-        socket: SocketWithId,
+        origin: Client, // Client originating the broadcast
         packet: ClientBoundPacket | ClientBoundPacket[]
     ) => {
         for (const [socketId, client] of Object.entries(this.clients)) {
-            if (socketId === socket.id) continue
+            if (parseInt(socketId) === origin.socket.id) continue
             client.write(packet)
         }
     }
@@ -73,10 +73,10 @@ export class Server {
     }
 
     open = (socket: SocketWithId) => {
-        const id = shortid.generate()
-        socket.id = id
         const client = new Client(socket)
-        this.clients[id] = client
+        this.entities.addEntity(client)
+        this.clients[client.entityId] = client
+        socket.id = client.entityId
         log('Socket connected', socket.id)
     }
 

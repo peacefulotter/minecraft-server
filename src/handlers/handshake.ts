@@ -6,7 +6,6 @@ export const HandshakeHandler = Handler.init('Handshake')
 
     .register(Handshake, async (args) => {
         const { client, packet } = args
-        console.log(packet)
         client.state = packet.nextState
     })
 

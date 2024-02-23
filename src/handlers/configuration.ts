@@ -16,9 +16,11 @@ import {
     FinishConfiguration as ClientFinishConfiguration,
     GameEvent,
     PlayLogin,
+    PlayerInfoUpdate,
     PlayerPositionFlag,
     SetCenterChunk,
     SetDefaultSpawnPosition,
+    SpawnEntity,
     SynchronizePlayerPosition,
 } from '~/net/packets/client'
 import { GameMode } from '~/data-types/enum'
@@ -37,7 +39,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
     .register(PluginMessage, async (args) => {})
 
-    .register(FinishConfiguration, async ({ client }) => {
+    .register(FinishConfiguration, async ({ server, client }) => {
         client.state = ClientState.PLAY
 
         const chunks: ClientBoundPacket[] = []
@@ -106,6 +108,36 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 flags: PlayerPositionFlag.NONE,
                 teleportId: 0,
             }),
+            ...(await Promise.all(
+                server.entities.getAll().map((entity) =>
+                    SpawnEntity({
+                        entityId: entity.entityId,
+                        entityUUID: entity.entityUUID,
+                        type: entity.type,
+                        x: entity.position.x,
+                        y: entity.position.y,
+                        z: entity.position.z,
+                        yaw: entity.rotation.yaw,
+                        pitch: entity.rotation.pitch,
+                        headYaw: entity.headYaw,
+                        data: entity.data,
+                        velocityX: entity.velocity.x,
+                        velocityY: entity.velocity.y,
+                        velocityZ: entity.velocity.z,
+                    })
+                )
+            )),
+            await PlayerInfoUpdate(
+                server.entities.getPlayers().map((p) => ({
+                    uuid: p.entityUUID,
+                    playerActions: {
+                        =====================================
+                        // addPlayer: {
+                        //     name: p.username as string,
+                        // },
+                    },
+                }))
+            ),
         ]
     })
     .register(ConfigurationServerBoundKeepAlive, async (args) => {})

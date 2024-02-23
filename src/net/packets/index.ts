@@ -41,5 +41,5 @@ export const formatPacket = async (
             ),
         } as ClientBoundPacket
     }
-    return wrap(packet)
+    return await wrap(packet)
 }

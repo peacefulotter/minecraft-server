@@ -1,8 +1,8 @@
 import { decrypt } from '~/auth'
-import type { AsyncType, Type } from '~/data-types/basic'
+import type { Type } from '~/data-types/basic'
 import type { PacketId } from '.'
 
-export type PacketFormat = { [key: string]: Type<any> | AsyncType<any> }
+export type PacketFormat = { [key: string]: Type<any> }
 
 type Packet<D, I extends PacketId = number, N extends string = string> = {
     id: I
@@ -35,7 +35,7 @@ const ServerBoundPacketReducer =
     (buffer: number[]) =>
     async <T extends PacketFormat>(
         acc: Promise<ServerBoundPacketData<T>>,
-        [key, type]: [keyof T, Type<any> | AsyncType<any>]
+        [key, type]: [keyof T, Type<any>]
     ) => {
         return {
             ...(await acc),
@@ -92,7 +92,7 @@ const ClientBoundPacketReducer =
     <T extends PacketFormat>(args: PacketArguments<T>) =>
     async (
         acc: Promise<Buffer>,
-        [key, type]: [keyof T, Type<any> | AsyncType<any>]
+        [key, type]: [keyof T, Type<any>]
     ): Promise<Buffer> => {
         const part = await type.write(args[key])
         return Buffer.concat([await acc, part])

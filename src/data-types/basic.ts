@@ -1,47 +1,48 @@
 import Long from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 import BitSet from 'bitset'
+import { parseUUID, type UUID } from '@minecraft-js/uuid'
 
 const FLOAT_SIZE = 4
 const DOUBLE_SIZE = 8
 const LONG_SIZE = 8
 const UUID_SIZE = 16
 
-type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
-    ...a: Parameters<T>
-) => TNewReturn
+// type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
+//     ...a: Parameters<T>
+// ) => TNewReturn
 
 export type Type<T> = {
     size?: number
-    read: (buffer: number[], length?: number) => T
-    write: (t: T) => Buffer
+    read: (buffer: number[], length?: number) => Promise<T>
+    write: (t: T) => Promise<Buffer>
 }
 
-export type AsyncType<T> = Omit<Type<T>, 'read' | 'write'> & {
-    read: ReplaceReturnType<
-        Type<T>['read'],
-        Promise<ReturnType<Type<T>['read']>>
-    >
-    write: ReplaceReturnType<
-        Type<T>['write'],
-        Promise<ReturnType<Type<T>['write']>>
-    >
-}
+// export type AsyncType<T> = Omit<Type<T>, 'read' | 'write'> & {
+//     read: ReplaceReturnType<
+//         Type<T>['read'],
+//         Promise<ReturnType<Type<T>['read']>>
+//     >
+//     write: ReplaceReturnType<
+//         Type<T>['write'],
+//         Promise<ReturnType<Type<T>['write']>>
+//     >
+// }
 
 export const DataBoolean: Type<boolean> = {
-    read: (buffer: number[]) => {
+    read: async (buffer: number[]) => {
         return buffer.shift() === 1
     },
-    write: (t: boolean) => {
+    write: async (t: boolean) => {
         return Buffer.from([t ? 1 : 0])
     },
 }
 
 export const DataByte: Type<number> = {
-    read: (buffer: number[]) => {
+    read: async (buffer: number[]) => {
         return buffer.shift() as number
     },
-    write: (t: number) => {
+    write: async (t: number) => {
         return Buffer.from([t])
     },
 }
@@ -49,11 +50,11 @@ export const DataByte: Type<number> = {
 export const DataAngle = DataByte
 
 export const DataByteArray: Type<Buffer> = {
-    read: (buffer: number[], length?: number) => {
+    read: async (buffer: number[], length?: number) => {
         const acc: number[] = []
         let i = 0
         while (length === undefined || i++ < length) {
-            const element = DataByte.read(buffer)
+            const element = await DataByte.read(buffer)
             if (element === undefined) {
                 if (length === undefined) break
                 throw new Error('Buffer is too small')
@@ -62,54 +63,56 @@ export const DataByteArray: Type<Buffer> = {
         }
         return Buffer.from(acc)
     },
-    write: (t: Buffer) => {
+    write: async (t: Buffer) => {
         return t
     },
 }
 
 export const DataShort: Type<number> = {
-    read: (buffer: number[]) => {
-        const b1 = DataByte.read(buffer)
-        const b2 = DataByte.read(buffer)
+    read: async (buffer: number[]) => {
+        const b1 = await DataByte.read(buffer)
+        const b2 = await DataByte.read(buffer)
         return (b1 << 8) | b2
     },
-    write: (t: number) => {
+    write: async (t: number) => {
         return Buffer.from([(t >> 8) & 0xffff, t & 0xffff])
     },
 }
 
 export const DataInt: Type<number> = {
-    read: (buffer: number[]) => {
-        const b1 = DataShort.read(buffer)
-        const b2 = DataShort.read(buffer)
+    read: async (buffer: number[]) => {
+        const b1 = await DataShort.read(buffer)
+        const b2 = await DataShort.read(buffer)
         return (b1 << 16) | b2
     },
-    write: (t: number) => {
+    write: async (t: number) => {
         return Buffer.concat([
-            DataShort.write((t >> 16) & 0xffffffff),
-            DataShort.write(t & 0xffffffff),
+            await DataShort.write((t >> 16) & 0xffffffff),
+            await DataShort.write(t & 0xffffffff),
         ])
     },
 }
 
 export const DataLong: Type<Long> = {
-    read: (buffer: number[]) => {
-        const b1 = DataInt.read(buffer)
-        const b2 = DataInt.read(buffer)
+    read: async (buffer: number[]) => {
+        const b1 = await DataInt.read(buffer)
+        const b2 = await DataInt.read(buffer)
         return new Long(b1, b2)
     },
-    write: (t: Long) => {
-        return Buffer.concat([DataInt.write(t.high), DataInt.write(t.low)])
+    write: async (t: Long) => {
+        return Buffer.concat([
+            await DataInt.write(t.high),
+            await DataInt.write(t.low),
+        ])
     },
 }
 
 export const DataFloat: Type<number> = {
-    read: (buffer: number[]) => {
-        return new DataView(
-            DataByteArray.read(buffer, FLOAT_SIZE).buffer
-        ).getFloat32(0)
+    read: async (buffer: number[]) => {
+        const arr = await DataByteArray.read(buffer, FLOAT_SIZE)
+        return new DataView(arr.buffer).getFloat32(0)
     },
-    write: (t: number) => {
+    write: async (t: number) => {
         const buffer = new ArrayBuffer(FLOAT_SIZE)
         new DataView(buffer).setFloat32(0, t)
         return Buffer.from(buffer)
@@ -117,47 +120,50 @@ export const DataFloat: Type<number> = {
 }
 
 export const DataDouble: Type<number> = {
-    read: (buffer: number[]) => {
-        return new DataView(
-            DataByteArray.read(buffer, DOUBLE_SIZE).buffer
-        ).getFloat64(0)
+    read: async (buffer: number[]) => {
+        const arr = await DataByteArray.read(buffer, DOUBLE_SIZE)
+        return new DataView(arr.buffer).getFloat64(0)
     },
 
-    write: (t: number) => {
+    write: async (t: number) => {
         const buffer = new ArrayBuffer(DOUBLE_SIZE)
         new DataView(buffer).setFloat64(0, t)
         return Buffer.from(buffer)
     },
 }
 
-export const DataUUID: Type<string> = {
-    read: (buffer: number[]) => {
-        return DataByteArray.read(buffer, UUID_SIZE).toString('hex')
+export const DataUUID: Type<UUID> = {
+    read: async (buffer: number[]) => {
+        const arr = await DataByteArray.read(buffer, UUID_SIZE)
+        return parseUUID(arr.toString('hex'))
     },
-    write: (t: string) => {
-        const buffer = Buffer.from(t.replaceAll('-', ''), 'hex')
-        return buffer
+    write: async (t: UUID) => {
+        return Buffer.concat([
+            t.getMostSignificantBits(),
+            t.getLeastSignificantBits(),
+        ])
     },
 }
 
 export const DataString: Type<string> = {
-    read: (buffer: number[]) => {
-        return VarIntPrefixedByteArray.read(buffer).toString('utf-8')
+    read: async (buffer: number[]) => {
+        const arr = await VarIntPrefixedByteArray.read(buffer)
+        return arr.toString('utf-8')
     },
-    write: (t: string) => {
+    write: async (t: string) => {
         const buffer = Buffer.from(t)
         return VarIntPrefixedByteArray.write(buffer)
     },
 }
 
 export const VarInt: Type<number> = {
-    read: (buffer: number[]) => {
+    read: async (buffer: number[]) => {
         let value = 0
         let position = 0
         let idx = 0
 
         while (true) {
-            const byte = DataByte.read(buffer)
+            const byte = await DataByte.read(buffer)
 
             value |= (byte & SEGMENT_BITS) << position
 
@@ -172,7 +178,7 @@ export const VarInt: Type<number> = {
         return value
     },
 
-    write: (t: number) => {
+    write: async (t: number) => {
         const buffer = []
         while (true) {
             if ((t & ~SEGMENT_BITS) == 0) {
@@ -190,7 +196,7 @@ export const VarInt: Type<number> = {
 }
 
 export const VarLong: Type<Long> = {
-    read: (buffer: number[]) => {
+    read: async (buffer: number[]) => {
         let value = new Long(0)
         let position = 0
         let idx = 0
@@ -213,7 +219,7 @@ export const VarLong: Type<Long> = {
         return value
     },
 
-    write: (t: Long) => {
+    write: async (t: Long) => {
         const buffer: number[] = []
         while (true) {
             if (t.and(~SEGMENT_BITS).eq(0)) {
@@ -230,14 +236,14 @@ export const VarLong: Type<Long> = {
 }
 
 export const VarIntPrefixedByteArray: Type<Buffer> = {
-    read: (buffer: number[]) => {
-        const length = VarInt.read(buffer)
-        return DataByteArray.read(buffer, length)
+    read: async (buffer: number[]) => {
+        const length = await VarInt.read(buffer)
+        return await DataByteArray.read(buffer, length)
     },
 
-    write: (t: Buffer) => {
+    write: async (t: Buffer) => {
         const length = t.length
-        return Buffer.concat([VarInt.write(length), t])
+        return Buffer.concat([await VarInt.write(length), t])
     },
 }
 
@@ -246,15 +252,16 @@ export const DataPosition: Type<{
     y: number
     z: number
 }> = {
-    read: (buffer: number[]) => {
-        const val = DataLong.read(buffer).toNumber()
+    read: async (buffer: number[]) => {
+        const long = await DataLong.read(buffer)
+        const val = long.toNumber()
         const x = val >> 38
         const y = (val << 52) >> 52
         const z = (val << 26) >> 38
         return { x, y, z }
     },
 
-    write: (t: { x: number; y: number; z: number }) => {
+    write: async (t: { x: number; y: number; z: number }) => {
         const val =
             ((t.x & 0x3ffffff) << 38) |
             ((t.z & 0x3ffffff) << 12) |
@@ -264,15 +271,14 @@ export const DataPosition: Type<{
 }
 
 export const DataBitSet: Type<BitSet> = {
-    read: (buffer: number[]) => {
-        const nbLong = VarInt.read(buffer)
+    read: async (buffer: number[]) => {
+        const nbLong = await VarInt.read(buffer)
         if (nbLong === 0) return new BitSet(0)
         const length = Math.min(buffer.length, nbLong * LONG_SIZE)
-        console.log(length, buffer.length, nbLong, buffer)
-        const bits = DataByteArray.read(buffer, length)
+        const bits = await DataByteArray.read(buffer, length)
         return new BitSet(bits)
     },
-    write: (t: BitSet) => {
+    write: async (t: BitSet) => {
         if (t.toArray().length === 0) return Buffer.from([0])
         const buffer = Buffer.from(
             t
@@ -286,52 +292,51 @@ export const DataBitSet: Type<BitSet> = {
                 ) as number[]
         )
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
-        return Buffer.concat([VarInt.write(nbLongs), buffer])
+        return Buffer.concat([await VarInt.write(nbLongs), buffer])
     },
 }
 
 // ============= Meta types =============
-export const DataOptional = <T>(
-    type: Type<T> | AsyncType<T>
-): AsyncType<T | undefined> => ({
+export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
     read: async (buffer: number[], length?: number) => {
-        if (DataBoolean.read(buffer, length))
-            return await type.read(buffer, length)
+        const isPresent = await DataBoolean.read(buffer, length)
+        if (isPresent) return await type.read(buffer, length)
         return undefined
     },
 
     write: async (t: T | undefined) => {
         if (t === undefined) {
-            return DataBoolean.write(false)
+            return await DataBoolean.write(false)
         }
-        return Buffer.concat([DataBoolean.write(true), await type.write(t)])
+        return Buffer.concat([
+            await DataBoolean.write(true),
+            await type.write(t),
+        ])
     },
 })
 
-export const DataArray = <T>(type: Type<T> | AsyncType<T>) => ({
+export const DataArray = <T>(type: Type<T>) => ({
     read: async (buffer: number[]) => {
-        const length = VarInt.read(buffer)
+        const length = await VarInt.read(buffer)
         const decoded = new Array(length).fill(0).map(() => type.read(buffer))
         return await Promise.all(decoded)
     },
 
     write: async (t: T[]) => {
-        const length = VarInt.write(t.length)
+        const length = await VarInt.write(t.length)
         const encoded = await Promise.all(t.map((e) => type.write(e)))
         return Buffer.concat([length, ...encoded])
     },
 })
 
-type DataTypeObject = { [key: string]: Type<any> | AsyncType<any> }
-export type ObjectResult<T extends DataTypeObject> = {
-    [key in keyof T]: T[key] extends Type<infer U> | AsyncType<infer U>
-        ? U
-        : never
+type DataTypeObject = { [key: string]: Type<any> }
+export type ObjectTypeInner<T extends DataTypeObject> = {
+    [key in keyof T]: T[key] extends Type<infer U> ? U : never
 }
 
 export const DataObject = <T extends DataTypeObject>(
     types: T
-): AsyncType<ObjectResult<T>> => ({
+): Type<ObjectTypeInner<T>> => ({
     read: async (buffer: number[]) => {
         return Object.fromEntries(
             await Promise.all(
@@ -340,10 +345,10 @@ export const DataObject = <T extends DataTypeObject>(
                     await type.read(buffer),
                 ])
             )
-        ) as ObjectResult<T>
+        ) as ObjectTypeInner<T>
     },
 
-    write: async (t: ObjectResult<T>) => {
+    write: async (t: ObjectTypeInner<T>) => {
         return Buffer.concat(
             await Promise.all(
                 Object.entries(t).map(([key, value]) => types[key].write(value))
@@ -352,16 +357,19 @@ export const DataObject = <T extends DataTypeObject>(
     },
 })
 
+export const DataObjectOptional = <T extends DataTypeObject>(types: T) =>
+    DataObject(types) as Type<Partial<ObjectTypeInner<T>>>
+
 export const DataPackedXZ: Type<{ x: number; z: number }> = {
-    read: (buffer: number[]) => {
-        const encoded = DataByte.read(buffer)
+    read: async (buffer: number[]) => {
+        const encoded = await DataByte.read(buffer)
         const x = encoded >> 4
         const z = encoded & 15
         return { x, z }
     },
 
-    write: (t: { x: number; z: number }) => {
+    write: async (t: { x: number; z: number }) => {
         const encoded = ((t.x & 15) << 4) | (t.z & 15)
-        return DataByte.write(encoded)
+        return await DataByte.write(encoded)
     },
 }

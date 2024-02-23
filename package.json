@@ -16,16 +16,17 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@minecraft-js/uuid": "^1.0.3",
     "bitset": "^5.1.1",
     "chalk": "^5.3.0",
     "leb128": "^0.0.5",
     "long": "^5.2.3",
     "mc-anvil": "^2.0.15",
+    "nanoid": "^5.0.5",
     "nbt": "^0.8.1",
     "nbtify": "^1.85.0",
     "node-rsa": "^1.1.1",
     "region-types": "Offroaders123/Region-Types",
-    "shortid": "^2.2.16",
     "type-fest": "^4.10.2",
     "typescript-object-builder": "^0.3.0",
     "uuid": "^9.0.1"

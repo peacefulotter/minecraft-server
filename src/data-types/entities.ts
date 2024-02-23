@@ -1,7 +1,7 @@
 // https://github.com/PrismarineJS/minecraft-data/blob/master/data/pc/1.20.3/entities.json
 export type Entities = (typeof entities)[number]
 
-export type EntityId = Entities['id']
+export type EntityType = Entities['id']
 
 export const entities = [
     {

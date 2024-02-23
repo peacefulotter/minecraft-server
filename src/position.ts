@@ -1,7 +1,10 @@
-export type Position = {
+export type Vec3 = {
     x: number
     y: number
     z: number
+}
+
+export type Position = Vec3 & {
     onGround: boolean
 }
 

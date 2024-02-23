@@ -1,9 +1,10 @@
 import * as NBT from 'nbtify'
+
 import { logClientBoundPacket } from '../logger'
 import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
-import type { Position, Rotation } from '../position'
+import type { Position, Rotation, Vec3 } from '../position'
 import type { SocketWithId } from '../socket'
 import Long from 'long'
 import {
@@ -11,6 +12,7 @@ import {
     PlayClientBoundKeepAlive,
     PlayDisconnect,
 } from './packets/client'
+import { Player } from '~/entity/player'
 
 export enum ClientState {
     HANDSHAKING,
@@ -24,27 +26,23 @@ export enum ClientState {
 export const REFRESH_INTERVAL = 5000 // ms
 export const KICK_TIMEOUT = 30000 // ms
 
-export class Client {
-    state: ClientState
-    encrypted: boolean
+export class Client extends Player {
+    // https://raw.githubusercontent.com/Pokechu22/Burger/gh-pages/1.20.4.json
+    static ENTITY_TYPE = 124 as const // TODO: retrieve this properly
 
-    username: string | undefined
-    uuid: string | undefined
+    state: ClientState = ClientState.HANDSHAKING
+    encrypted: boolean = false
+
+    refreshIn: number = REFRESH_INTERVAL
+
     publicKey: Buffer | undefined
 
     info: ClientInfo | undefined
-    position: Position
-    rotation: Rotation
 
-    refreshIn: number
     aliveTimeout: Record<string, NodeJS.Timeout> = {}
 
     constructor(public readonly socket: SocketWithId) {
-        this.state = ClientState.HANDSHAKING
-        this.encrypted = false
-        this.position = { x: 0, y: 0, z: 0, onGround: true }
-        this.rotation = { pitch: 0, yaw: 0 }
-        this.refreshIn = REFRESH_INTERVAL
+        super(Client.ENTITY_TYPE)
     }
 
     async write(packet: ClientBoundPacket | ClientBoundPacket[]) {
@@ -57,6 +55,7 @@ export class Client {
         this.state = ClientState.DISCONNECTED
         this.write(
             await PlayDisconnect({
+                // TODO: fix Chat type
                 reason: NBT.parse(
                     JSON.stringify({
                         type: 'text',
@@ -86,7 +85,10 @@ export class Client {
         this.write(await KeepAlive({ id }))
 
         this.refreshIn = REFRESH_INTERVAL
-        this.aliveTimeout[id.toString()] = setTimeout(this.kick, KICK_TIMEOUT)
+        this.aliveTimeout[id.toString()] = setTimeout(
+            this.kick.bind(this),
+            KICK_TIMEOUT
+        )
     }
 
     keepAlive(id: Long) {
@@ -103,10 +105,25 @@ export class Client {
     get z() {
         return this.position.z
     }
+    get onGround() {
+        return this.position.onGround
+    }
     get yaw() {
         return this.rotation.yaw
     }
     get pitch() {
         return this.rotation.pitch
+    }
+    get velocityX() {
+        return this.velocity.x
+    }
+    get velocityY() {
+        return this.velocity.y
+    }
+    get velocityZ() {
+        return this.velocity.z
+    }
+    get uuid() {
+        return this.entityUUID
     }
 }
