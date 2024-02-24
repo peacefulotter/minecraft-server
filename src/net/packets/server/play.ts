@@ -11,9 +11,16 @@ import {
     DataShort,
     DataUUID,
     DataPosition,
+    DataArray,
+    DataObject,
+    DataByteArray,
+    DataBitSet,
+    DataFixedBitSet,
+    DataOptional,
 } from '~/data-types/basic'
 import { ServerBoundPacketCreator } from '../create'
 import type { Difficulty } from '~/data-types/enum'
+import type { EntityId } from '~/entity/entity'
 
 export const ConfirmTeleportation = ServerBoundPacketCreator(
     0x00,
@@ -44,19 +51,27 @@ export const AcknowledgeMessage = ServerBoundPacketCreator(
     }
 )
 
-// export const ChatCommand =  ServerBoundPacket(0x04,'ChatCommand', {
-//     command: String,
-//     timestamp: Long,
-//     salt: Long,
-//     arrayLength: VarInt,
-//     array: Array<{
-//         argName: String,
-//         signature: ByteArray
-//     }>
-// })
+export const ChatCommand = ServerBoundPacketCreator(0x04, 'ChatCommand', {
+    command: DataString,
+    timestamp: DataLong,
+    salt: DataLong,
+    args: DataArray(
+        DataObject({
+            name: DataString,
+            signature: DataByteArray(256),
+        })
+    ),
+    messageCount: VarInt,
+    acknowledged: DataFixedBitSet(20 / 8),
+})
 
 export const ChatMessage = ServerBoundPacketCreator(0x05, 'ChatMessage', {
-    // TODO: Implement
+    message: DataString,
+    timestamp: DataLong,
+    salt: DataLong,
+    signature: DataOptional(DataByteArray(256)),
+    messageCount: VarInt,
+    acknowledged: DataFixedBitSet(20 / 8),
 })
 
 export const PlayerSession = ServerBoundPacketCreator(0x06, 'PlayerSession', {
@@ -200,7 +215,7 @@ enum PlayerCommandAction {
 }
 
 export const PlayerCommand = ServerBoundPacketCreator(0x22, 'PlayerCommand', {
-    entity: VarInt,
+    entity: VarInt as Type<EntityId>,
     action: VarInt as Type<PlayerCommandAction>,
     jump_boost: VarInt,
 })

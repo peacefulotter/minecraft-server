@@ -1,9 +1,12 @@
 import { generateV4 } from '@minecraft-js/uuid'
+import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
 import {
     DataArray,
+    DataBitSet,
     DataByte,
+    DataFixedBitSet,
     DataInt,
     DataLong,
     DataObject,
@@ -24,14 +27,21 @@ import {
 
 const packetTester = async <T extends PacketFormat>(
     format: T,
-    packet: PacketArguments<T>
+    packet: PacketArguments<T>,
+    process?: (data: PacketArguments<T>) => any
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
     const buffer = await writePacket(packet)
     const data = buffer.data.toJSON().data
     const res = await readPacket.deserialize(data, false)
-    expect(res.data).toEqual(packet)
+    // console.log('Expected', packet)
+    // console.log('Obtained', res.data)
+    if (process) {
+        expect(process(res.data)).toEqual(process(packet))
+    } else {
+        expect(res.data).toEqual(packet)
+    }
 }
 
 describe('formats', () => {
@@ -105,6 +115,37 @@ describe('formats', () => {
                 },
             }
         )
+    })
+
+    test('bitset', async () => {
+        const bin = '011010101011101000'
+        const data = BitSet.fromBinaryString(bin)
+        await packetTester(
+            {
+                a: DataBitSet,
+            },
+            {
+                a: data,
+            },
+            (data) => data.a.toString()
+        )
+    })
+
+    test('fixed bitset', async () => {
+        let bin = ''
+        for (let i = 0; i < 24; i++) {
+            bin += Math.random() > 0.5 ? '1' : '0'
+            const data = BitSet.fromBinaryString(bin)
+            await packetTester(
+                {
+                    a: DataFixedBitSet(bin.length / 8),
+                },
+                {
+                    a: data,
+                },
+                (data) => data.a.toString()
+            )
+        }
     })
 
     test('is identity when writing -> reading', async () => {

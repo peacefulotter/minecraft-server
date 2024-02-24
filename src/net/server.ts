@@ -6,8 +6,9 @@ import { unwrap } from './packets/server'
 import { type PacketId } from './packets'
 import { GameLoop } from '~/worker/loop'
 import type { ClientBoundPacket } from './packets/create'
-import { EntityHandler } from '~/entity/Handler'
-import { nanoid } from 'nanoid'
+import { EntityHandler } from '~/entity/handler'
+import { PlayerInfoRemove } from './packets/client'
+import { CommandHandler } from '~/commands/handler'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -35,7 +36,8 @@ export class Server {
     // private worker: ServerWorker = new ServerWorker()
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
-    // private loop = new GameLoop(this.clients)
+    private loop = new GameLoop(this.clients)
+    cmd = new CommandHandler()
     entities: EntityHandler = new EntityHandler()
 
     handlePacket = async (
@@ -80,12 +82,34 @@ export class Server {
         log('Socket connected', socket.id)
     }
 
-    close = (socket: SocketWithId) => {
+    close = async (socket: SocketWithId) => {
         log('Socket disconnected', socket.id)
+        const client = this.clients[socket.id]
+        this.entities.removePlayer(client)
+        this.broadcast(
+            client,
+            await PlayerInfoRemove({
+                players: [client.entityUUID],
+            })
+        )
         delete this.clients[socket.id]
     }
 
     error = (socket: SocketWithId, error: object) => {
         log(JSON.stringify(error, null, 2))
     }
+
+    // public toString(): string {
+    //     return `Server
+    //         # clients: ${Object.keys(this.clients).length}
+    //     `
+    // }
+
+    // public [Symbol.toPrimitive](): string {
+    //     return this.toString()
+    // }
+
+    // public [Symbol.for('nodejs.util.inspect.custom')](): string {
+    //     return this.toString()
+    // }
 }

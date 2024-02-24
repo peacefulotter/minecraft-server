@@ -31,7 +31,6 @@ export const LoginHandler = Handler.init('Login')
 
     .register(LoginStart, async ({ client, packet }) => {
         client.username = packet.username
-
         log(
             'User',
             chalk.cyan(client.username),

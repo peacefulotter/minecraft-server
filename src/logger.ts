@@ -7,6 +7,7 @@ import type {
 import { ClientState, type Client } from './net/client'
 import type { Handler, PacketHandler } from './handlers'
 import type { PacketId } from './net/packets'
+import type { Command } from './commands/handler'
 
 export const log = (...message: any[]) => {
     const d = new Date()
@@ -16,6 +17,15 @@ export const log = (...message: any[]) => {
 export const hex = (byte: number) => {
     const hex = byte.toString(16)
     return '0x' + (hex.length % 2 === 1 ? '0' : '') + hex
+}
+
+export const logCmdHandler = (commands: Map<string, Command>) => {
+    console.log(
+        `-------{  ${chalk.red('Commands')}  }-------`,
+        `\n${[...commands.values()]
+            .map((cmd) => `${chalk.redBright(cmd.name)}: ${cmd.description}`)
+            .join('\n')}`
+    )
 }
 
 export const logHandler = <
@@ -39,15 +49,13 @@ const logPacket =
     (side: string) =>
     (packet: ClientBoundPacket | ServerBoundPacket, client: Client) => {
         log(
+            chalk.gray(client.entityId),
             chalk.redBright(side),
-            'packet',
-            chalk.rgb(150, 255, 0)(hex(packet.id) + ' : ' + packet.name),
-            'for state',
             chalk.cyan(ClientState[client.state]),
-            'data:',
+            chalk.rgb(150, 255, 0)(hex(packet.id) + ' : ' + packet.name),
             packet.data
         )
     }
 
-export const logClientBoundPacket = logPacket('Sending')
-export const logServerBoundPacket = logPacket('Handling')
+export const logClientBoundPacket = logPacket('S -> C')
+export const logServerBoundPacket = logPacket('C -> S')

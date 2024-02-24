@@ -22,4 +22,16 @@ export class Player extends Entity {
     ) {
         super(type, 'player')
     }
+
+    public toString(): string {
+        return super.toString()
+    }
+
+    public [Symbol.toPrimitive](): string {
+        return this.toString()
+    }
+
+    public [Symbol.for('nodejs.util.inspect.custom')](): string {
+        return this.toString()
+    }
 }

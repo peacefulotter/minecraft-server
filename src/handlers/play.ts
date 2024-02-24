@@ -1,5 +1,7 @@
 import {
     AcknowledgeMessage,
+    ChatCommand,
+    ChatMessage,
     ConfirmTeleportation,
     PlayServerBoundKeepAlive,
     PlayerAction,
@@ -27,6 +29,14 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(AcknowledgeMessage, async ({ packet }) => {})
+
+    .register(ChatCommand, async (args) => {
+        await args.server.cmd.handle(args)
+    })
+
+    .register(ChatMessage, async ({ client, packet }) => {
+        console.log(packet)
+    })
 
     .register(PlayServerBoundKeepAlive, async ({ client, packet }) => {
         client.keepAlive(packet.id)

@@ -44,7 +44,7 @@ export const PluginMessage = ServerBoundPacketCreator(
     'PluginMessage' as const,
     {
         channel: DataString as Type<PluginChannel>,
-        data: DataByteArray,
+        data: DataByteArray(),
     }
 )
 

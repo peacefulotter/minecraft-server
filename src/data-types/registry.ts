@@ -96,12 +96,14 @@ export const DataDimensionMonsterSpawnLightLevel: Type<DimensionMonsterSpawnLigh
         },
     }
 
-export const DataNBT: Type<NBT.NBTData<NBT.RootTag>> = class NBTCompoundTag {
+export const DataNBT: Type<
+    NBT.NBTData<NBT.RootTagLike>
+> = class NBTCompoundTag {
     static read = async (buffer: number[]) => {
         return await NBT.read(Buffer.from(buffer), { rootName: null })
     }
 
-    static write = async (t: NBT.NBTData<NBT.RootTag>) => {
+    static write = async (t: NBT.NBTData<NBT.RootTagLike>) => {
         return Buffer.from(await NBT.write(t, { rootName: null }))
     }
 }

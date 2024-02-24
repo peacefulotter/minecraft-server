@@ -29,4 +29,27 @@ export class Entity {
         public data: number = DEFAULT_DATA,
         public gameMode: GameMode = GameMode.SURVIVAL
     ) {}
+
+    public toString(): string {
+        return `Entity 
+            entityId: ${this.entityId}
+            entityUUID: ${this.entityUUID}
+            type: ${this.type}
+            name: ${this.name}
+            gameMode: ${GameMode[this.gameMode]}
+            position: ${JSON.stringify(this.position)}
+            rotation: ${JSON.stringify(this.rotation)}
+            velocity: ${JSON.stringify(this.velocity)}
+            headYaw: ${this.headYaw}
+            data: ${this.data}
+        `
+    }
+
+    public [Symbol.toPrimitive](): string {
+        return this.toString()
+    }
+
+    public [Symbol.for('nodejs.util.inspect.custom')](): string {
+        return this.toString()
+    }
 }

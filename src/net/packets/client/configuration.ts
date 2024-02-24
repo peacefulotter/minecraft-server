@@ -18,7 +18,7 @@ export const ConfigurationPluginMessage = ClientBoundPacketCreator(
     'ConfigurationPluginMessage',
     {
         channel: DataString,
-        data: DataByteArray,
+        data: DataByteArray(),
     }
 )
 

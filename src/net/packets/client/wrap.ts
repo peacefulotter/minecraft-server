@@ -4,7 +4,7 @@ import { ClientBoundPacketCreator, type ClientBoundPacket } from '../create'
 const ResponseFormat = {
     packetLen: VarInt,
     id: VarInt,
-    data: DataByteArray,
+    data: DataByteArray(),
 }
 
 export const wrap = async (packet: ClientBoundPacket) => {

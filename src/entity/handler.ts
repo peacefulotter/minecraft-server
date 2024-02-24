@@ -14,6 +14,15 @@ export class EntityHandler {
         this.players[player.entityId] = player
     }
 
+    removeEntity(entity: Entity) {
+        delete this.entities[entity.entityId]
+    }
+
+    removePlayer(player: Player) {
+        this.removeEntity(player)
+        delete this.players[player.entityId]
+    }
+
     getAll() {
         return Object.values(this.entities)
     }

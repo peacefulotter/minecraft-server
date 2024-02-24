@@ -184,6 +184,14 @@ export const UpdateEntityRotation = ClientBoundPacketCreator(
     }
 )
 
+export const PlayerInfoRemove = ClientBoundPacketCreator(
+    0x3b,
+    'PlayerInfoRemove',
+    {
+        players: DataArray(DataUUID),
+    }
+)
+
 const AddPlayerAction = DataObject({
     name: DataString,
     properties: DataArray(
@@ -219,7 +227,7 @@ const UpdateLatencyAction = DataObject({
 })
 
 const UpdateDisplayNameAction = DataObject({
-    displayName: DataOptional(DataString),
+    displayName: DataOptional(DataString), // TODO: must be DataNBT
 })
 
 const PlayerActions = {

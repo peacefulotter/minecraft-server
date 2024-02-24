@@ -2,7 +2,6 @@ import * as NBT from 'nbtify'
 import { DimensionResource } from 'region-types'
 import {
     FinishConfiguration,
-    PlayServerBoundKeepAlive,
     PluginMessage,
     PlayPong,
     ResourcePackResponse,
@@ -10,7 +9,7 @@ import {
     ConfigurationServerBoundKeepAlive,
 } from '~/net/packets/server'
 import { Handler } from '.'
-import { ClientState } from '~/net/client'
+import { Client, ClientState } from '~/net/client'
 import {
     ChunkDataAndUpdateLight,
     FinishConfiguration as ClientFinishConfiguration,
@@ -66,7 +65,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
         const packets = [
             await PlayLogin({
-                entityId: 124, // see data-types/entities.ts
+                entityId: Client.ENTITY_TYPE, // see data-types/entities.ts
                 isHardcore: false,
                 dimensionNames: [
                     DimensionResource.overworld,
@@ -82,7 +81,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 dimensionType: DimensionResource.overworld,
                 dimensionName: DimensionResource.overworld,
                 hashedSeed: hashSeed(WORLD_SEED),
-                gameMode: GameMode.SURVIVAL,
+                gameMode: GameMode.CREATIVE,
                 previousGameMode: GameMode.UNDEFINED,
                 isDebug: false,
                 isFlat: false,
@@ -138,7 +137,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     uuid: p.entityUUID,
                     playerActions: {
                         addPlayer: {
-                            name: p.name,
+                            name: p.username || 'player',
                             properties: [],
                         },
                         initializeChat: {
@@ -151,10 +150,13 @@ export const ConfigurationHandler = Handler.init('Configuration')
                             listed: true,
                         },
                         updateLatency: {
-                            ping: 0,
+                            ping: (p as Client).ping,
                         },
                         updateDisplayName: {
-                            displayName: p.username,
+                            displayName: undefined, //p.username,
+                            // displayName: new NBT.NBTData(p.username, {
+                            //     rootName: null,
+                            // }),
                         },
                     },
                 }))

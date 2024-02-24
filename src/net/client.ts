@@ -27,7 +27,7 @@ export const KICK_TIMEOUT = 30000 // ms
 
 export class Client extends Player {
     // https://raw.githubusercontent.com/Pokechu22/Burger/gh-pages/1.20.4.json
-    static ENTITY_TYPE = 124 as const // TODO: retrieve this properly
+    static ENTITY_TYPE = 123 as const // TODO: retrieve this properly
 
     state: ClientState = ClientState.HANDSHAKING
     encrypted: boolean = false
@@ -38,7 +38,14 @@ export class Client extends Player {
 
     info: ClientInfo | undefined
 
-    aliveTimeout: Record<string, NodeJS.Timeout> = {}
+    ping: number = 0
+    aliveTimeout: Record<
+        string,
+        {
+            date: number
+            timeout: NodeJS.Timeout
+        }
+    > = {}
 
     constructor(public readonly socket: SocketWithId) {
         super(Client.ENTITY_TYPE)
@@ -76,7 +83,8 @@ export class Client extends Player {
         )
             return
 
-        const id = Long.fromNumber(Date.now())
+        const now = Date.now()
+        const id = Long.fromNumber(now)
 
         const KeepAlive = {
             [ClientState.CONFIGURATION]: ConfigurationClientBoundKeepAlive,
@@ -86,15 +94,17 @@ export class Client extends Player {
         this.write(await KeepAlive({ id }))
 
         this.refreshIn = REFRESH_INTERVAL
-        this.aliveTimeout[id.toString()] = setTimeout(
-            this.kick.bind(this),
-            KICK_TIMEOUT
-        )
+        this.aliveTimeout[id.toString()] = {
+            date: now,
+            timeout: setTimeout(this.kick.bind(this), KICK_TIMEOUT),
+        }
     }
 
     keepAlive(id: Long) {
-        clearTimeout(this.aliveTimeout[id.toString()])
+        const { timeout, date } = this.aliveTimeout[id.toString()]
+        clearTimeout(timeout)
         delete this.aliveTimeout[id.toString()]
+        this.ping = Date.now() - date
     }
 
     get x() {
@@ -126,5 +136,22 @@ export class Client extends Player {
     }
     get uuid() {
         return this.entityUUID
+    }
+
+    public toString(): string {
+        return `Client 
+            username: ${this.username}
+            state: ${ClientState[this.state]}
+            ping: ${this.ping}ms
+            ${super.toString()}            
+        `
+    }
+
+    public [Symbol.toPrimitive](): string {
+        return this.toString()
+    }
+
+    public [Symbol.for('nodejs.util.inspect.custom')](): string {
+        return this.toString()
     }
 }
