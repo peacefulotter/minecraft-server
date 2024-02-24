@@ -1,0 +1,1 @@
+git ls-files --exclude-standard -- ':!:**/*.mca' ':!:**/*.d.ts' ':!:**/*.nbt' ':!:./data-types/entities.ts' | xargs wc -l
