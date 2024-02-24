@@ -64,7 +64,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
             }
         }
 
-        return [
+        const packets = [
             await PlayLogin({
                 entityId: 124, // see data-types/entities.ts
                 isHardcore: false,
@@ -127,18 +127,42 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     })
                 )
             )),
-            await PlayerInfoUpdate(
-                server.entities.getPlayers().map((p) => ({
+        ]
+
+        const players = server.entities.getPlayers()
+        console.log(players)
+
+        if (players.length > 0) {
+            const playerInfoUpdate = await PlayerInfoUpdate(
+                players.map((p) => ({
                     uuid: p.entityUUID,
                     playerActions: {
-                        =====================================
-                        // addPlayer: {
-                        //     name: p.username as string,
-                        // },
+                        addPlayer: {
+                            name: p.name,
+                            properties: [],
+                        },
+                        initializeChat: {
+                            signatureData: undefined,
+                        },
+                        updateGameMode: {
+                            gameMode: p.gameMode,
+                        },
+                        updateListed: {
+                            listed: true,
+                        },
+                        updateLatency: {
+                            ping: 0,
+                        },
+                        updateDisplayName: {
+                            displayName: p.username,
+                        },
                     },
                 }))
-            ),
-        ]
+            )
+            packets.push(playerInfoUpdate)
+        }
+
+        return packets
     })
     .register(ConfigurationServerBoundKeepAlive, async (args) => {})
 

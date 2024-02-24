@@ -8,7 +8,7 @@ const LEGACY_SERVER_LIST_PING_ID = 254
 //     return head.length === 2 && head[0] === 0x1f && head[1] === 0x8b;
 // }
 
-const unwrapSingle = (buffer: number[]) => {
+const unwrapSingle = async (buffer: number[]) => {
     // Handle legacy server list ping
     if (buffer[0] == LEGACY_SERVER_LIST_PING_ID) {
         return {
@@ -18,18 +18,22 @@ const unwrapSingle = (buffer: number[]) => {
         }
     }
 
-    const packetLen = VarInt.read(buffer)
-    const packetId = VarInt.read(buffer)
+    const packetLen = await VarInt.read(buffer)
+    const packetId = await VarInt.read(buffer)
     const newBuffer = buffer.slice(0, packetLen - 1) // - 1 to account for the packet id
     return { packetId, buffer: newBuffer, packetLen }
 }
 
-export const unwrap = (data: Buffer) => {
+export const unwrap = async (data: Buffer) => {
     let buffer = data.toJSON().data
 
     const packets: { packetId: PacketId; buffer: number[] }[] = []
     while (buffer.length > 0) {
-        const { packetId, buffer: newBuffer, packetLen } = unwrapSingle(buffer)
+        const {
+            packetId,
+            buffer: newBuffer,
+            packetLen,
+        } = await unwrapSingle(buffer)
 
         if (packetLen > 0) {
             packets.push({ packetId, buffer: newBuffer })

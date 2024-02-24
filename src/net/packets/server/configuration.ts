@@ -15,7 +15,10 @@ import type {
     PluginChannel,
     ResourcePackResult,
 } from '~/data-types/enum'
-import { type ServerBoundPacketData, ServerBoundPacketCreator } from '../create'
+import {
+    ServerBoundPacketCreator,
+    type ServerBoundPacketDataFromDeserializer,
+} from '../create'
 
 export const ConfigurationClientInformation = ServerBoundPacketCreator(
     0x00,
@@ -32,7 +35,7 @@ export const ConfigurationClientInformation = ServerBoundPacketCreator(
     }
 )
 
-export type ClientInfo = ServerBoundPacketData<
+export type ClientInfo = ServerBoundPacketDataFromDeserializer<
     typeof ConfigurationClientInformation
 >
 

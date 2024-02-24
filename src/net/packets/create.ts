@@ -1,8 +1,13 @@
 import { decrypt } from '~/auth'
 import type { Type } from '~/data-types/basic'
 import type { PacketId } from '.'
+import type { Server } from '../server'
 
 export type PacketFormat = { [key: string]: Type<any> }
+
+export type PacketArguments<Format extends PacketFormat> = {
+    [key in keyof Format]: Format[key] extends Type<infer U> ? U : never
+}
 
 type Packet<D, I extends PacketId = number, N extends string = string> = {
     id: I
@@ -14,34 +19,14 @@ type Packet<D, I extends PacketId = number, N extends string = string> = {
 
 export type ServerBoundPacket = Packet<ServerBoundPacketData<PacketFormat>>
 
-// Get the packet return type format either from the format directly or from the packet
-export type ServerBoundPacketData<
-    T extends PacketFormat | ServerBoundPacketDeserializer
-> = T extends PacketFormat
-    ? {
-          [key in keyof T]: T[key]['read'] extends (
-              buffer: number[]
-          ) => Promise<infer Ret> | infer Ret
-              ? Ret
-              : never
-      }
-    : T extends ServerBoundPacketDeserializer
-    ? ReturnType<T['deserialize']> extends Promise<Packet<infer U>>
-        ? U
-        : never
-    : never
+// Get the packet return type format, equivalent to packet arguments
+export type ServerBoundPacketData<T extends PacketFormat> = PacketArguments<T>
 
-const ServerBoundPacketReducer =
-    (buffer: number[]) =>
-    async <T extends PacketFormat>(
-        acc: Promise<ServerBoundPacketData<T>>,
-        [key, type]: [keyof T, Type<any>]
-    ) => {
-        return {
-            ...(await acc),
-            [key]: await type.read(buffer),
-        }
-    }
+export type ServerBoundPacketDataFromDeserializer<
+    T extends ServerBoundPacketDeserializer
+> = T extends ServerBoundPacketDeserializer<any, any, infer Format>
+    ? ServerBoundPacketData<Format>
+    : never
 
 export const ServerBoundPacketCreator = <
     I extends PacketId = number,
@@ -56,10 +41,11 @@ export const ServerBoundPacketCreator = <
     name,
     deserialize: async (buf: number[], encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
-        const data = await Object.entries(types).reduce(
-            ServerBoundPacketReducer(buffer),
-            Promise.resolve({}) as Promise<ServerBoundPacketData<T>>
-        )
+        let data = {} as ServerBoundPacketData<T>
+        for (const [key, type] of Object.entries(types)) {
+            const elt = await type.read(buffer)
+            data[key as keyof typeof data] = elt
+        }
         return { id, name, data }
     },
 })
@@ -82,22 +68,6 @@ export type ServerBoundPacketDeserializer<
 
 export type ClientBoundPacket = Packet<Buffer>
 
-type PacketArguments<T extends PacketFormat> = {
-    [key in keyof T]: T[key]['write'] extends (arg: infer Arg) => any
-        ? Arg
-        : never
-}
-
-const ClientBoundPacketReducer =
-    <T extends PacketFormat>(args: PacketArguments<T>) =>
-    async (
-        acc: Promise<Buffer>,
-        [key, type]: [keyof T, Type<any>]
-    ): Promise<Buffer> => {
-        const part = await type.write(args[key])
-        return Buffer.concat([await acc, part])
-    }
-
 export const ClientBoundPacketCreator =
     <
         I extends PacketId = number,
@@ -109,10 +79,11 @@ export const ClientBoundPacketCreator =
         types: T
     ) =>
     async (args: PacketArguments<T>) => {
-        const data = await Object.entries(types).reduce(
-            ClientBoundPacketReducer(args),
-            Promise.resolve(Buffer.from([]))
-        )
+        let data = Buffer.from([])
+        for (const [key, type] of Object.entries(types)) {
+            const elt = await type.write(args[key])
+            data = Buffer.concat([data, elt])
+        }
         return { id, name, data } as Packet<Buffer, I, N>
     }
 

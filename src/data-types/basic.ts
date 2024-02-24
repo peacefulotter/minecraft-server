@@ -1,7 +1,8 @@
-import Long from 'long'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 import BitSet from 'bitset'
 import { parseUUID, type UUID } from '@minecraft-js/uuid'
+import type { PacketArguments, PacketFormat } from '~/net/packets/create'
+import Long from 'long'
 
 const FLOAT_SIZE = 4
 const DOUBLE_SIZE = 8
@@ -97,7 +98,7 @@ export const DataLong: Type<Long> = {
     read: async (buffer: number[]) => {
         const b1 = await DataInt.read(buffer)
         const b2 = await DataInt.read(buffer)
-        return new Long(b1, b2)
+        return new Long(b2, b1)
     },
     write: async (t: Long) => {
         return Buffer.concat([
@@ -197,13 +198,13 @@ export const VarInt: Type<number> = {
 
 export const VarLong: Type<Long> = {
     read: async (buffer: number[]) => {
-        let value = new Long(0)
+        let value = new Long(0, 0)
         let position = 0
         let idx = 0
 
         while (true) {
-            const currentByte = buffer.at(idx)
-            if (currentByte === undefined) throw new Error('VarLong is too big')
+            const currentByte = await DataByte.read(buffer)
+
             value = value.or(
                 new Long(currentByte & SEGMENT_BITS).shiftLeft(position)
             )
@@ -299,7 +300,7 @@ export const DataBitSet: Type<BitSet> = {
 // ============= Meta types =============
 export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
     read: async (buffer: number[], length?: number) => {
-        const isPresent = await DataBoolean.read(buffer, length)
+        const isPresent = await DataBoolean.read(buffer)
         if (isPresent) return await type.read(buffer, length)
         return undefined
     },
@@ -318,47 +319,81 @@ export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
 export const DataArray = <T>(type: Type<T>) => ({
     read: async (buffer: number[]) => {
         const length = await VarInt.read(buffer)
-        const decoded = new Array(length).fill(0).map(() => type.read(buffer))
-        return await Promise.all(decoded)
+        const arr = []
+        for (let i = 0; i < length; i++) {
+            const elt = await type.read(buffer)
+            arr.push(elt)
+        }
+        return arr
     },
 
-    write: async (t: T[]) => {
-        const length = await VarInt.write(t.length)
-        const encoded = await Promise.all(t.map((e) => type.write(e)))
-        return Buffer.concat([length, ...encoded])
+    write: async (ts: T[]) => {
+        const length = await VarInt.write(ts.length)
+        const arr = []
+        for (const t of ts) {
+            const elt = await type.write(t)
+            arr.push(elt)
+        }
+        return Buffer.concat([length, ...arr])
     },
 })
 
-type DataTypeObject = { [key: string]: Type<any> }
-export type ObjectTypeInner<T extends DataTypeObject> = {
-    [key in keyof T]: T[key] extends Type<infer U> ? U : never
-}
-
-export const DataObject = <T extends DataTypeObject>(
+export const DataObject = <T extends PacketFormat>(
     types: T
-): Type<ObjectTypeInner<T>> => ({
+): Type<PacketArguments<T>> => ({
     read: async (buffer: number[]) => {
-        return Object.fromEntries(
-            await Promise.all(
-                Object.entries(types).map(async ([key, type]) => [
-                    key,
-                    await type.read(buffer),
-                ])
-            )
-        ) as ObjectTypeInner<T>
+        const resolved = await Object.entries(types).reduce(
+            (acc, [key, type]) =>
+                acc.then(async (acc) => {
+                    acc.push([key, await type.read(buffer)])
+                    return acc
+                }),
+            Promise.resolve([] as [keyof T, Promise<any>][])
+        )
+        return Object.fromEntries(resolved) as PacketArguments<T>
     },
 
-    write: async (t: ObjectTypeInner<T>) => {
-        return Buffer.concat(
-            await Promise.all(
-                Object.entries(t).map(([key, value]) => types[key].write(value))
-            )
+    write: async (t: PacketArguments<T>) => {
+        return await Object.entries(types).reduce(
+            (acc, [key, type]) =>
+                acc.then(async (acc) =>
+                    Buffer.concat([acc, await type.write(t[key])])
+                ),
+            Promise.resolve(Buffer.from([]))
         )
     },
 })
 
-export const DataObjectOptional = <T extends DataTypeObject>(types: T) =>
-    DataObject(types) as Type<Partial<ObjectTypeInner<T>>>
+// Make it possible to send a packet with optional fields (?)
+// Using a mask to know which fields are present
+// need to consider if this is worth implementing
+
+// export const DataObjectOptional = <T extends PacketFormat>(
+//     types: T,
+//     masks: Record<keyof T, number>
+// ): Type<PacketArguments<T>> => ({
+//     read: async (buffer: number[]) => {
+//         const resolved = await Object.entries(types).reduce(
+//             (acc, [key, type]) =>
+//                 acc.then(async (acc) => {
+//                     acc.push([key, await type.read(buffer)])
+//                     return acc
+//                 }),
+//             Promise.resolve([] as [keyof T, Promise<any>][])
+//         )
+//         return Object.fromEntries(resolved) as PacketArguments<T>
+//     },
+
+//     write: async (t: PacketArguments<T>) => {
+//         return await Object.entries(types).reduce(
+//             (acc, [key, type]) =>
+//                 acc.then(async (acc) =>
+//                     Buffer.concat([acc, await type.write(t[key])])
+//                 ),
+//             Promise.resolve(Buffer.from([]))
+//         )
+//     },
+// })
 
 export const DataPackedXZ: Type<{ x: number; z: number }> = {
     read: async (buffer: number[]) => {

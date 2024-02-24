@@ -20,6 +20,6 @@ export class Player extends Entity {
         public headYaw: number = DEFAULT_HEAD_YAW,
         public data: number = DEFAULT_DATA
     ) {
-        super(type)
+        super(type, 'player')
     }
 }

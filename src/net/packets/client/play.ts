@@ -18,12 +18,10 @@ import {
     DataPackedXZ,
     DataUUID,
     DataAngle,
-    DataObjectOptional,
-    type ObjectTypeInner,
 } from '~/data-types/basic'
 import { GameMode } from '~/data-types/enum'
 import type { DimensionResource } from 'region-types'
-import { ClientBoundPacketCreator } from '../create'
+import { ClientBoundPacketCreator, type PacketArguments } from '../create'
 import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
 import type { EntityType } from '~/data-types/entities'
@@ -187,7 +185,7 @@ export const UpdateEntityRotation = ClientBoundPacketCreator(
 )
 
 const AddPlayerAction = DataObject({
-    name: DataUUID,
+    name: DataString,
     properties: DataArray(
         DataObject({
             name: DataString,
@@ -226,7 +224,7 @@ const UpdateDisplayNameAction = DataObject({
 
 const PlayerActions = {
     addPlayer: AddPlayerAction,
-    inializeChat: InitializeChatAction,
+    initializeChat: InitializeChatAction,
     updateGameMode: UpdateGameModeAction,
     updateListed: UpdateListedAction,
     updateLatency: UpdateLatencyAction,
@@ -235,7 +233,7 @@ const PlayerActions = {
 
 const PlayerActionsMask: Record<keyof typeof PlayerActions, number> = {
     addPlayer: 0x01,
-    inializeChat: 0x02,
+    initializeChat: 0x02,
     updateGameMode: 0x04,
     updateListed: 0x08,
     updateLatency: 0x10,
@@ -248,30 +246,50 @@ const _PlayerInfoUpdate = ClientBoundPacketCreator(0x3c, 'PlayerInfoUpdate', {
         DataObject({
             // TODO: check uuid v3 (see spawn entity below table)
             uuid: DataUUID, // player uuid
-            playerActions: DataObjectOptional(PlayerActions),
+            playerActions: DataObject(PlayerActions),
         })
     ),
 })
 
 // Wrapper for private PlayerInfoUpdate to compute the actions byte
-export const PlayerInfoUpdate = <
-    // Enforce all player actions to be the same type (same keys defined)
-    P extends Partial<ObjectTypeInner<typeof PlayerActions>>
->(
-    players: {
-        uuid: UUID
-        // Enforce all player actions to be the same type (same keys defined)
-        playerActions: { [K in keyof P]: P[K] }
-    }[]
-) => {
-    const actions = Object.keys(players[0].playerActions).reduce((acc, key) => {
-        return acc | PlayerActionsMask[key as keyof typeof PlayerActions]
-    }, 0)
-    return _PlayerInfoUpdate({
-        actions,
-        players,
-    })
-}
+export const PlayerInfoUpdate =
+    // Used with DataObjectOptional which is not implemented (see DataObjectOptional)
+    // <
+    //     // Enforce all player actions to be the same type (same keys defined)
+    //     P extends Partial<PacketArguments<typeof PlayerActions>>
+    // >(
+    //     players: {
+    //         uuid: UUID
+    //         // Enforce all player actions to be the same type (same keys defined)
+    //         playerActions: { [K in keyof P]: P[K] }
+    //     }[]
+    (
+        players: {
+            uuid: UUID
+            // Enforce all player actions to be the same type (same keys defined)
+            playerActions: PacketArguments<typeof PlayerActions>
+        }[]
+    ) => {
+        if (players.length === 0) {
+            return _PlayerInfoUpdate({
+                actions: 0,
+                players: [],
+            })
+        }
+
+        const actions = Object.keys(players[0].playerActions).reduce(
+            (acc, key) => {
+                return (
+                    acc | PlayerActionsMask[key as keyof typeof PlayerActions]
+                )
+            },
+            0
+        )
+        return _PlayerInfoUpdate({
+            actions,
+            players,
+        })
+    }
 
 export enum PlayerPositionFlag {
     NONE = 0x00,

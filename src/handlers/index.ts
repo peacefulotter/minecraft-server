@@ -16,11 +16,17 @@ export type RawHandlerArgs = {
     buffer: number[]
 }
 
-type Args<Packet extends ServerBoundPacketDeserializer> = Omit<
+type Args<Deserializer extends ServerBoundPacketDeserializer> = Omit<
     RawHandlerArgs,
     'buffer'
 > & {
-    packet: ServerBoundPacketData<Packet>
+    packet: Deserializer extends ServerBoundPacketDeserializer<
+        any,
+        any,
+        infer Format
+    >
+        ? ServerBoundPacketData<Format>
+        : never
 }
 
 type HandleFunc<Packet extends ServerBoundPacketDeserializer> = (

@@ -66,7 +66,7 @@ export class Server {
 
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]
-        const packets = unwrap(data)
+        const packets = await unwrap(data)
         for (const packet of packets) {
             await this.handlePacket(client, packet)
         }
@@ -74,7 +74,7 @@ export class Server {
 
     open = (socket: SocketWithId) => {
         const client = new Client(socket)
-        this.entities.addEntity(client)
+        this.entities.addPlayer(client)
         this.clients[client.entityId] = client
         socket.id = client.entityId
         log('Socket connected', socket.id)

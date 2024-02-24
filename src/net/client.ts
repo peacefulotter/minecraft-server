@@ -4,7 +4,6 @@ import { logClientBoundPacket } from '../logger'
 import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
 import type { ClientInfo } from './packets/server'
-import type { Position, Rotation, Vec3 } from '../position'
 import type { SocketWithId } from '../socket'
 import Long from 'long'
 import {
@@ -50,6 +49,8 @@ export class Client extends Player {
         logClientBoundPacket(formatted, this)
         this.socket.write(formatted.data)
     }
+
+    // TODO: ping from time to time as well
 
     async kick() {
         this.state = ClientState.DISCONNECTED

@@ -18,16 +18,7 @@ import {
     UpdateEntityPositionAndRotation,
     UpdateEntityRotation,
 } from '~/net/packets/client'
-import type { Position } from '~/position'
-
-const calcDelta = (prev: Position, current: Position) => {
-    const change = (p: number, c: number) => (c * 32 - p * 32) * 128
-    return {
-        deltaX: change(prev.x, current.x),
-        deltaY: change(prev.y, current.y),
-        deltaZ: change(prev.z, current.z),
-    }
-}
+import { deltaPosition } from '~/position'
 
 export const PlayHandler = Handler.init('Play')
 
@@ -43,8 +34,8 @@ export const PlayHandler = Handler.init('Play')
 
     .register(SetPlayerPosition, async ({ server, client, packet }) => {
         const newPosition = packet
-        ========================= register speed
-        const delta = calcDelta(client.position, newPosition)
+
+        const delta = deltaPosition(client.position, newPosition)
         client.position = newPosition
 
         server.broadcast(
@@ -62,7 +53,7 @@ export const PlayHandler = Handler.init('Play')
         async ({ server, client, packet }) => {
             const { yaw, pitch, ...newPosition } = packet
 
-            const delta = calcDelta(client.position, newPosition)
+            const delta = deltaPosition(client.position, newPosition)
 
             client.position = newPosition
             client.rotation = { yaw, pitch }

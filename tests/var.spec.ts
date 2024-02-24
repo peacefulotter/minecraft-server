@@ -3,13 +3,13 @@ import Long from 'long'
 import { VarInt, VarLong } from '~/data-types/basic'
 
 describe('vars work', () => {
-    test('some varints', () => {
-        console.log(VarInt.write(53))
-        console.log(VarInt.read([254, 1]))
-        console.log(VarInt.read([250, 0]))
+    test('some varints', async () => {
+        console.log(await VarInt.write(53))
+        console.log(await VarInt.read([254, 1]))
+        console.log(await VarInt.read([250, 0]))
     })
 
-    test('sample varints', () => {
+    test('sample varints', async () => {
         const buffers = [
             Buffer.from([0x00]),
             Buffer.from([0x01]),
@@ -27,9 +27,9 @@ describe('vars work', () => {
             0, 1, 2, 127, 128, 255, 25565, 2097151, 2147483647, -1, -2147483648,
         ]
         for (let i = 0; i < buffers.length; i++) {
-            console.log(VarInt.read(buffers[i].toJSON().data), values[i])
-            const read = VarInt.read(buffers[i].toJSON().data)
-            const original = VarInt.write(read)
+            console.log(await VarInt.read(buffers[i].toJSON().data), values[i])
+            const read = await VarInt.read(buffers[i].toJSON().data)
+            const original = await VarInt.write(read)
             expect(read).toBe(values[i])
             expect(original).toEqual(buffers[i])
         }
