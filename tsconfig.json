@@ -13,6 +13,8 @@
         "verbatimModuleSyntax": true,
         "noEmit": true,
 
+        "exactOptionalPropertyTypes": true,
+
         /* Linting */
         "skipLibCheck": true,
         "strict": true,

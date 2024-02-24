@@ -107,29 +107,9 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 flags: PlayerPositionFlag.NONE,
                 teleportId: 0,
             }),
-            ...(await Promise.all(
-                server.entities.getAll().map((entity) =>
-                    SpawnEntity({
-                        entityId: entity.entityId,
-                        entityUUID: entity.entityUUID,
-                        type: entity.type,
-                        x: entity.position.x,
-                        y: entity.position.y,
-                        z: entity.position.z,
-                        yaw: entity.rotation.yaw,
-                        pitch: entity.rotation.pitch,
-                        headYaw: entity.headYaw,
-                        data: entity.data,
-                        velocityX: entity.velocity.x,
-                        velocityY: entity.velocity.y,
-                        velocityZ: entity.velocity.z,
-                    })
-                )
-            )),
         ]
 
         const players = server.entities.getPlayers()
-        console.log(players)
 
         if (players.length > 0) {
             const playerInfoUpdate = await PlayerInfoUpdate(
@@ -163,6 +143,28 @@ export const ConfigurationHandler = Handler.init('Configuration')
             )
             packets.push(playerInfoUpdate)
         }
+
+        packets.push(
+            ...(await Promise.all(
+                server.entities.getAll().map((entity) =>
+                    SpawnEntity({
+                        entityId: entity.entityId,
+                        entityUUID: entity.entityUUID,
+                        type: entity.type,
+                        x: entity.position.x,
+                        y: entity.position.y,
+                        z: entity.position.z,
+                        yaw: entity.rotation.yaw,
+                        pitch: entity.rotation.pitch,
+                        headYaw: entity.headYaw,
+                        data: entity.data,
+                        velocityX: entity.velocity.x,
+                        velocityY: entity.velocity.y,
+                        velocityZ: entity.velocity.z,
+                    })
+                )
+            ))
+        )
 
         return packets
     })

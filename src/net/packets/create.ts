@@ -1,12 +1,15 @@
 import { decrypt } from '~/auth'
 import type { Type } from '~/data-types/basic'
 import type { PacketId } from '.'
-import type { Server } from '../server'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
+export type InnerType<T extends Type<any>> = T extends Type<any, infer U>
+    ? U
+    : never
+
 export type PacketArguments<Format extends PacketFormat> = {
-    [key in keyof Format]: Format[key] extends Type<infer U> ? U : never
+    [key in keyof Format]: InnerType<Format[key]>
 }
 
 type Packet<D, I extends PacketId = number, N extends string = string> = {

@@ -14,6 +14,7 @@ import {
     DataShort,
     DataString,
     DataUUID,
+    DataWithDefault,
     VarInt,
     VarIntPrefixedByteArray,
     VarLong,
@@ -28,7 +29,7 @@ import {
 const packetTester = async <T extends PacketFormat>(
     format: T,
     packet: PacketArguments<T>,
-    process?: (data: PacketArguments<T>) => any
+    process?: (data: PacketArguments<T>, expected?: boolean) => any
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
@@ -38,7 +39,7 @@ const packetTester = async <T extends PacketFormat>(
     // console.log('Expected', packet)
     // console.log('Obtained', res.data)
     if (process) {
-        expect(process(res.data)).toEqual(process(packet))
+        expect(process(res.data, false)).toEqual(process(packet, true))
     } else {
         expect(res.data).toEqual(packet)
     }
@@ -138,14 +139,36 @@ describe('formats', () => {
             const data = BitSet.fromBinaryString(bin)
             await packetTester(
                 {
-                    a: DataFixedBitSet(bin.length / 8),
+                    a: DataFixedBitSet(bin.length),
                 },
                 {
                     a: data,
                 },
-                (data) => data.a.toString()
+                (data) => {
+                    return data.a.toString()
+                }
             )
         }
+    })
+
+    test('with default', async () => {
+        const defaultValue = 'default'
+        const format = {
+            a: DataWithDefault(DataString, defaultValue),
+        }
+        await packetTester(format, {
+            a: 'different_default',
+        })
+        await packetTester(
+            format,
+            {
+                a: undefined,
+            },
+            (data, expected) => {
+                // Since undefined gets replaced by the default value
+                return expected ? defaultValue : data.a
+            }
+        )
     })
 
     test('is identity when writing -> reading', async () => {

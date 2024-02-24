@@ -26,6 +26,7 @@ import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
 import type { EntityType } from '~/data-types/entities'
 import type { UUID } from '@minecraft-js/uuid'
+import type { EntityId } from '~/entity/entity'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
@@ -356,3 +357,20 @@ export const SetDefaultSpawnPosition = ClientBoundPacketCreator(
         angle: DataFloat,
     }
 )
+
+// Updates one or more metadata properties for an existing entity.
+// Any properties not included in the Metadata field are left unchanged.
+export const SetEntityMetadata = ClientBoundPacketCreator(
+    0x56,
+    'SetEntityMetadata',
+    {
+        entityId: VarInt,
+        metadata: DataNBT,
+    }
+)
+
+// This packet is sent when an entity has been leashed to another entity.
+export const LinkEntities = ClientBoundPacketCreator(0x57, 'LinkEntities', {
+    attachedEntityId: DataInt as Type<EntityId>,
+    holdingEntityId: DataInt as Type<EntityId>, // -1 to detach
+})

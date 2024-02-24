@@ -27,7 +27,7 @@ export const KICK_TIMEOUT = 30000 // ms
 
 export class Client extends Player {
     // https://raw.githubusercontent.com/Pokechu22/Burger/gh-pages/1.20.4.json
-    static ENTITY_TYPE = 123 as const // TODO: retrieve this properly
+    static ENTITY_TYPE = 124 as const // TODO: retrieve this properly
 
     state: ClientState = ClientState.HANDSHAKING
     encrypted: boolean = false

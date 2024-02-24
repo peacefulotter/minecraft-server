@@ -9,10 +9,10 @@ const DOUBLE_SIZE = 8
 const LONG_SIZE = 8
 const UUID_SIZE = 16
 
-export type Type<T> = {
+export type Type<R, W = R> = {
     size?: number
-    read: (buffer: number[]) => Promise<T>
-    write: (t: T) => Promise<Buffer>
+    read: (buffer: number[]) => Promise<R>
+    write: (t: W) => Promise<Buffer>
 }
 
 export const DataBoolean: Type<boolean> = {
@@ -260,18 +260,14 @@ export const DataPosition: Type<{
 }
 
 const getBitSetBuffer = (t: BitSet) => {
-    if (t.toArray().length === 0) return Buffer.from([0])
-    return Buffer.from(
-        t
-            .toString()
-            .split('')
-            .reverse()
-            .join('')
-            .match(/.{1,8}/g)
-            ?.map((x) =>
-                parseInt(x.split('').reverse().join(''), 2)
-            ) as number[]
-    )
+    const arr = t.toArray()
+    const buffer: number[] = []
+    for (const bit of arr) {
+        const idx = bit >> 3
+        while (idx >= buffer.length) buffer.push(0)
+        buffer[bit >> 3] |= 1 << (bit & 7)
+    }
+    return Buffer.from(buffer)
 }
 
 export const DataBitSet: Type<BitSet> = {
@@ -284,8 +280,8 @@ export const DataBitSet: Type<BitSet> = {
     },
 
     write: async (t: BitSet) => {
-        if (t.toArray().length === 0) return Buffer.from([0])
         const buffer = getBitSetBuffer(t)
+        if (buffer.length === 0) return Buffer.from([0])
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
         return Buffer.concat([await VarInt.write(nbLongs), buffer])
     },
@@ -293,11 +289,14 @@ export const DataBitSet: Type<BitSet> = {
 
 export const DataFixedBitSet = (length: number): Type<BitSet> => ({
     read: async (buffer: number[]) => {
-        const bits = await DataByteArray(length).read(buffer)
+        const numBytes = Math.ceil(length / 8)
+        const bits = await DataByteArray(numBytes).read(buffer)
         return new BitSet(bits)
     },
     write: async (t: BitSet) => {
-        return getBitSetBuffer(t)
+        const numBytes = Math.ceil(length / 8)
+        const buffer = getBitSetBuffer(t)
+        return Buffer.concat([buffer, Buffer.alloc(numBytes - buffer.length)])
     },
 })
 
@@ -398,6 +397,19 @@ export const DataObject = <T extends PacketFormat>(
 //         )
 //     },
 // })
+
+export const DataWithDefault = <T>(
+    type: Type<T>,
+    defaultValue: T
+): Type<T, T | undefined> => ({
+    read: async (buffer: number[]) => {
+        return type.read(buffer)
+    },
+    write: async (t?: T) => {
+        const definedT = t === undefined ? defaultValue : t
+        return await type.write(definedT)
+    },
+})
 
 export const DataPackedXZ: Type<{ x: number; z: number }> = {
     read: async (buffer: number[]) => {

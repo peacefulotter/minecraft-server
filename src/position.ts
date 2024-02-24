@@ -13,6 +13,8 @@ export type Rotation = {
     pitch: number
 }
 
+export const ORIGIN_VEC = { x: 0, y: 0, z: 0 }
+
 export const deltaPosition = (prev: Position, current: Position) => {
     const change = (p: number, c: number) => (c * 32 - p * 32) * 128
     return {

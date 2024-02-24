@@ -16,7 +16,7 @@ export type RawHandlerArgs = {
     buffer: number[]
 }
 
-type Args<Deserializer extends ServerBoundPacketDeserializer> = Omit<
+export type Args<Deserializer extends ServerBoundPacketDeserializer> = Omit<
     RawHandlerArgs,
     'buffer'
 > & {

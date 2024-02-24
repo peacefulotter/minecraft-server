@@ -62,7 +62,7 @@ export const ChatCommand = ServerBoundPacketCreator(0x04, 'ChatCommand', {
         })
     ),
     messageCount: VarInt,
-    acknowledged: DataFixedBitSet(20 / 8),
+    acknowledged: DataFixedBitSet(20),
 })
 
 export const ChatMessage = ServerBoundPacketCreator(0x05, 'ChatMessage', {
@@ -71,7 +71,7 @@ export const ChatMessage = ServerBoundPacketCreator(0x05, 'ChatMessage', {
     salt: DataLong,
     signature: DataOptional(DataByteArray(256)),
     messageCount: VarInt,
-    acknowledged: DataFixedBitSet(20 / 8),
+    acknowledged: DataFixedBitSet(20),
 })
 
 export const PlayerSession = ServerBoundPacketCreator(0x06, 'PlayerSession', {
