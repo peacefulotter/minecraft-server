@@ -24,9 +24,9 @@ import type { DimensionResource } from 'region-types'
 import { ClientBoundPacketCreator, type PacketArguments } from '../create'
 import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
-import type { EntityType } from '~/data-types/entities'
 import type { UUID } from '@minecraft-js/uuid'
 import type { EntityId } from '~/entity/entity'
+import type { EntityTypeId } from '~/data-types/entities'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
@@ -37,7 +37,7 @@ export const BundleDelimiter = ClientBoundPacketCreator(
 export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
     entityId: VarInt,
     entityUUID: DataUUID,
-    type: VarInt as Type<EntityType>,
+    type: VarInt as Type<EntityTypeId>,
     x: DataDouble,
     y: DataDouble,
     z: DataDouble,
@@ -228,7 +228,7 @@ const UpdateLatencyAction = DataObject({
 })
 
 const UpdateDisplayNameAction = DataObject({
-    displayName: DataOptional(DataString), // TODO: must be DataNBT
+    displayName: DataOptional(DataNBT), // TODO: must be DataNBT
 })
 
 const PlayerActions = {

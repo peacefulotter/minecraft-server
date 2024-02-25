@@ -157,7 +157,7 @@ export const MD = <N extends string, I extends TypeIndex>(
     value,
 })
 
-export type RawMetadata = {
+export type MetadataSchema = {
     [index: FieldIndex]: ReturnType<typeof MD>
 }
 
@@ -171,8 +171,8 @@ type MetadataDataType<T> = MetadataTypeIndex<T> extends infer I
 
 type MetadataArg<T> = InnerType<MetadataDataType<T>>
 
-export type MetadataArgs<M extends RawMetadata = RawMetadata> = {
-    [key in keyof M]?: MetadataArg<M[key]>
+export type MetadataArgs<Schema extends MetadataSchema = MetadataSchema> = {
+    [key in keyof Schema]?: MetadataArg<Schema[key]>
 }
 
 const METADATA_END_INDEX = 0xff
@@ -193,9 +193,9 @@ export const DataEntityMetadata = {
     read: async (buffer: number[]) => {
         return readMetadata(buffer, {})
     },
-    write: async <R extends RawMetadata>(args: {
-        raw: R
-        metadata: MetadataArgs<R>
+    write: async <Schema extends MetadataSchema>(args: {
+        raw: Schema
+        metadata: MetadataArgs<Schema>
     }) => {
         const { raw, metadata } = args
         let buffer: Buffer = Buffer.from([])

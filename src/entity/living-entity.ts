@@ -8,7 +8,7 @@ import {
     Entity,
 } from './entity'
 import type { Position, Rotation, Vec3 } from '~/position'
-import { MD, type RawMetadata } from './metadata'
+import { MD, type MetadataSchema } from './metadata'
 import { GameMode } from '~/data-types/enum'
 
 enum HandState {
@@ -18,7 +18,7 @@ enum HandState {
     IS_RIPTIDE_SPINNING = 0x04,
 }
 
-const LivingEntityMetadata = {
+const LivingEntityMetadataSchema = {
     8: MD('handState', 1, HandState.NOTHING),
     9: MD('health', 3, 1),
     10: MD('potionEffectColor', 1, 0),
@@ -28,14 +28,14 @@ const LivingEntityMetadata = {
     14: MD('locationBedSleepingIn', 11, undefined),
 }
 
-// export type LivingEntityMetadata = MetadataArgs<typeof LivingEntityMetadata>
+export type LivingEntitySchema = typeof LivingEntityMetadataSchema
 
 export abstract class LivingEntity<
-    Metadata extends RawMetadata,
+    Schema extends MetadataSchema,
     Name extends EntityName
-> extends Entity<Metadata & typeof LivingEntityMetadata, Name> {
+> extends Entity<Schema & LivingEntitySchema, Name> {
     constructor(
-        metadata: Metadata,
+        metadata: Schema,
         name: Name,
         position: Position = DEFAULT_POSITION,
         rotation: Rotation = DEFAULT_ROTATION,
@@ -45,7 +45,7 @@ export abstract class LivingEntity<
         gameMode: GameMode = GameMode.SURVIVAL
     ) {
         super(
-            { ...LivingEntityMetadata, ...metadata },
+            { ...metadata, ...LivingEntityMetadataSchema },
             name,
             position,
             rotation,

@@ -134,7 +134,16 @@ export const ConfigurationHandler = Handler.init('Configuration')
                             ping: (p as Client).ping,
                         },
                         updateDisplayName: {
-                            displayName: undefined, //p.username,
+                            displayName: new NBT.NBTData(
+                                NBT.parse(
+                                    JSON.stringify({
+                                        color: 'light_purple',
+                                        text: p.username || 'player',
+                                        bold: true,
+                                    })
+                                ),
+                                { rootName: null }
+                            ), //p.username,
                             // displayName: new NBT.NBTData(p.username, {
                             //     rootName: null,
                             // }),

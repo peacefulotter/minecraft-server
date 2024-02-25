@@ -10,7 +10,7 @@ enum ArmorStandMask {
     MARKER = 0x10,
 }
 
-export const ArmorStandMetadata = {
+export const ArmorStandMetadataSchema = {
     15: MD('mask', 0, ArmorStandMask.NOTHING),
     16: MD('headRotation', 9, ORIGIN_VEC),
     20: MD('bodyRotation', 9, ORIGIN_VEC),
@@ -20,12 +20,11 @@ export const ArmorStandMetadata = {
     24: MD('rightLegRotation', 9, { x: 1, y: 0, z: 1 }),
 }
 
-export class ArmorStand extends LivingEntity<
-    typeof ArmorStandMetadata,
-    'armor_stand'
-> {
+type ArmorStandSchema = typeof ArmorStandMetadataSchema
+
+export class ArmorStand extends LivingEntity<ArmorStandSchema, 'armor_stand'> {
     constructor() {
-        super(ArmorStandMetadata, 'armor_stand')
+        super(ArmorStandMetadataSchema, 'armor_stand')
     }
 
     test() {}

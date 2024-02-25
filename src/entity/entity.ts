@@ -7,7 +7,12 @@ import {
 } from '~/data-types/entities'
 import type { Position, Rotation, Vec3 } from '~/position'
 import { GameMode } from '~/data-types/enum'
-import { EntityPose, MD, type RawMetadata } from './metadata'
+import {
+    EntityPose,
+    MD,
+    type MetadataArgs,
+    type MetadataSchema,
+} from './metadata'
 
 export const DEFAULT_POSITION: Position = { x: 0, y: 0, z: 0, onGround: true }
 export const DEFAULT_ROTATION: Rotation = { pitch: 0, yaw: 0 }
@@ -40,7 +45,7 @@ export enum EntityFlags {
     ELYTRA_FLYING = 0x80,
 }
 
-const EntityMetadata = {
+const EntityMetadataSchema = {
     0: MD('flags', 0, EntityFlags.ON_FIRE),
     1: MD('airTicks', 1, 300),
     2: MD(
@@ -59,22 +64,23 @@ const EntityMetadata = {
     5: MD('hasNoGravity', 8, false),
     6: MD('pose', 20, EntityPose.STANDING),
     7: MD('tickFrozenInPowderedSnow', 1, 0),
-} as const
+}
 
-// export type EntityMetadata = MetadataArgs<typeof EntityMetadata>
+export type EntitySchema = typeof EntityMetadataSchema
 
 export abstract class Entity<
-    Metadata extends RawMetadata,
+    Schema extends MetadataSchema,
     Name extends EntityName
 > {
     readonly entityId: EntityId = generateId()
     readonly entityUUID: UUID = generateV4()
 
-    readonly metadata: Metadata & typeof EntityMetadata
+    readonly metadataSchema: Schema & EntitySchema
     readonly info: EntityMap[Name]
+    metadata: MetadataArgs<Schema & EntitySchema>
 
     constructor(
-        metadata: Metadata,
+        metadata: Schema,
         public name: Name,
         public position: Position = DEFAULT_POSITION,
         public rotation: Rotation = DEFAULT_ROTATION,
@@ -83,8 +89,13 @@ export abstract class Entity<
         public data: number = DEFAULT_DATA,
         public gameMode: GameMode = GameMode.SURVIVAL
     ) {
-        this.metadata = { ...EntityMetadata, ...metadata }
+        this.metadataSchema = { ...metadata, ...EntityMetadataSchema }
         this.info = entities[name]
+        this.metadata = {} as MetadataArgs<Schema & EntitySchema>
+    }
+
+    setMetadata(metadata: MetadataArgs<Schema & EntitySchema>): void {
+        // this.metadata = { ...this.metadata, ...metadata }
     }
 
     public toString(): string {
