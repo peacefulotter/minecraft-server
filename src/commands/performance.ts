@@ -1,27 +1,24 @@
 import { SpawnEntity } from '~/net/packets/client'
 import type { CmdArgs, Command } from './handler'
 import { ArmorStand } from '~/entity/armor-stand'
+import v from 'vec3'
 
-export const performance: Command<[]> = {
+export const perf: Command<[]> = {
     name: 'perf',
     description: 'Performs performance tests',
     callback: async ({ client }: CmdArgs) => {
-        const length = 20
-        const r = 4
+        const length = 100
+        const r = 5
         const stands = new Array(length).fill(0).map((_, i) => {
             const as = new ArmorStand()
             as.position.x = Math.cos((i / length) * 2 * Math.PI) * r
             as.position.z = Math.sin((i / length) * 2 * Math.PI) * r
-            console.log(as.position)
             return as
         })
-
-        // console.log(stands)
 
         await client.write(
             await Promise.all(
                 stands.map(async (as, i) => {
-                    console.log('======', i, as.position)
                     return await SpawnEntity({
                         entityId: as.entityId,
                         entityUUID: as.entityUUID,
@@ -41,17 +38,38 @@ export const performance: Command<[]> = {
             )
         )
 
-        // let i = 0
-        // setInterval(async () => {
-        //     await armorStand.setMetadata(client, {
-        //         17: { x: i, y: i, z: i },
-        //         18: { x: -i, y: i, z: i },
-        //         19: { x: i, y: -i, z: i },
-        //         20: { x: i, y: i, z: -i },
-        //         21: { x: -i, y: -i, z: i },
-        //     })
-        //     i += 0.1
-        // }, 1)
+        let i = 0
+        let date = performance.now()
+        const interval = setInterval(async () => {
+            if (i > 10000) {
+                console.log('===============================')
+                console.log('======== REACHED END ==========')
+                console.log('===============================')
+
+                clearInterval(interval)
+                return
+            }
+            console.log('Interval time:', performance.now() - date, 'ms')
+            date = performance.now()
+            await client.write(
+                await Promise.all(
+                    stands.map(async (as, j) => {
+                        const k = i + 0.1 * j
+                        return await as.setMetadata({
+                            17: v(k, k, k),
+                            18: v(k, k, k),
+                            19: v(k, k, k),
+                            20: v(k, k, k),
+                            21: v(k, k, k),
+                        })
+                    })
+                ),
+                false
+            )
+            console.log('Packet time:', performance.now() - date, 'ms')
+            date = performance.now()
+            i += 1
+        }, 1)
     },
     parser: [],
 }

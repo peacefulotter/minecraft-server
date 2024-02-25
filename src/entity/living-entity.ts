@@ -40,9 +40,9 @@ export abstract class LivingEntity<
         metadata: Schema,
         name: Name,
         position: Position = DEFAULT_POSITION,
-        onGround: boolean = DEFAULT_ON_GROUND,
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
+        onGround: boolean = DEFAULT_ON_GROUND,
         headYaw: number = DEFAULT_HEAD_YAW,
         data: number = DEFAULT_DATA,
         gameMode: GameMode = GameMode.SURVIVAL
@@ -51,9 +51,9 @@ export abstract class LivingEntity<
             { ...metadata, ...LivingEntityMetadataSchema },
             name,
             position,
-            onGround,
             rotation,
             velocity,
+            onGround,
             headYaw,
             data,
             gameMode

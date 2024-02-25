@@ -76,6 +76,7 @@ export class Server {
 
     open = (socket: SocketWithId) => {
         const client = new Client(socket)
+        console.log(client)
         this.entities.addPlayer(client)
         this.clients[client.entityId] = client
         socket.id = client.entityId

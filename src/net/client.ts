@@ -49,14 +49,13 @@ export class Client extends Player {
     }
 
     async write(
-        packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
+        packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][],
+        log: boolean = true
     ) {
         const formatted = await formatPacket(packet)
-        logClientBoundPacket(formatted, this)
+        if (log) logClientBoundPacket(formatted, this)
         this.socket.write(formatted.data)
     }
-
-    // TODO: ping from time to time as well
 
     async kick() {
         this.state = ClientState.DISCONNECTED
@@ -65,8 +64,9 @@ export class Client extends Player {
                 // TODO: fix Chat type
                 reason: NBT.parse(
                     JSON.stringify({
-                        type: 'text',
-                        text: 'GOT KICKED LOOSER',
+                        color: 'light_purple',
+                        text: 'You have been kicked from the server',
+                        bold: true,
                     })
                 ),
             })

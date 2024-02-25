@@ -3,6 +3,8 @@ import BitSet from 'bitset'
 import { parseUUID, type UUID } from '@minecraft-js/uuid'
 import type { PacketArguments, PacketFormat } from '~/net/packets/create'
 import Long from 'long'
+import type { Vec3 } from 'vec3'
+import v from 'vec3'
 
 const FLOAT_SIZE = 4
 const DOUBLE_SIZE = 8
@@ -236,21 +238,17 @@ export const VarIntPrefixedByteArray: Type<Buffer> = {
     },
 }
 
-export const DataPosition: Type<{
-    x: number
-    y: number
-    z: number
-}> = {
+export const DataPosition: Type<Vec3> = {
     read: async (buffer: number[]) => {
         const long = await DataLong.read(buffer)
         const val = long.toNumber()
         const x = val >> 38
         const y = (val << 52) >> 52
         const z = (val << 26) >> 38
-        return { x, y, z }
+        return v(x, y, z)
     },
 
-    write: async (t: { x: number; y: number; z: number }) => {
+    write: async (t: Vec3) => {
         const val =
             ((t.x & 0x3ffffff) << 38) |
             ((t.z & 0x3ffffff) << 12) |
@@ -398,6 +396,7 @@ export const DataObject = <T extends PacketFormat>(
 //     },
 // })
 
+// TODO: remove if not used
 export const DataWithDefault = <T>(
     type: Type<T>,
     defaultValue: T
@@ -410,6 +409,23 @@ export const DataWithDefault = <T>(
         return await type.write(definedT)
     },
 })
+
+export const DataVec3: Type<Vec3> = {
+    read: async (buffer: number[]) => {
+        const x = await DataFloat.read(buffer)
+        const y = await DataFloat.read(buffer)
+        const z = await DataFloat.read(buffer)
+        return v(x, y, z)
+    },
+
+    write: async (t: Vec3) => {
+        return Buffer.concat([
+            await DataFloat.write(t.x),
+            await DataFloat.write(t.y),
+            await DataFloat.write(t.z),
+        ])
+    },
+}
 
 export const DataPackedXZ: Type<{ x: number; z: number }> = {
     read: async (buffer: number[]) => {

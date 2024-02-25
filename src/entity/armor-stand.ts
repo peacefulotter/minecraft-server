@@ -1,6 +1,7 @@
 import { ORIGIN_VEC } from '~/position'
 import { LivingEntity } from './living-entity'
 import { MD } from './metadata'
+import v from 'vec3'
 
 enum ArmorStandMask {
     NOTHING = 0x00,
@@ -14,10 +15,10 @@ export const ArmorStandMetadataSchema = {
     15: MD('mask', 0, ArmorStandMask.NOTHING),
     16: MD('headRotation', 9, ORIGIN_VEC),
     17: MD('bodyRotation', 9, ORIGIN_VEC),
-    18: MD('leftArmRotation', 9, { x: -10, y: 0, z: -10 }),
-    19: MD('rightArmRotation', 9, { x: -15, y: 0, z: 10 }),
-    20: MD('leftLegRotation', 9, { x: -1, y: 0, z: -1 }),
-    21: MD('rightLegRotation', 9, { x: 1, y: 0, z: 1 }),
+    18: MD('leftArmRotation', 9, v(-10, 0, -10)),
+    19: MD('rightArmRotation', 9, v(-15, 0, 10)),
+    20: MD('leftLegRotation', 9, v(-1, 0, -1)),
+    21: MD('rightLegRotation', 9, v(1, 0, 1)),
 }
 
 type ArmorStandSchema = typeof ArmorStandMetadataSchema

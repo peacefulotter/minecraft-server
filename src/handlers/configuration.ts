@@ -160,7 +160,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     SpawnEntity({
                         entityId: entity.entityId,
                         entityUUID: entity.entityUUID,
-                        type: entity.type,
+                        type: entity.info.typeId,
                         x: entity.position.x,
                         y: entity.position.y,
                         z: entity.position.z,

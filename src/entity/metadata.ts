@@ -9,6 +9,8 @@ import {
     DataString,
     DataObject,
     DataUUID,
+    DataVec3,
+    DataPosition,
 } from '~/data-types/basic'
 import { DataNBT } from '~/data-types/registry'
 import type { DimensionID, VillagerLevel } from '../../Region-Types/src/java'
@@ -17,13 +19,9 @@ import { log } from '~/logger'
 
 const TextComponent = DataNBT
 const Slot = DataNBT
-const DataVec3 = DataObject({
-    x: DataFloat,
-    y: DataFloat,
-    z: DataFloat,
-})
+
+const DataParticle = DataNBT // TODO: proper particle type
 const DataRotation = DataVec3
-const DataPosition = DataVec3
 
 export enum Direction {
     DOWN = 0,
@@ -131,7 +129,7 @@ const TypeMap = {
     14: DataBlockId,
     15: DataOptional(DataBlockId),
     16: DataNBT,
-    17: DataNBT, // TODO: DataParticle ???,
+    17: DataParticle, // TODO: DataParticle ???,
     18: DataVillagerData,
     19: DataOptional(VarInt),
     20: VarInt as Type<EntityPose>,
@@ -203,7 +201,7 @@ export const DataEntityMetadata = {
             if (data === undefined) continue
             const { typeIndex } = raw[parseInt(index)]
             const type = TypeMap[typeIndex as TypeIndex]
-            log('Writing metadata', { index, typeIndex, data })
+            // log('Writing metadata', { index, typeIndex, data })
             buffer = Buffer.concat([
                 buffer,
                 await DataByte.write(parseInt(index)),

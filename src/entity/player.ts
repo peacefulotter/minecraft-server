@@ -50,9 +50,9 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
             PlayerMetadata,
             'player',
             position,
-            onGround,
             rotation,
             velocity,
+            onGround,
             headYaw,
             data,
             gameMode

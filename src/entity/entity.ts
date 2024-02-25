@@ -66,8 +66,8 @@ const EntityMetadataSchema = {
 export type EntitySchema = typeof EntityMetadataSchema
 
 export abstract class Entity<
-    Schema extends MetadataSchema,
-    Name extends EntityName
+    Schema extends MetadataSchema = MetadataSchema,
+    Name extends EntityName = EntityName
 > {
     readonly entityId: EntityId = generateId()
     readonly entityUUID: UUID = generateV4()
@@ -76,13 +76,17 @@ export abstract class Entity<
     readonly info: EntityMap[Name]
     metadata: MetadataArgs<Schema & EntitySchema>
 
+    position: Position
+    rotation: Rotation
+    velocity: Vec3
+
     constructor(
         metadata: Schema,
         public name: Name,
-        public position: Position = DEFAULT_POSITION,
+        position: Position = DEFAULT_POSITION,
+        rotation: Rotation = DEFAULT_ROTATION,
+        velocity: Vec3 = DEFAULT_VELOCITY,
         public onGround: boolean = DEFAULT_ON_GROUND,
-        public rotation: Rotation = DEFAULT_ROTATION,
-        public velocity: Vec3 = DEFAULT_VELOCITY,
         public headYaw: number = DEFAULT_HEAD_YAW,
         public data: number = DEFAULT_DATA,
         public gameMode: GameMode = GameMode.SURVIVAL
@@ -90,19 +94,20 @@ export abstract class Entity<
         this.metadataSchema = { ...metadata, ...EntityMetadataSchema }
         this.info = entities[name]
         this.metadata = {} as MetadataArgs<Schema & EntitySchema>
+
+        // Make sure its new instances
+        this.position = position.clone()
+        this.rotation = { ...rotation }
+        this.velocity = velocity.clone()
     }
 
-    async setMetadata(
-        client: Client,
-        metadata: MetadataArgs<Schema & EntitySchema>
-    ) {
-        await client.write(
-            await SetEntityMetadata({
-                entityId: this.entityId,
-                metadata: { raw: this.metadataSchema, metadata },
-            })
-        )
+    // Updates metadata and returns the packet to send to the client
+    async setMetadata(metadata: MetadataArgs<Schema & EntitySchema>) {
         this.metadata = { ...this.metadata, ...metadata }
+        return await SetEntityMetadata({
+            entityId: this.entityId,
+            metadata: { raw: this.metadataSchema, metadata },
+        })
     }
 
     get x() {

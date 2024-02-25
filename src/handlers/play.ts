@@ -21,11 +21,29 @@ import {
     UpdateEntityRotation,
 } from '~/net/packets/client'
 import { deltaPosition } from '~/position'
+import v from 'vec3'
 
 export const PlayHandler = Handler.init('Play')
 
     .register(ConfirmTeleportation, async ({ server, client }) => {
-        server.broadcast(client, await SpawnEntity(client))
+        server.broadcast(
+            client,
+            await SpawnEntity({
+                entityId: client.entityId,
+                entityUUID: client.entityUUID,
+                type: client.info.typeId,
+                x: client.x,
+                y: client.y,
+                z: client.z,
+                yaw: client.yaw,
+                pitch: client.pitch,
+                headYaw: client.headYaw,
+                data: client.data,
+                velocityX: client.velocityX,
+                velocityY: client.velocityY,
+                velocityZ: client.velocityZ,
+            })
+        )
     })
 
     .register(AcknowledgeMessage, async ({ packet }) => {})
@@ -43,17 +61,20 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(SetPlayerPosition, async ({ server, client, packet }) => {
-        const newPosition = packet
+        const { x, y, z, onGround } = packet
 
+        const newPosition = v(x, y, z)
         const delta = deltaPosition(client.position, newPosition)
+
         client.position = newPosition
+        client.onGround = onGround
 
         server.broadcast(
             client,
             await UpdateEntityPosition({
                 entityId: client.entityId,
                 ...delta,
-                onGround: client.position.onGround,
+                onGround: client.onGround,
             })
         )
     })
@@ -61,8 +82,9 @@ export const PlayHandler = Handler.init('Play')
     .register(
         SetPlayerPositionAndRotation,
         async ({ server, client, packet }) => {
-            const { yaw, pitch, ...newPosition } = packet
+            const { yaw, pitch, x, y, z, onGround } = packet
 
+            const newPosition = v(x, y, z)
             const delta = deltaPosition(client.position, newPosition)
 
             client.position = newPosition
@@ -74,7 +96,7 @@ export const PlayHandler = Handler.init('Play')
                     ...delta,
                     yaw: client.yaw,
                     pitch: client.pitch,
-                    onGround: client.position.onGround,
+                    onGround: client.onGround,
                 }),
                 await SetHeadRotation({
                     entityId: client.entityId,
@@ -87,7 +109,7 @@ export const PlayHandler = Handler.init('Play')
     .register(SetPlayerRotation, async ({ server, client, packet }) => {
         const { onGround, ...rotation } = packet
         client.rotation = rotation
-        if (client.position !== undefined) client.position.onGround = onGround
+        if (client.position !== undefined) client.onGround = onGround
 
         server.broadcast(client, [
             await UpdateEntityRotation({
@@ -104,8 +126,7 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(SetPlayerOnGround, async ({ client, packet }) => {
-        if (client.position !== undefined)
-            client.position.onGround = packet.onGround
+        if (client.position !== undefined) client.onGround = packet.onGround
     })
 
     .register(PlayerCommand, async ({ client, packet }) => {
