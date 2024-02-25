@@ -28,11 +28,12 @@ import type { ClientBoundPacket } from '~/net/packets/create'
 import BitSet from 'bitset'
 import { chunk } from '~/world/chunk'
 import { SPAWN_POSITION, WORLD_SEED } from '~/constants'
+import { entities } from '~/data-types/entities'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
     .register(ConfigurationClientInformation, async ({ client, packet }) => {
-        client.info = packet
+        client.clientInfo = packet
         return ClientFinishConfiguration({})
     })
 
@@ -65,7 +66,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
         const packets = [
             await PlayLogin({
-                entityId: Client.ENTITY_TYPE, // see data-types/entities.ts
+                entityId: entities.player.typeId, // see data-types/entities.ts
                 isHardcore: false,
                 dimensionNames: [
                     DimensionResource.overworld,
@@ -95,7 +96,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
             await SetCenterChunk({ chunkX: 0, chunkZ: 0 }),
             await GameEvent({
                 event: {
-                    effect: 13,
+                    effect: 13, // TODO: define effects
                     value: 0,
                 },
             }),

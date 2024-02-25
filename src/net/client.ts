@@ -26,9 +26,6 @@ export const REFRESH_INTERVAL = 5000 // ms
 export const KICK_TIMEOUT = 30000 // ms
 
 export class Client extends Player {
-    // https://raw.githubusercontent.com/Pokechu22/Burger/gh-pages/1.20.4.json
-    static ENTITY_TYPE = 124 as const // TODO: retrieve this properly
-
     state: ClientState = ClientState.HANDSHAKING
     encrypted: boolean = false
 
@@ -36,7 +33,7 @@ export class Client extends Player {
 
     publicKey: Buffer | undefined
 
-    info: ClientInfo | undefined
+    clientInfo: ClientInfo | undefined
 
     ping: number = 0
     aliveTimeout: Record<
@@ -48,7 +45,7 @@ export class Client extends Player {
     > = {}
 
     constructor(public readonly socket: SocketWithId) {
-        super(Client.ENTITY_TYPE)
+        super()
     }
 
     async write(packet: ClientBoundPacket | ClientBoundPacket[]) {

@@ -1,0 +1,136 @@
+import type { EntityName, EntityTypeId } from '~/data-types/entities'
+import {
+    DEFAULT_DATA,
+    DEFAULT_HEAD_YAW,
+    DEFAULT_POSITION,
+    DEFAULT_ROTATION,
+    DEFAULT_VELOCITY,
+    Entity,
+} from './entity'
+import type { Position, Rotation, Vec3 } from '~/position'
+import { MD, type RawMetadata } from './metadata'
+import { GameMode } from '~/data-types/enum'
+
+enum HandState {
+    NOTHING = 0x00,
+    IS_HAND_ACTIVE = 0x01,
+    ACTIVE_HAND = 0x02,
+    IS_RIPTIDE_SPINNING = 0x04,
+}
+
+const LivingEntityMetadata = {
+    8: MD('handState', 1, HandState.NOTHING),
+    9: MD('health', 3, 1),
+    10: MD('potionEffectColor', 1, 0),
+    11: MD('isPotionEffectAmbient', 8, false),
+    12: MD('numberOfArrowsInEntity', 1, 0),
+    13: MD('numberOfBeeStingersInEntity', 1, 0),
+    14: MD('locationBedSleepingIn', 11, undefined),
+}
+
+// export type LivingEntityMetadata = MetadataArgs<typeof LivingEntityMetadata>
+
+export abstract class LivingEntity<
+    Metadata extends RawMetadata,
+    Name extends EntityName
+> extends Entity<Metadata & typeof LivingEntityMetadata, Name> {
+    constructor(
+        metadata: Metadata,
+        name: Name,
+        position: Position = DEFAULT_POSITION,
+        rotation: Rotation = DEFAULT_ROTATION,
+        velocity: Vec3 = DEFAULT_VELOCITY,
+        headYaw: number = DEFAULT_HEAD_YAW,
+        data: number = DEFAULT_DATA,
+        gameMode: GameMode = GameMode.SURVIVAL
+    ) {
+        super(
+            { ...LivingEntityMetadata, ...metadata },
+            name,
+            position,
+            rotation,
+            velocity,
+            headYaw,
+            data,
+            gameMode
+        )
+    }
+
+    public toString(): string {
+        return `LivingEntity
+            ${super.toString()}`
+    }
+
+    public [Symbol.toPrimitive](): string {
+        return this.toString()
+    }
+
+    public [Symbol.for('nodejs.util.inspect.custom')](): string {
+        return this.toString()
+    }
+
+    // health: number
+    // potionEffectColor: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+    // potionEffectShowIcon: boolean
+    // potionEffectDuration: number
+    // potionEffectAmplifier: number
+    // potionEffectId: number
+    // potionEffectAmbient: boolean
+    // potionEffectShowParticles: boolean
+}

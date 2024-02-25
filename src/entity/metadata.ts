@@ -1,6 +1,5 @@
 import {
     DataByte,
-    DataWithDefault,
     VarInt,
     DataOptional,
     DataBoolean,
@@ -13,10 +12,8 @@ import {
 } from '~/data-types/basic'
 import { DataNBT } from '~/data-types/registry'
 import type { DimensionID, VillagerLevel } from '../../Region-Types/src/java'
-import { ORIGIN_VEC } from '~/position'
-import type { InnerType, PacketArguments } from '~/net/packets/create'
+import type { InnerType } from '~/net/packets/create'
 import { log } from '~/logger'
-import { createPrinter } from 'typescript'
 
 const TextComponent = DataNBT
 const Slot = DataNBT
@@ -28,7 +25,7 @@ const DataVec3 = DataObject({
 const DataRotation = DataVec3
 const DataPosition = DataVec3
 
-enum Direction {
+export enum Direction {
     DOWN = 0,
     UP,
     NORTH,
@@ -50,7 +47,7 @@ export enum VillagerType {
     'minecraft:taiga',
 }
 
-enum VillagerProfession {
+export enum VillagerProfession {
     'minecraft:armorer',
     'minecraft:butcher',
     'minecraft:cartographer',
@@ -74,7 +71,7 @@ const DataVillagerData = DataObject({
     level: VarInt as Type<VillagerLevel>,
 })
 
-enum Pose {
+export enum EntityPose {
     STANDING = 0,
     FALL_FLYING,
     SLEEPING,
@@ -99,7 +96,7 @@ const DataGlobalPos = DataObject({
     z: VarLong,
 })
 
-enum SnifferState {
+export enum SnifferState {
     IDLING = 0,
     FEELING_HAPPY,
     SCENTING,
@@ -137,7 +134,7 @@ const TypeMap = {
     17: DataNBT, // TODO: DataParticle ???,
     18: DataVillagerData,
     19: DataOptional(VarInt),
-    20: VarInt as Type<Pose>,
+    20: VarInt as Type<EntityPose>,
     21: VarInt, // CAT_VARIANT
     22: VarInt, // FROG_VARIANT
     23: DataOptional(DataGlobalPos),
@@ -148,14 +145,20 @@ const TypeMap = {
 } as const
 
 type TypeIndex = keyof typeof TypeMap
+type FieldIndex = number
 
-const L = <N extends string, I extends TypeIndex>(name: N, typeIndex: I) => ({
+export const MD = <N extends string, I extends TypeIndex>(
+    name: N,
+    typeIndex: I,
+    value: InnerType<(typeof TypeMap)[I]>
+) => ({
     name,
     typeIndex,
+    value,
 })
 
-type RawMetadata = {
-    [index: number]: ReturnType<typeof L>
+export type RawMetadata = {
+    [index: FieldIndex]: ReturnType<typeof MD>
 }
 
 type MetadataTypeIndex<T> = T extends { typeIndex: infer T } ? T : never
@@ -168,7 +171,7 @@ type MetadataDataType<T> = MetadataTypeIndex<T> extends infer I
 
 type MetadataArg<T> = InnerType<MetadataDataType<T>>
 
-type MetadataArgs<M extends RawMetadata = RawMetadata> = {
+export type MetadataArgs<M extends RawMetadata = RawMetadata> = {
     [key in keyof M]?: MetadataArg<M[key]>
 }
 
@@ -199,7 +202,7 @@ export const DataEntityMetadata = {
         for (const [index, data] of Object.entries(metadata)) {
             if (data === undefined) continue
             const { typeIndex } = raw[parseInt(index)]
-            const type = TypeMap[typeIndex]
+            const type = TypeMap[typeIndex as TypeIndex]
             log('Writing metadata', { index, typeIndex, data })
             buffer = Buffer.concat([
                 buffer,
@@ -211,85 +214,3 @@ export const DataEntityMetadata = {
         return Buffer.concat([buffer, await DataByte.write(METADATA_END_INDEX)])
     },
 }
-
-// TODO: add default values to L(), see for them below
-
-export const EntityMetadata = {
-    0: L('flags', 0),
-    1: L('airTicks', 1),
-    2: L('customName', 16),
-    3: L('isCustomNameVisible', 8),
-    4: L('isSilent', 8),
-    5: L('hasNoGravity', 8),
-    6: L('pose', 20),
-    7: L('tickFrozenInPowderedSnow', 1),
-} as const
-
-// export type EntityMetadata = MetadataArgs<typeof EntityMetadata>
-
-export const LivingEntityMetadata = {
-    ...EntityMetadata,
-    8: L('handState', 1),
-    9: L('health', 3),
-    10: L('potionEffectColor', 1),
-    11: L('isPotionEffectAmbient', 8),
-    12: L('numberOfArrowsInEntity', 1),
-    13: L('numberOfBeeStingersInEntity', 1),
-    14: L('locationBedSleepingIn', 11),
-}
-
-// export type LivingEntityMetadata = MetadataArgs<typeof LivingEntityMetadata>
-
-export const ArmorStandMetadata = {
-    ...LivingEntityMetadata,
-    15: L('mask', 0),
-    16: L('headRotation', 27),
-    20: L('bodyRotation', 27),
-    21: L('leftArmRotation', 27),
-    22: L('rightArmRotation', 27),
-    23: L('leftLegRotation', 27),
-    24: L('rightLegRotation', 27),
-}
-
-// ============================= OLD =============================
-// ============================= KEEP DEFAULT VALUES =============================
-
-// const L = <T>(name: string, type: Type<T>) => {
-//     return { name, type }
-// }
-
-// export const EntityMetadata = {
-//     0: L('flags', DataWithDefault(DataByte, 0)),
-//     1: L('airTicks', DataWithDefault(VarInt, 300)),
-//     2: L('customName', DataOptional(DataNBT)),
-//     3: L('isCustomNameVisible', DataWithDefault(DataBoolean, false)),
-//     4: L('isSilent', DataWithDefault(DataBoolean, false)),
-//     5: L('hasNoGravity', DataWithDefault(DataBoolean, false)),
-//     6: L('pose', DataWithDefault(VarInt as Type<Pose>, Pose.STANDING)),
-//     7: L('tickFrozenInPowderedSnow', DataWithDefault(VarInt, 0)),
-// }
-
-// const DataBlockPos = DataPosition
-
-// export const ArmorStandMetadata = {
-//     ...LivingEntityMetadata,
-//     15: L('mask', DataWithDefault(DataByte, 0)),
-//     16: L('headRotation', DataWithDefault(DataRotation, ORIGIN_VEC)),
-//     20: L('bodyRotation', DataWithDefault(DataRotation, ORIGIN_VEC)),
-//     21: L(
-//         'leftArmRotation',
-//         DataWithDefault(DataRotation, { x: -10, y: 0, z: -10 })
-//     ),
-//     22: L(
-//         'rightArmRotation',
-//         DataWithDefault(DataRotation, { x: -15, y: 0, z: 10 })
-//     ),
-//     23: L(
-//         'leftLegRotation',
-//         DataWithDefault(DataRotation, { x: -1, y: 0, z: -1 })
-//     ),
-//     24: L(
-//         'rightLegRotation',
-//         DataWithDefault(DataRotation, { x: 1, y: 0, z: 1 })
-//     ),
-// }
