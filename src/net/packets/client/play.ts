@@ -27,6 +27,7 @@ import type { ValueOf } from 'type-fest'
 import type { UUID } from '@minecraft-js/uuid'
 import type { EntityId } from '~/entity/entity'
 import type { EntityTypeId } from '~/data-types/entities'
+import { DataEntityMetadata } from '~/entity/metadata'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
@@ -365,7 +366,7 @@ export const SetEntityMetadata = ClientBoundPacketCreator(
     'SetEntityMetadata',
     {
         entityId: VarInt,
-        metadata: DataNBT,
+        metadata: DataEntityMetadata,
     }
 )
 

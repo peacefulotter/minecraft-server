@@ -5,7 +5,7 @@ import {
     type EntityMap,
     type EntityName,
 } from '~/data-types/entities'
-import type { Position, Rotation, Vec3 } from '~/position'
+import type { Position, Rotation } from '~/position'
 import { GameMode } from '~/data-types/enum'
 import {
     EntityPose,
@@ -13,10 +13,15 @@ import {
     type MetadataArgs,
     type MetadataSchema,
 } from './metadata'
+import type { Client } from '~/net/client'
+import { SetEntityMetadata } from '~/net/packets/client'
+import type { Vec3 } from 'vec3'
+import v from 'vec3'
 
-export const DEFAULT_POSITION: Position = { x: 0, y: 0, z: 0, onGround: true }
+export const DEFAULT_POSITION: Position = v(0, 0, 0)
+export const DEFAULT_ON_GROUND = true
 export const DEFAULT_ROTATION: Rotation = { pitch: 0, yaw: 0 }
-export const DEFAULT_VELOCITY: Vec3 = { x: 0, y: 0, z: 0 }
+export const DEFAULT_VELOCITY: Vec3 = v(0, 0, 0)
 export const DEFAULT_HEAD_YAW = 0
 export const DEFAULT_DATA = 0
 
@@ -25,14 +30,6 @@ export type EntityId = number
 const generateId = (): EntityId => {
     return Math.floor(Math.random() * 1000000)
 }
-//     0: L('flags', DataWithDefault(DataByte, 0)),
-//     1: L('airTicks', DataWithDefault(VarInt, 300)),
-//     2: L('customName', DataOptional(DataNBT)),
-//     3: L('isCustomNameVisible', DataWithDefault(DataBoolean, false)),
-//     4: L('isSilent', DataWithDefault(DataBoolean, false)),
-//     5: L('hasNoGravity', DataWithDefault(DataBoolean, false)),
-//     6: L('pose', DataWithDefault(VarInt as Type<Pose>, Pose.STANDING)),
-//     7: L('tickFrozenInPowderedSnow', DataWithDefault(VarInt, 0)),
 
 // https://wiki.vg/Entity_metadata#Entity
 export enum EntityFlags {
@@ -83,6 +80,7 @@ export abstract class Entity<
         metadata: Schema,
         public name: Name,
         public position: Position = DEFAULT_POSITION,
+        public onGround: boolean = DEFAULT_ON_GROUND,
         public rotation: Rotation = DEFAULT_ROTATION,
         public velocity: Vec3 = DEFAULT_VELOCITY,
         public headYaw: number = DEFAULT_HEAD_YAW,
@@ -94,8 +92,45 @@ export abstract class Entity<
         this.metadata = {} as MetadataArgs<Schema & EntitySchema>
     }
 
-    setMetadata(metadata: MetadataArgs<Schema & EntitySchema>): void {
-        // this.metadata = { ...this.metadata, ...metadata }
+    async setMetadata(
+        client: Client,
+        metadata: MetadataArgs<Schema & EntitySchema>
+    ) {
+        await client.write(
+            await SetEntityMetadata({
+                entityId: this.entityId,
+                metadata: { raw: this.metadataSchema, metadata },
+            })
+        )
+        this.metadata = { ...this.metadata, ...metadata }
+    }
+
+    get x() {
+        return this.position.x
+    }
+    get y() {
+        return this.position.y
+    }
+    get z() {
+        return this.position.z
+    }
+    get yaw() {
+        return this.rotation.yaw
+    }
+    get pitch() {
+        return this.rotation.pitch
+    }
+    get velocityX() {
+        return this.velocity.x
+    }
+    get velocityY() {
+        return this.velocity.y
+    }
+    get velocityZ() {
+        return this.velocity.z
+    }
+    get uuid() {
+        return this.entityUUID
     }
 
     public toString(): string {

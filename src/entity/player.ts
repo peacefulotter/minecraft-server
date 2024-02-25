@@ -1,4 +1,4 @@
-import type { Position, Rotation, Vec3 } from '~/position'
+import type { Position, Rotation } from '~/position'
 import {
     DEFAULT_DATA,
     DEFAULT_HEAD_YAW,
@@ -11,6 +11,7 @@ import { MD } from './metadata'
 import { GameMode, MainHand } from '~/data-types/enum'
 import { LivingEntity } from './living-entity'
 import { NBTData } from 'nbtify'
+import type { Vec3 } from 'vec3'
 
 enum SkinPartsMask {
     NOTHING = 0x00,
@@ -38,6 +39,7 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
 
     constructor(
         position: Position = DEFAULT_POSITION,
+        onGround: boolean = true,
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
         headYaw: number = DEFAULT_HEAD_YAW,
@@ -48,6 +50,7 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
             PlayerMetadata,
             'player',
             position,
+            onGround,
             rotation,
             velocity,
             headYaw,

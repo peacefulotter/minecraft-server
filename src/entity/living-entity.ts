@@ -2,14 +2,16 @@ import type { EntityName, EntityTypeId } from '~/data-types/entities'
 import {
     DEFAULT_DATA,
     DEFAULT_HEAD_YAW,
+    DEFAULT_ON_GROUND,
     DEFAULT_POSITION,
     DEFAULT_ROTATION,
     DEFAULT_VELOCITY,
     Entity,
 } from './entity'
-import type { Position, Rotation, Vec3 } from '~/position'
+import type { Position, Rotation } from '~/position'
 import { MD, type MetadataSchema } from './metadata'
 import { GameMode } from '~/data-types/enum'
+import type { Vec3 } from 'vec3'
 
 enum HandState {
     NOTHING = 0x00,
@@ -38,6 +40,7 @@ export abstract class LivingEntity<
         metadata: Schema,
         name: Name,
         position: Position = DEFAULT_POSITION,
+        onGround: boolean = DEFAULT_ON_GROUND,
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
         headYaw: number = DEFAULT_HEAD_YAW,
@@ -48,6 +51,7 @@ export abstract class LivingEntity<
             { ...metadata, ...LivingEntityMetadataSchema },
             name,
             position,
+            onGround,
             rotation,
             velocity,
             headYaw,

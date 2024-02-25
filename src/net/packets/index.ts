@@ -23,23 +23,66 @@ const getNames = (packets: ClientBoundPacket[]) => {
         .join(' | ')
 }
 
-export const formatPacket = async (
-    packet: ClientBoundPacket | ClientBoundPacket[]
-) => {
-    if (Array.isArray(packet)) {
-        // const delimiter = await BundleDelimiter({})
-        // const delimiterBuffer = await wrap(delimiter)
-        const data = await Promise.all(packet.map(wrap))
-        return {
-            id: packet
-                .map((p) => p.id)
-                .reduce((a, b) => (a << 8) + (b & 0xff), 0),
-            name: getNames(packet),
-            data: Buffer.concat(
-                // data.map((d) => Buffer.concat([d.data, delimiterBuffer.data]))
-                data.map((d) => d.data)
+const formatPacketGroup = async (packets: ClientBoundPacket[]) => {
+    const data = await Promise.all(packets.map(wrap))
+    return {
+        id: packets.map((p) => p.id).reduce((a, b) => (a << 8) + (b & 0xff), 0),
+        name: getNames(packets),
+        data: Buffer.concat(
+            // data.map((d) => Buffer.concat([d.data, delimiterBuffer.data]))
+            data.map((d) => d.data)
+        ),
+    } as ClientBoundPacket
+}
+
+const bundlePackets = async (packets: ClientBoundPacket[], join: boolean) => {
+    return {
+        id: packets.map((p) => p.id).reduce((a, b) => (a << 8) + (b & 0xff), 0),
+        name: packets
+            .map((p) => p.name)
+            .reduce(
+                (acc, p) =>
+                    join
+                        ? acc.length === 0
+                            ? p
+                            : `${acc} | ${p}`
+                        : `${acc} [${p}] `,
+                ''
             ),
-        } as ClientBoundPacket
+        data: Buffer.concat(packets.map((p) => p.data)),
+    } as ClientBoundPacket
+}
+
+const is1DPackets = (
+    packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
+): packet is ClientBoundPacket[] => {
+    return Array.isArray(packet) && !Array.isArray(packet[0])
+}
+
+const is2DPackets = (
+    packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
+): packet is ClientBoundPacket[][] => {
+    return Array.isArray(packet) && Array.isArray(packet[0])
+}
+
+export const formatPacket = async (
+    packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
+) => {
+    if (is1DPackets(packet)) {
+        return formatPacketGroup(packet)
     }
+
+    if (is2DPackets(packet)) {
+        const delimiter = await BundleDelimiter({})
+        const bundles = packet.map(async (packets) => {
+            const group = await formatPacketGroup(packets)
+            return bundlePackets(
+                [await wrap(delimiter), group, await wrap(delimiter)],
+                true
+            )
+        })
+        return bundlePackets(await Promise.all(bundles), false)
+    }
+
     return await wrap(packet)
 }

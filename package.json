@@ -29,6 +29,7 @@
     "region-types": "Offroaders123/Region-Types",
     "type-fest": "^4.10.2",
     "typescript-object-builder": "^0.3.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "vec3": "^0.1.10"
   }
 }

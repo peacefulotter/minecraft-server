@@ -48,7 +48,9 @@ export class Client extends Player {
         super()
     }
 
-    async write(packet: ClientBoundPacket | ClientBoundPacket[]) {
+    async write(
+        packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
+    ) {
         const formatted = await formatPacket(packet)
         logClientBoundPacket(formatted, this)
         this.socket.write(formatted.data)
@@ -102,37 +104,6 @@ export class Client extends Player {
         clearTimeout(timeout)
         delete this.aliveTimeout[id.toString()]
         this.ping = Date.now() - date
-    }
-
-    get x() {
-        return this.position.x
-    }
-    get y() {
-        return this.position.y
-    }
-    get z() {
-        return this.position.z
-    }
-    get onGround() {
-        return this.position.onGround
-    }
-    get yaw() {
-        return this.rotation.yaw
-    }
-    get pitch() {
-        return this.rotation.pitch
-    }
-    get velocityX() {
-        return this.velocity.x
-    }
-    get velocityY() {
-        return this.velocity.y
-    }
-    get velocityZ() {
-        return this.velocity.z
-    }
-    get uuid() {
-        return this.entityUUID
     }
 
     public toString(): string {
