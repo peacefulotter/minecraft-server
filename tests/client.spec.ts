@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'bun:test'
-import { DataString } from '~/data-types/basic'
+import { DataString } from '~/data/types'
 import { Client } from '~/net/client'
-import { formatPacket } from '~/net/packets'
 import { ClientBoundPacketCreator } from '~/net/packets/create'
 import { Server } from '~/net/server'
 import type { SocketWithId } from '~/socket'

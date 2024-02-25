@@ -8,7 +8,7 @@ import {
     Entity,
 } from './entity'
 import { MD } from './metadata'
-import { GameMode, MainHand } from '~/data-types/enum'
+import { GameMode, MainHand } from '~/data/enum'
 import { LivingEntity } from './living-entity'
 import { NBTData } from 'nbtify'
 import type { Vec3 } from 'vec3'

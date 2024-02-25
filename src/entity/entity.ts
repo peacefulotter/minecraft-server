@@ -1,12 +1,8 @@
 import * as NBT from 'nbtify'
 import { generateV4, type UUID } from '@minecraft-js/uuid'
-import {
-    entities,
-    type EntityMap,
-    type EntityName,
-} from '~/data-types/entities'
+import { entities, type EntityMap, type EntityName } from '~/data/entities'
 import type { Position, Rotation } from '~/position'
-import { GameMode } from '~/data-types/enum'
+import { GameMode } from '~/data/enum'
 import {
     EntityPose,
     MD,

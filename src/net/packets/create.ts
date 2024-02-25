@@ -1,15 +1,17 @@
 import { decrypt } from '~/auth'
-import type { Type } from '~/data-types/basic'
+import type { InnerReadType, InnerWriteType, Type } from '~/data/types'
 import type { PacketId } from '.'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
-export type InnerType<T extends Type<any>> = T extends Type<any, infer U>
-    ? U
-    : never
-
+// Packet type after serialization (when performing a write)
 export type PacketArguments<Format extends PacketFormat> = {
-    [key in keyof Format]: InnerType<Format[key]>
+    [key in keyof Format]: InnerWriteType<Format[key]>
+}
+
+// Packet type after deserialization (when performing a read)
+export type PacketResult<Format extends PacketFormat> = {
+    [key in keyof Format]: InnerReadType<Format[key]>
 }
 
 type Packet<D, I extends PacketId = number, N extends string = string> = {
@@ -20,10 +22,10 @@ type Packet<D, I extends PacketId = number, N extends string = string> = {
 
 // ========================== READ PACKET ==========================
 
-export type ServerBoundPacket = Packet<ServerBoundPacketData<PacketFormat>>
-
 // Get the packet return type format, equivalent to packet arguments
-export type ServerBoundPacketData<T extends PacketFormat> = PacketArguments<T>
+export type ServerBoundPacketData<T extends PacketFormat> = PacketResult<T>
+
+export type ServerBoundPacket = Packet<ServerBoundPacketData<PacketFormat>>
 
 export type ServerBoundPacketDataFromDeserializer<
     T extends ServerBoundPacketDeserializer

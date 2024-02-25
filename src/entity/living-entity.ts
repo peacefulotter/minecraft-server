@@ -1,4 +1,4 @@
-import type { EntityName, EntityTypeId } from '~/data-types/entities'
+import type { EntityName, EntityTypeId } from '~/data/entities'
 import {
     DEFAULT_DATA,
     DEFAULT_HEAD_YAW,
@@ -10,7 +10,7 @@ import {
 } from './entity'
 import type { Position, Rotation } from '~/position'
 import { MD, type MetadataSchema } from './metadata'
-import { GameMode } from '~/data-types/enum'
+import { GameMode } from '~/data/enum'
 import type { Vec3 } from 'vec3'
 
 enum HandState {

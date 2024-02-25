@@ -90,7 +90,7 @@ export class Client extends Player {
             [ClientState.PLAY]: PlayClientBoundKeepAlive,
         }[this.state]
 
-        this.write(await KeepAlive({ id }))
+        this.write(await KeepAlive({ id }), false)
 
         this.refreshIn = REFRESH_INTERVAL
         this.aliveTimeout[id.toString()] = {

@@ -1,5 +1,4 @@
 import { type Client } from '~/net/client'
-import { PlayClientBoundKeepAlive } from '~/net/packets/client'
 import type { SocketId } from '~/socket'
 
 const FRAMERATES = 30

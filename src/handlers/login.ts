@@ -96,7 +96,7 @@ export const LoginHandler = Handler.init('Login')
         const p = path.join(
             import.meta.dir,
             '..',
-            'data-types',
+            'data',
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()

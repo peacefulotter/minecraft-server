@@ -8,13 +8,13 @@ import {
     DataLong,
     DataInt,
     DataUUID,
-} from '~/data-types/basic'
+} from '~/data/types'
 import type {
     ChatMode,
     MainHand,
     PluginChannel,
     ResourcePackResult,
-} from '~/data-types/enum'
+} from '~/data/enum'
 import {
     ServerBoundPacketCreator,
     type ServerBoundPacketDataFromDeserializer,

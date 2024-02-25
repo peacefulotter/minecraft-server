@@ -22,13 +22,13 @@ import {
     SpawnEntity,
     SynchronizePlayerPosition,
 } from '~/net/packets/client'
-import { GameMode } from '~/data-types/enum'
+import { GameMode } from '~/data/enum'
 import { hashSeed } from '~/seed'
 import type { ClientBoundPacket } from '~/net/packets/create'
 import BitSet from 'bitset'
 import { chunk } from '~/world/chunk'
 import { SPAWN_POSITION, WORLD_SEED } from '~/constants'
-import { entities } from '~/data-types/entities'
+import { entities } from '~/data/entities'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 

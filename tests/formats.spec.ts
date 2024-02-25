@@ -1,3 +1,5 @@
+import path from 'path'
+import * as NBT from 'nbtify'
 import { generateV4 } from '@minecraft-js/uuid'
 import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
@@ -9,6 +11,7 @@ import {
     DataFixedBitSet,
     DataInt,
     DataLong,
+    DataNBT,
     DataObject,
     DataOptional,
     DataShort,
@@ -18,18 +21,20 @@ import {
     VarInt,
     VarIntPrefixedByteArray,
     VarLong,
-} from '~/data-types/basic'
+} from '~/data/types'
 import {
     ClientBoundPacketCreator,
     ServerBoundPacketCreator,
     type PacketFormat,
     type PacketArguments,
+    type PacketResult,
 } from '~/net/packets/create'
 
-const packetTester = async <T extends PacketFormat>(
+const packetTester = async <T extends PacketFormat, U>(
     format: T,
     packet: PacketArguments<T>,
-    process?: (data: PacketArguments<T>, expected?: boolean) => any
+    processArg?: (data: PacketArguments<T>) => U,
+    processRes?: (data: PacketResult<T>) => U
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
@@ -38,11 +43,30 @@ const packetTester = async <T extends PacketFormat>(
     const res = await readPacket.deserialize(data, false)
     // console.log('Expected', packet)
     // console.log('Obtained', res.data)
-    if (process) {
-        expect(process(res.data, false)).toEqual(process(packet, true))
+    if (processRes && processArg) {
+        expect(processRes(res.data)).toEqual(processArg(packet))
+    } else if (processArg) {
+        expect(res.data).toEqual(processArg(packet) as PacketResult<T>)
     } else {
-        expect(res.data).toEqual(packet)
+        expect(res.data).toEqual(packet as PacketResult<T>)
     }
+}
+
+const performanceTester = async <T extends PacketFormat>(
+    format: T,
+    packet: PacketArguments<T>,
+    iterations: number = 10000
+) => {
+    const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
+    const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
+
+    const now = performance.now()
+    for (let i = 0; i < iterations; i++) {
+        const buffer = await writePacket(packet)
+        const data = buffer.data.toJSON().data
+        await readPacket.deserialize(data, false)
+    }
+    console.log('perf:', (performance.now() - now) / iterations, 'ms')
 }
 
 describe('formats', () => {
@@ -128,6 +152,7 @@ describe('formats', () => {
             {
                 a: data,
             },
+            (data) => data.a.toString(),
             (data) => data.a.toString()
         )
     })
@@ -144,9 +169,8 @@ describe('formats', () => {
                 {
                     a: data,
                 },
-                (data) => {
-                    return data.a.toString()
-                }
+                (data) => data.a.toString(),
+                (data) => data.a.toString()
             )
         }
     })
@@ -164,9 +188,9 @@ describe('formats', () => {
             {
                 a: undefined,
             },
-            (data, expected) => {
+            (data) => {
                 // Since undefined gets replaced by the default value
-                return expected ? defaultValue : data.a
+                return { a: defaultValue }
             }
         )
     })
@@ -224,5 +248,73 @@ describe('formats', () => {
 
         const res = await readPacket.deserialize(data, false)
         expect(res.data).toEqual(packet)
+    })
+
+    test('varint perf', async () => {
+        const format = {
+            a: VarInt,
+        }
+        const packet = {
+            a: Number.MAX_SAFE_INTEGER,
+        }
+        await performanceTester(format, packet)
+    })
+
+    test('dataobject perf', async () => {
+        const format = {
+            a: DataObject({
+                b: DataObject({
+                    c: DataObject({
+                        d: DataObject({
+                            e: DataInt,
+                        }),
+                    }),
+                }),
+                f: DataObject({
+                    g: DataObject({
+                        h: DataObject({
+                            i: DataInt,
+                        }),
+                    }),
+                }),
+                j: DataObject({
+                    k: DataObject({
+                        l: DataObject({
+                            m: DataInt,
+                        }),
+                    }),
+                }),
+            }),
+        }
+        const packet = {
+            a: {
+                b: { c: { d: { e: 42 } } },
+                f: { g: { h: { i: 42 } } },
+                j: { k: { l: { m: 42 } } },
+            },
+        }
+
+        await performanceTester(format, packet)
+    })
+
+    test('NBT perf', async () => {
+        const p = path.join(
+            import.meta.dir,
+            '..',
+            'src',
+            'data',
+            'registry-data-packet.nbt'
+        )
+        const file = await Bun.file(p).arrayBuffer()
+        const root = await NBT.read(file)
+
+        const format = {
+            nbt: DataNBT,
+        }
+        const packet = {
+            nbt: root,
+        }
+
+        await performanceTester(format, packet, 1000)
     })
 })

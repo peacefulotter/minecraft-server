@@ -8,9 +8,9 @@ import {
     DataUUID,
     DataArray,
     type Type,
-} from '~/data-types/basic'
-import { DataNBT } from '~/data-types/registry'
-import type { FeatureFlags } from '~/data-types/enum'
+    DataNBT,
+} from '~/data/types'
+import type { FeatureFlags } from '~/data/enum'
 import { ClientBoundPacketCreator } from '../create'
 
 export const ConfigurationPluginMessage = ClientBoundPacketCreator(

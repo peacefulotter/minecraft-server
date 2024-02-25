@@ -1,4 +1,4 @@
-import { VarInt } from '~/data-types/basic'
+import { VarInt } from '~/data/types'
 import type { PacketId } from '..'
 
 const LEGACY_SERVER_LIST_PING_ID = 254

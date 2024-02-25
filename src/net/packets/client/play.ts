@@ -18,15 +18,16 @@ import {
     DataPackedXZ,
     DataUUID,
     DataAngle,
-} from '~/data-types/basic'
-import { GameMode } from '~/data-types/enum'
+    DataNBT,
+    DataSlot,
+} from '~/data/types'
+import { GameMode } from '~/data/enum'
 import type { DimensionResource } from 'region-types'
 import { ClientBoundPacketCreator, type PacketArguments } from '../create'
-import { DataNBT } from '~/data-types/registry'
 import type { ValueOf } from 'type-fest'
 import type { UUID } from '@minecraft-js/uuid'
 import type { EntityId } from '~/entity/entity'
-import type { EntityTypeId } from '~/data-types/entities'
+import type { EntityTypeId } from '~/data/entities'
 import { DataEntityMetadata } from '~/entity/metadata'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
@@ -50,6 +51,102 @@ export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
     velocityY: DataShort,
     velocityZ: DataShort,
 })
+
+export const CloseContainer = ClientBoundPacketCreator(0x12, 'CloseContainer', {
+    windowId: DataByte,
+})
+
+export const SetContainerContent = ClientBoundPacketCreator(
+    0x13,
+    'SetContainerContent',
+    {
+        windowId: DataByte, // 0 for player inventory
+        stateId: VarInt,
+        count: VarInt,
+        carriedItems: DataArray(DataSlot), // Item being dragged with the mouse
+    }
+)
+
+// TODO: move this
+// https://wiki.vg/Protocol#Set_Container_Property
+enum FurnaceProperties {
+    FIRE_ICON = 0,
+    MAX_FUEL_BURN_TIME,
+    PROGRESS_ARROW,
+    MAXIMUM_PROGRESS,
+}
+
+enum EnchantingTableProperties {
+    LEVEL_SLOT_TOP = 0,
+    LEVEL_SLOT_MIDDLE,
+    LEVEL_SLOT_BOTTOM,
+    ENCHANTMENT_SEED,
+    ENCHANTMENT_ID_TOP,
+    ENCHANTMENT_ID_MIDDLE,
+    ENCHANTMENT_ID_BOTTOM,
+    ENCHANTMENT_LEVEL_TOP,
+    ENCHANTMENT_LEVEL_MIDDLE,
+    ENCHANTMENT_LEVEL_BOTTOM,
+}
+
+enum BeaconProperties {
+    POWER_LEVEL = 0,
+    FIRST_POTION_EFFECT,
+    SECOND_POTION_EFFECT,
+}
+
+enum AnvilProperties {
+    REPAIR_COST = 0,
+}
+
+enum BrewingStandProperties {
+    BREW_TIME = 0,
+    FUEL_TIME,
+}
+
+enum StonecutterProperties {
+    SELECTED_RECIPE = 0,
+}
+
+enum LoomProperties {
+    SELECTED_PATTERN = 0,
+}
+
+enum LecternProperties {
+    PAGE = 0,
+}
+
+export type ContainerProperties = {
+    furnace: FurnaceProperties
+    enchanting_table: EnchantingTableProperties
+    beacon: BeaconProperties
+    anvil: AnvilProperties
+    brewing_stand: BrewingStandProperties
+    stonecutter: StonecutterProperties
+    loom: LoomProperties
+    lectern: LecternProperties
+}
+
+export const SetContainerPropery = ClientBoundPacketCreator(
+    0x14,
+    'SetContainerProperty',
+    {
+        windowId: DataByte,
+        property: DataShort, // Propery to be updated
+        value: DataShort, // New value for the property
+    }
+)
+
+export const SetContainerSlot = ClientBoundPacketCreator(
+    0x15,
+    'SetContainerSlot',
+    {
+        windowId: DataByte,
+        stateId: VarInt,
+        slot: DataShort,
+        item: DataSlot,
+    }
+)
 
 export const PlayDisconnect = ClientBoundPacketCreator(0x19, 'PlayDisconnect', {
     reason: DataNBT,

@@ -14,12 +14,11 @@ import {
     DataArray,
     DataObject,
     DataByteArray,
-    DataBitSet,
     DataFixedBitSet,
     DataOptional,
-} from '~/data-types/basic'
+} from '~/data/types'
 import { ServerBoundPacketCreator } from '../create'
-import type { Difficulty } from '~/data-types/enum'
+import type { Difficulty } from '~/data/enum'
 import type { EntityId } from '~/entity/entity'
 
 export const ConfirmTeleportation = ServerBoundPacketCreator(

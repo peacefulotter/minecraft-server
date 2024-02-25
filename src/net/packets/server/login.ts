@@ -1,8 +1,4 @@
-import {
-    DataString,
-    DataUUID,
-    VarIntPrefixedByteArray,
-} from '~/data-types/basic'
+import { DataString, DataUUID, VarIntPrefixedByteArray } from '~/data/types'
 import { ServerBoundPacketCreator } from '../create'
 
 export const LoginStart = ServerBoundPacketCreator(0x00, 'LoginStart', {

@@ -11,11 +11,10 @@ import {
     DataUUID,
     DataVec3,
     DataPosition,
-} from '~/data-types/basic'
-import { DataNBT } from '~/data-types/registry'
+    DataNBT,
+    type InnerWriteType,
+} from '~/data/types'
 import type { DimensionID, VillagerLevel } from '../../Region-Types/src/java'
-import type { InnerType } from '~/net/packets/create'
-import { log } from '~/logger'
 
 const TextComponent = DataNBT
 const Slot = DataNBT
@@ -148,7 +147,7 @@ type FieldIndex = number
 export const MD = <N extends string, I extends TypeIndex>(
     name: N,
     typeIndex: I,
-    value: InnerType<(typeof TypeMap)[I]>
+    value: InnerWriteType<(typeof TypeMap)[I]>
 ) => ({
     name,
     typeIndex,
@@ -167,7 +166,7 @@ type MetadataDataType<T> = MetadataTypeIndex<T> extends infer I
         : never
     : never
 
-type MetadataArg<T> = InnerType<MetadataDataType<T>>
+type MetadataArg<T> = InnerWriteType<MetadataDataType<T>>
 
 export type MetadataArgs<Schema extends MetadataSchema = MetadataSchema> = {
     [key in keyof Schema]?: MetadataArg<Schema[key]>

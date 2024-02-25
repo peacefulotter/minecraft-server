@@ -4,9 +4,8 @@ import {
     DataString,
     DataUUID,
     DataOptional,
-    VarInt,
     VarIntPrefixedByteArray,
-} from '~/data-types/basic'
+} from '~/data/types'
 import { ClientBoundPacketCreator } from '../create'
 
 export const EncryptionRequest = ClientBoundPacketCreator(

@@ -1,45 +1,10 @@
-import nbt from 'nbt'
 import * as NBT from 'nbtify'
-import { Int32, type IntTag } from 'nbtify'
-import { DataInt, DataObject, VarInt, type Type, DataString } from './basic'
+import { Int32 } from 'nbtify'
+import { DataInt, DataObject, VarInt, type Type, DataString } from './types'
 import type {
     DimensionMonsterSpawnLightLevel,
     DimensionMonsterSpawnLightLevelRange,
-    IntegerDistribution,
-    IntegerDistributionType,
 } from '../../Region-Types/src/java'
-
-// type TagBuilder<
-//     ID extends number,
-//     Name extends string,
-//     PayloadSize extends number
-// > = {
-//     id: ID
-//     name: Name
-//     payloadSize: PayloadSize
-// }
-
-// export type TagBuilders =
-//     | TagBuilder<0, 'End', 0>
-//     | TagBuilder<1, 'Byte', 1>
-//     | TagBuilder<2, 'Short', 2>
-//     | TagBuilder<3, 'Int', 4>
-//     | TagBuilder<4, 'Long', 8>
-//     | TagBuilder<5, 'Float', 4>
-//     | TagBuilder<6, 'Double', 8>
-//     | TagBuilder<7, 'Byte_Array', 0>
-//     | TagBuilder<8, 'String', 0>
-//     | TagBuilder<9, 'List', 0>
-//     | TagBuilder<10, 'Compound', 0>
-//     | TagBuilder<11, 'Int_Array', 0>
-//     | TagBuilder<12, 'Long_Array', 0>
-
-// // type Tag<Name extends string> = Extract<Tags, {name: `TAG_${Name}`}>
-// type Tags = {
-//     [Tag in TagBuilders as TagBuilders['name']]: Omit<Tag, 'name'> & {
-//         name: `TAG_${Tag['name']}`
-//     }
-// }
 
 // TODO: replace this with fixed type
 type _IntegerDistribution = {
@@ -95,18 +60,6 @@ export const DataDimensionMonsterSpawnLightLevel: Type<DimensionMonsterSpawnLigh
             throw new Error('Invalid DimensionMonsterSpawnLightLevel')
         },
     }
-
-export const DataNBT: Type<
-    NBT.NBTData<NBT.RootTagLike>
-> = class NBTCompoundTag {
-    static read = async (buffer: number[]) => {
-        return await NBT.read(Buffer.from(buffer), { rootName: null })
-    }
-
-    static write = async (t: NBT.NBTData<NBT.RootTagLike>) => {
-        return Buffer.from(await NBT.write(t, { rootName: null }))
-    }
-}
 
 // export type DimensionType = {
 //     fixed_time?: LongTag // [0, 24000]

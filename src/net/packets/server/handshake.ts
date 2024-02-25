@@ -5,7 +5,7 @@ import {
     DataString,
     VarInt,
     type Type,
-} from '~/data-types/basic'
+} from '~/data/types'
 import type { ClientState } from '~/net/client'
 import { ServerBoundPacketCreator } from '../create'
 

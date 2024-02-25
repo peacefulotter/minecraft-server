@@ -1,10 +1,13 @@
-import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
-import BitSet from 'bitset'
 import { parseUUID, type UUID } from '@minecraft-js/uuid'
-import type { PacketArguments, PacketFormat } from '~/net/packets/create'
+import * as NBT from 'nbtify'
+import BitSet from 'bitset'
 import Long from 'long'
+
 import type { Vec3 } from 'vec3'
 import v from 'vec3'
+
+import type { PacketArguments, PacketFormat } from '~/net/packets/create'
+import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
 
 const FLOAT_SIZE = 4
 const DOUBLE_SIZE = 8
@@ -16,6 +19,14 @@ export type Type<R, W = R> = {
     read: (buffer: number[]) => Promise<R>
     write: (t: W) => Promise<Buffer>
 }
+
+export type InnerWriteType<T extends Type<any>> = T extends Type<any, infer U>
+    ? U
+    : never
+
+export type InnerReadType<T extends Type<any>> = T extends Type<infer U, any>
+    ? U
+    : never
 
 export const DataBoolean: Type<boolean> = {
     read: async (buffer: number[]) => {
@@ -298,6 +309,20 @@ export const DataFixedBitSet = (length: number): Type<BitSet> => ({
     },
 })
 
+export const DataNBT: Type<
+    NBT.NBTData<NBT.RootTagLike>,
+    any
+> = class NBTCompoundTag {
+    static read = async (buffer: number[]) => {
+        return await NBT.read(Buffer.from(buffer))
+    }
+
+    static write = async (t: any) => {
+        const buf = await NBT.write(t, { rootName: null })
+        return Buffer.from(buf)
+    }
+}
+
 // ============= Meta types =============
 export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
     read: async (buffer: number[]) => {
@@ -440,3 +465,13 @@ export const DataPackedXZ: Type<{ x: number; z: number }> = {
         return await DataByte.write(encoded)
     },
 }
+
+// https://wiki.vg/Slot_Data
+// Differs from the docs since the present field is taken care by DataOptional
+export const DataSlot = DataOptional(
+    DataObject({
+        itemId: VarInt,
+        itemCount: DataByte,
+        nbt: DataNBT,
+    })
+)

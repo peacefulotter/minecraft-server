@@ -28,7 +28,7 @@ export const ntt: Command<[]> = {
                 )
             }
         }
-        client.write(packets)
+        await client.write(packets)
     },
     parser: [],
 }
