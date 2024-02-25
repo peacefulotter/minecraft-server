@@ -44,12 +44,14 @@ export const ServerBoundPacketCreator = <
 ): ServerBoundPacketDeserializer<I, N, T> => ({
     id,
     name,
-    deserialize: async (buf: number[], encripted: boolean) => {
+    deserialize: async (buf: Buffer, encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
         let data = {} as ServerBoundPacketData<T>
+        let offset = 0
         for (const [key, type] of Object.entries(types)) {
-            const elt = await type.read(buffer)
+            const { t: elt, length } = await type.read(buffer, offset)
             data[key as keyof typeof data] = elt
+            offset += length
         }
         return { id, name, data }
     },
@@ -64,7 +66,7 @@ export type ServerBoundPacketDeserializer<
     id: I
     name: N
     deserialize: (
-        buf: number[],
+        buf: Buffer,
         encripted: boolean
     ) => Promise<Packet<ServerBoundPacketData<T>, I, N>>
 }
@@ -84,11 +86,12 @@ export const ClientBoundPacketCreator =
         types: T
     ) =>
     async (args: PacketArguments<T>) => {
-        let data = Buffer.from([])
+        let buffers = []
         for (const [key, type] of Object.entries(types)) {
             const elt = await type.write(args[key])
-            data = Buffer.concat([data, elt])
+            buffers.push(elt)
         }
+        const data = Buffer.concat(buffers)
         return { id, name, data } as Packet<Buffer, I, N>
     }
 

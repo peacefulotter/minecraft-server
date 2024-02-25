@@ -39,10 +39,9 @@ const packetTester = async <T extends PacketFormat, U>(
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
     const buffer = await writePacket(packet)
-    const data = buffer.data.toJSON().data
-    const res = await readPacket.deserialize(data, false)
-    // console.log('Expected', packet)
-    // console.log('Obtained', res.data)
+    const res = await readPacket.deserialize(buffer.data, false)
+    console.log('Expected', packet)
+    console.log('Obtained', res.data)
     if (processRes && processArg) {
         expect(processRes(res.data)).toEqual(processArg(packet))
     } else if (processArg) {
@@ -63,8 +62,7 @@ const performanceTester = async <T extends PacketFormat>(
     const now = performance.now()
     for (let i = 0; i < iterations; i++) {
         const buffer = await writePacket(packet)
-        const data = buffer.data.toJSON().data
-        await readPacket.deserialize(data, false)
+        await readPacket.deserialize(buffer.data, false)
     }
     console.log('perf:', (performance.now() - now) / iterations, 'ms')
 }
@@ -77,7 +75,9 @@ describe('formats', () => {
             },
             {
                 uuid: generateV4(),
-            }
+            },
+            (data) => data.uuid.toString(),
+            (data) => data.uuid.toString()
         )
     })
 
@@ -92,6 +92,19 @@ describe('formats', () => {
             opt: undefined,
         })
     })
+
+    test.only('int', async () => {
+        const format = {
+            a: DataInt,
+        }
+        for (let i = 0; i < 100; i++) {
+            await packetTester(format, {
+                a: Math.round((Math.random() - 0.5) * 1000000),
+            })
+        }
+    })
+
+    test('array', async () => {})
 
     test('object', async () => {
         const format = {
@@ -219,9 +232,8 @@ describe('formats', () => {
             ),
             m: DataLong,
         }
-        const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
-        const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
-        const packet: Parameters<typeof writePacket>[0] = {
+
+        const packet: PacketArguments<typeof format> = {
             a: 42,
             b: Buffer.from([1, 2, 3]),
             c: 5,
@@ -243,11 +255,7 @@ describe('formats', () => {
             m: Long.fromNumber(Date.now()),
         } as const
 
-        const buffer = await writePacket(packet)
-        const data = buffer.data.toJSON().data
-
-        const res = await readPacket.deserialize(data, false)
-        expect(res.data).toEqual(packet)
+        await packetTester(format, packet)
     })
 
     test('varint perf', async () => {
@@ -294,6 +302,16 @@ describe('formats', () => {
             },
         }
 
+        await performanceTester(format, packet)
+    })
+
+    test('string perf', async () => {
+        const format = {
+            a: DataString,
+        }
+        const packet = {
+            a: 'a'.repeat(32767),
+        }
         await performanceTester(format, packet)
     })
 

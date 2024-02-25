@@ -1,12 +1,12 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
-import { VarInt, VarLong } from '~/data-types/basic'
+import { VarInt, VarLong } from '~/data/types'
 
 describe('vars work', () => {
     test('some varints', async () => {
         console.log(await VarInt.write(53))
-        console.log(await VarInt.read([254, 1]))
-        console.log(await VarInt.read([250, 0]))
+        console.log(await VarInt.read(Buffer.from([254, 1]), 0))
+        console.log(await VarInt.read(Buffer.from([250, 0]), 0))
     })
 
     test('sample varints', async () => {
@@ -27,15 +27,14 @@ describe('vars work', () => {
             0, 1, 2, 127, 128, 255, 25565, 2097151, 2147483647, -1, -2147483648,
         ]
         for (let i = 0; i < buffers.length; i++) {
-            console.log(await VarInt.read(buffers[i].toJSON().data), values[i])
-            const read = await VarInt.read(buffers[i].toJSON().data)
+            const { t: read } = await VarInt.read(buffers[i], 0)
             const original = await VarInt.write(read)
-            expect(read).toBe(values[i])
+            expect(read).toEqual(values[i])
             expect(original).toEqual(buffers[i])
         }
     })
 
-    test('sample varlongs', () => {
+    test('sample varlongs', async () => {
         const buffers = [
             Buffer.from([0x00]),
             Buffer.from([0x01]),
@@ -69,7 +68,20 @@ describe('vars work', () => {
             new Long(0x80000000, 0x00000000),
         ]
         for (let i = 0; i < buffers.length; i++) {
-            // expect(VarLong.write(buffers[i]).eq(values[i]))
+            const { t: read } = await VarLong.read(buffers[i], 0)
+            const original = await VarLong.write(read)
+            console.log(
+                'expected',
+                values[i].low,
+                values[i].high,
+                values[i].toNumber(),
+                'got',
+                read.low,
+                read.high,
+                read.toNumber()
+            )
+            expect(original).toEqual(buffers[i])
+            expect(read).toEqual(values[i])
         }
     })
 })

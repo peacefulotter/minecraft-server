@@ -174,40 +174,64 @@ export type MetadataArgs<Schema extends MetadataSchema = MetadataSchema> = {
 
 const METADATA_END_INDEX = 0xff
 
-const readMetadata = async (buffer: number[], metadata: any): Promise<any> => {
-    const index = await DataByte.read(buffer)
+const readMetadata = async (
+    buffer: Buffer,
+    offset: number,
+    metadata: any
+): Promise<any> => {
+    // Read index
+    const { t: index, length: idxLen } = await DataByte.read(buffer, offset)
     if (index === METADATA_END_INDEX) {
-        return metadata
+        return { metadata, offset: offset + idxLen }
     }
-    const typeIndex = (await VarInt.read(buffer)) as TypeIndex
-    const type = TypeMap[typeIndex]
-    const value = await type.read(buffer)
+
+    // Read type
+    const { t: typeIndex, length: typeLen } = await VarInt.read(
+        buffer,
+        offset + idxLen
+    )
+
+    // Read value
+    const type = TypeMap[typeIndex as TypeIndex]
+    const { t: value, length: valLen } = await type.read(
+        buffer,
+        offset + idxLen + typeLen
+    )
+
     metadata[index] = value
-    return await readMetadata(buffer, metadata)
+
+    return await readMetadata(
+        buffer,
+        offset + idxLen + typeLen + valLen,
+        metadata
+    )
 }
 
 export const DataEntityMetadata = {
-    read: async (buffer: number[]) => {
-        return readMetadata(buffer, {})
+    read: async (buffer: Buffer, offset: number) => {
+        return readMetadata(buffer, offset, {})
     },
     write: async <Schema extends MetadataSchema>(args: {
         raw: Schema
         metadata: MetadataArgs<Schema>
     }) => {
         const { raw, metadata } = args
-        let buffer: Buffer = Buffer.from([])
+        let buffers: Buffer[] = []
+
         for (const [index, data] of Object.entries(metadata)) {
             if (data === undefined) continue
             const { typeIndex } = raw[parseInt(index)]
             const type = TypeMap[typeIndex as TypeIndex]
             // log('Writing metadata', { index, typeIndex, data })
-            buffer = Buffer.concat([
-                buffer,
+            buffers.push(
                 await DataByte.write(parseInt(index)),
                 await VarInt.write(typeIndex),
-                await type.write(data as never),
-            ])
+                await type.write(data as never)
+            )
         }
-        return Buffer.concat([buffer, await DataByte.write(METADATA_END_INDEX)])
+
+        buffers.push(await DataByte.write(METADATA_END_INDEX))
+
+        return Buffer.concat(buffers)
     },
 }
