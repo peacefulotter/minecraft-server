@@ -93,7 +93,7 @@ describe('formats', () => {
         })
     })
 
-    test.only('int', async () => {
+    test('int', async () => {
         const format = {
             a: DataInt,
         }
@@ -104,7 +104,14 @@ describe('formats', () => {
         }
     })
 
-    test('array', async () => {})
+    test('array', async () => {
+        const format = {
+            arr: DataArray(DataString),
+        }
+        await packetTester(format, {
+            arr: ['aaa', 'bbb', 'ccc'],
+        })
+    })
 
     test('object', async () => {
         const format = {
@@ -122,62 +129,27 @@ describe('formats', () => {
     })
 
     test('long', async () => {
-        const data = Long.fromNumber(Date.now())
-
-        await packetTester(
-            {
-                a: DataLong,
-            },
-            {
-                a: data,
-            }
-        )
-
-        await packetTester(
-            {
-                obj: DataObject({
+        for (let i = 0; i < 100; i++) {
+            const data = Long.fromNumber(
+                Math.round((Math.random() - 0.5) * Number.MAX_SAFE_INTEGER)
+            )
+            await packetTester(
+                {
                     a: DataLong,
-                    b: VarLong,
-                    c: DataLong,
-                    d: VarLong,
-                    e: DataLong,
-                }),
-            },
-            {
-                obj: {
-                    a: data,
-                    b: data.add(1),
-                    c: data.add(2),
-                    d: data.add(3),
-                    e: data.add(4),
                 },
-            }
-        )
+                {
+                    a: data,
+                }
+            )
+        }
     })
 
     test('bitset', async () => {
-        const bin = '011010101011101000'
-        const data = BitSet.fromBinaryString(bin)
-        await packetTester(
-            {
-                a: DataBitSet,
-            },
-            {
-                a: data,
-            },
-            (data) => data.a.toString(),
-            (data) => data.a.toString()
-        )
-    })
-
-    test('fixed bitset', async () => {
-        let bin = ''
-        for (let i = 0; i < 24; i++) {
-            bin += Math.random() > 0.5 ? '1' : '0'
-            const data = BitSet.fromBinaryString(bin)
+        const test = async (s: string) => {
+            const data = BitSet.fromBinaryString(s)
             await packetTester(
                 {
-                    a: DataFixedBitSet(bin.length),
+                    a: DataBitSet,
                 },
                 {
                     a: data,
@@ -185,6 +157,37 @@ describe('formats', () => {
                 (data) => data.a.toString(),
                 (data) => data.a.toString()
             )
+        }
+
+        const bin = '011010101011101000'
+        await test(bin)
+
+        let bin2 = ''
+        for (let i = 0; i < 24; i++) {
+            bin2 += Math.random() > 0.5 ? '1' : '0'
+            await test(bin2)
+        }
+    })
+
+    test('fixed bitset', async () => {
+        const test = async (s: string) => {
+            const data = BitSet.fromBinaryString(s)
+            await packetTester(
+                {
+                    a: DataFixedBitSet(s.length),
+                },
+                {
+                    a: data,
+                },
+                (data) => data.a.toString(),
+                (data) => data.a.toString()
+            )
+        }
+
+        let bin = ''
+        for (let i = 0; i < 24; i++) {
+            bin += Math.random() > 0.5 ? '1' : '0'
+            await test(bin)
         }
     })
 
@@ -255,7 +258,15 @@ describe('formats', () => {
             m: Long.fromNumber(Date.now()),
         } as const
 
-        await packetTester(format, packet)
+        const formatter = (data: PacketArguments<typeof format>) => {
+            return {
+                ...data,
+                h: data.h.toString(),
+                g: data.g.toString(),
+                m: data.m.toString(),
+            }
+        }
+        await packetTester(format, packet, formatter, formatter)
     })
 
     test('varint perf', async () => {

@@ -248,7 +248,11 @@ export const VarLong: Type<Long> = {
 export const VarIntPrefixedByteArray: Type<Buffer> = {
     read: async (buffer: Buffer, offset: number) => {
         const { t, length } = await VarInt.read(buffer, offset)
-        return await DataByteArray(t).read(buffer, offset + length)
+        const { t: arr, length: arrLength } = await DataByteArray(t).read(
+            buffer,
+            offset + length
+        )
+        return { t: arr, length: length + arrLength }
     },
 
     write: async (t: Buffer) => {
@@ -298,8 +302,8 @@ export const DataBitSet: Type<BitSet> = {
     },
 
     write: async (t: BitSet) => {
-        const length = Math.ceil(t.msb() / 8)
-        if (length === 0) return Buffer.from([0])
+        const length = Math.ceil((t.msb() + 1) / 8)
+        if (length === 0 || t.toArray().length === 0) return Buffer.from([0])
         const buffer = Buffer.allocUnsafe(length)
         setBitSetBuffer(t, buffer)
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
@@ -350,7 +354,13 @@ export const DataNBT: Type<
 export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
     read: async (buffer: Buffer, offset: number) => {
         const { t: isPresent, length } = await DataBoolean.read(buffer, offset)
-        if (isPresent) return await type.read(buffer, offset + length)
+        if (isPresent) {
+            const { t: value, length: valueLength } = await type.read(
+                buffer,
+                offset + length
+            )
+            return { t: value, length: length + valueLength }
+        }
         return { t: undefined, length }
     },
 
@@ -401,7 +411,7 @@ export const DataObject = <T extends PacketFormat>(
         for (const [key, type] of Object.entries(types)) {
             const { t, length } = await type.read(buffer, offset + objLen)
             obj[key as keyof typeof obj] = t
-            offset += length
+            objLen += length
         }
         return { t: obj, length: objLen }
     },
