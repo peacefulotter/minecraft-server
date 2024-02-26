@@ -12,4 +12,10 @@ describe('Buffer', () => {
         console.log(buffer)
         expect(int).toBe(int_2)
     })
+
+    test('test 2', async () => {
+        const buffer = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        const int = buffer.readInt32BE(0)
+        console.log(int, buffer.byteOffset)
+    })
 })

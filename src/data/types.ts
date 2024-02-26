@@ -8,18 +8,19 @@ import v from 'vec3'
 
 import type { PacketArguments, PacketFormat } from '~/net/packets/create'
 import { CONTINUE_BIT, SEGMENT_BITS } from './constants'
-import { decode, encode } from 'leb128/unsigned'
+import { PacketBuffer } from '~/net/PacketBuffer'
 
-const SHORT_SIZE = 2
-const INT_SIZE = 4
-const FLOAT_SIZE = 4
-const DOUBLE_SIZE = 8
-const LONG_SIZE = 8
-const UUID_SIZE = 16
+export const BYTE_SIZE = 1
+export const SHORT_SIZE = 2
+export const INT_SIZE = 4
+export const FLOAT_SIZE = 4
+export const DOUBLE_SIZE = 8
+export const LONG_SIZE = 8
+export const UUID_SIZE = 16
 
 export type Type<R, W = R> = {
-    read: (buffer: Buffer, offset: number) => Promise<{ t: R; length: number }>
-    write: (t: W) => Promise<Buffer>
+    read: (buffer: PacketBuffer) => Promise<R>
+    write: (t: W) => Promise<PacketBuffer>
 }
 
 export type InnerWriteType<T extends Type<any>> = T extends Type<any, infer U>
@@ -31,82 +32,82 @@ export type InnerReadType<T extends Type<any>> = T extends Type<infer U, any>
     : never
 
 export const DataByte: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
-        return { t: buffer.readInt8(offset), length: 1 }
+    read: async (buffer: PacketBuffer) => {
+        return buffer.readByte()
     },
     write: async (t: number) => {
-        return Buffer.from([t])
+        return PacketBuffer.from([t])
     },
 }
 
 export const DataUnsignedByte: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
-        return { t: buffer.readUInt8(offset), length: 1 }
+    read: async (buffer: PacketBuffer) => {
+        return buffer.readUnsignedByte()
     },
     write: async (t: number) => {
-        return Buffer.from([t])
+        return PacketBuffer.from([t])
     },
 }
 
 export const DataBoolean: Type<boolean> = {
-    read: async (buffer: Buffer, offset: number) => {
-        return { t: buffer.readUInt8(offset) === 1, length: 1 }
+    read: async (buffer: PacketBuffer) => {
+        return (await DataUnsignedByte.read(buffer)) === 1
     },
     write: async (t: boolean) => {
-        return DataByte.write(t ? 1 : 0)
+        return await DataByte.write(t ? 1 : 0)
     },
 }
 
 export const DataAngle = DataByte
 
-export const DataByteArray = (length?: number): Type<Buffer> => ({
-    read: async (buffer: Buffer, offset: number) => {
+export const DataByteArray = (length?: number): Type<PacketBuffer> => ({
+    read: async (buffer: PacketBuffer, offset: number) => {
         const res =
             length === undefined
                 ? buffer.subarray(offset)
                 : buffer.subarray(offset, offset + length)
         return { t: res, length: res.length }
     },
-    write: async (t: Buffer) => {
+    write: async (t: PacketBuffer) => {
         return t
     },
 })
 
 export const DataShort: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return { t: buffer.readInt16BE(offset), length: SHORT_SIZE }
     },
     write: async (t: number) => {
-        const buffer = Buffer.allocUnsafe(SHORT_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(SHORT_SIZE)
         buffer.writeInt16BE(t)
         return buffer
     },
 }
 
 export const DataUnsignedShort: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return { t: buffer.readUInt16BE(offset), length: SHORT_SIZE }
     },
     write: async (t: number) => {
-        const buffer = Buffer.allocUnsafe(SHORT_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(SHORT_SIZE)
         buffer.writeUInt16BE(t)
         return buffer
     },
 }
 
 export const DataInt: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return { t: buffer.readInt32BE(offset), length: INT_SIZE }
     },
     write: async (t: number) => {
-        const buffer = Buffer.allocUnsafe(INT_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(INT_SIZE)
         buffer.writeInt32BE(t)
         return buffer
     },
 }
 
 export const DataLong: Type<Long> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const low = buffer.readInt32BE(offset)
         const high = buffer.readInt32BE(offset + INT_SIZE)
         return {
@@ -115,7 +116,7 @@ export const DataLong: Type<Long> = {
         }
     },
     write: async (t: Long) => {
-        const buffer = Buffer.allocUnsafe(LONG_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(LONG_SIZE)
         buffer.writeInt32BE(t.low)
         buffer.writeInt32BE(t.high, INT_SIZE)
         return buffer
@@ -123,52 +124,52 @@ export const DataLong: Type<Long> = {
 }
 
 export const DataFloat: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return { t: buffer.readFloatBE(offset), length: FLOAT_SIZE }
     },
     write: async (t: number) => {
-        const buffer = Buffer.allocUnsafe(FLOAT_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(FLOAT_SIZE)
         buffer.writeFloatBE(t)
         return buffer
     },
 }
 
 export const DataDouble: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return { t: buffer.readDoubleBE(offset), length: DOUBLE_SIZE }
     },
 
     write: async (t: number) => {
-        const buffer = Buffer.allocUnsafe(DOUBLE_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(DOUBLE_SIZE)
         buffer.writeDoubleBE(t)
         return buffer
     },
 }
 
 export const DataUUID: Type<UUID> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const str = buffer.toString('hex', offset, offset + UUID_SIZE)
         const uuid = parseUUID(str)
         return { t: uuid, length: UUID_SIZE }
     },
     write: async (t: UUID) => {
-        return Buffer.from(t.toString(false), 'hex')
+        return PacketBuffer.from(t.toString(false), 'hex')
     },
 }
 
 export const DataString: Type<string> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t, length } = await VarIntPrefixedByteArray.read(buffer, offset)
         return { t: t.toString('utf-8'), length }
     },
     write: async (t: string) => {
-        const buffer = Buffer.from(t, 'utf-8')
+        const buffer = PacketBuffer.from(t, 'utf-8')
         return VarIntPrefixedByteArray.write(buffer)
     },
 }
 
 export const VarInt: Type<number> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         let value = 0
         let position = 0
         let length = 0
@@ -202,13 +203,13 @@ export const VarInt: Type<number> = {
             // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
             t = t >>> 7
         }
-        return Buffer.from(buffer)
+        return PacketBuffer.from(buffer)
     },
 }
 
 // TODO: /!\ Fix issue with negative longs
 export const VarLong: Type<Long> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         let value = new Long(0, 0)
         let position = 0
         let length = 0
@@ -241,12 +242,12 @@ export const VarLong: Type<Long> = {
 
             t = t.shiftRight(7)
         }
-        return Buffer.from(buffer)
+        return PacketBuffer.from(buffer)
     },
 }
 
-export const VarIntPrefixedByteArray: Type<Buffer> = {
-    read: async (buffer: Buffer, offset: number) => {
+export const VarIntPrefixedByteArray: Type<PacketBuffer> = {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t, length } = await VarInt.read(buffer, offset)
         const { t: arr, length: arrLength } = await DataByteArray(t).read(
             buffer,
@@ -255,14 +256,14 @@ export const VarIntPrefixedByteArray: Type<Buffer> = {
         return { t: arr, length: length + arrLength }
     },
 
-    write: async (t: Buffer) => {
+    write: async (t: PacketBuffer) => {
         const length = t.length
-        return Buffer.concat([await VarInt.write(length), t])
+        return PacketBuffer.concat([await VarInt.write(length), t])
     },
 }
 
 export const DataPosition: Type<Vec3> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: long, length } = await DataLong.read(buffer, offset)
         const val = long.toNumber()
         const x = val >> 38
@@ -280,7 +281,7 @@ export const DataPosition: Type<Vec3> = {
     },
 }
 
-const setBitSetBuffer = (t: BitSet, buffer: Buffer) => {
+const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer) => {
     const arr = t.toArray()
     for (const bit of arr) {
         buffer[bit >> 3] |= 1 << (bit & 7)
@@ -288,7 +289,7 @@ const setBitSetBuffer = (t: BitSet, buffer: Buffer) => {
 }
 
 export const DataBitSet: Type<BitSet> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: nbLong, length: viLen } = await VarInt.read(buffer, offset)
         if (nbLong === 0) {
             return { t: new BitSet(0), length: viLen }
@@ -303,23 +304,24 @@ export const DataBitSet: Type<BitSet> = {
 
     write: async (t: BitSet) => {
         const length = Math.ceil((t.msb() + 1) / 8)
-        if (length === 0 || t.toArray().length === 0) return Buffer.from([0])
-        const buffer = Buffer.allocUnsafe(length)
+        if (length === 0 || t.toArray().length === 0)
+            return PacketBuffer.from([0])
+        const buffer = PacketBuffer.allocUnsafe(length)
         setBitSetBuffer(t, buffer)
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
-        return Buffer.concat([await VarInt.write(nbLongs), buffer])
+        return PacketBuffer.concat([await VarInt.write(nbLongs), buffer])
     },
 }
 
 export const DataFixedBitSet = (length: number): Type<BitSet> => ({
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const numBytes = Math.ceil(length / 8)
         const arr = await DataByteArray(numBytes).read(buffer, offset)
         return { t: new BitSet(arr.t), length: arr.length }
     },
     write: async (t: BitSet) => {
         const numBytes = Math.ceil(length / 8)
-        const buffer = Buffer.alloc(numBytes)
+        const buffer = PacketBuffer.alloc(numBytes)
         setBitSetBuffer(t, buffer)
         return buffer
     },
@@ -329,7 +331,7 @@ export const DataNBT: Type<
     NBT.NBTData<NBT.RootTagLike>,
     any
 > = class NBTCompoundTag {
-    static read = async (buffer: Buffer, offset: number) => {
+    static read = async (buffer: PacketBuffer, offset: number) => {
         return {
             t: await NBT.read(buffer.subarray(offset)),
             length: buffer.length - offset,
@@ -337,22 +339,26 @@ export const DataNBT: Type<
     }
 
     static write = async (
-        t: NBT.RootTagLike | NBT.NBTData<NBT.RootTagLike> | Buffer | ArrayBuffer
+        t:
+            | NBT.RootTagLike
+            | NBT.NBTData<NBT.RootTagLike>
+            | PacketBuffer
+            | ArrayBuffer
     ) => {
-        if (t instanceof Buffer) {
+        if (t instanceof PacketBuffer) {
             return t
         } else if (t instanceof ArrayBuffer) {
-            return Buffer.from(t)
+            return PacketBuffer.from(t)
         }
 
         const buf = await NBT.write(t, { rootName: null })
-        return Buffer.from(buf)
+        return PacketBuffer.from(buf)
     }
 }
 
 // ============= Meta types =============
 export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: isPresent, length } = await DataBoolean.read(buffer, offset)
         if (isPresent) {
             const { t: value, length: valueLength } = await type.read(
@@ -368,7 +374,7 @@ export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
         if (t === undefined) {
             return await DataBoolean.write(false)
         }
-        return Buffer.concat([
+        return PacketBuffer.concat([
             await DataBoolean.write(true),
             await type.write(t),
         ])
@@ -376,7 +382,7 @@ export const DataOptional = <T>(type: Type<T>): Type<T | undefined> => ({
 })
 
 export const DataArray = <T>(type: Type<T>) => ({
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: size, length } = await VarInt.read(buffer, offset)
         const arr: T[] = new Array(size)
         let arrLength = 0
@@ -398,14 +404,14 @@ export const DataArray = <T>(type: Type<T>) => ({
             const elt = await type.write(ts[i])
             arr[i] = elt
         }
-        return Buffer.concat([length, ...arr])
+        return PacketBuffer.concat([length, ...arr])
     },
 })
 
 export const DataObject = <T extends PacketFormat>(
     types: T
 ): Type<PacketArguments<T>> => ({
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const obj = {} as PacketArguments<T>
         let objLen = 0
         for (const [key, type] of Object.entries(types)) {
@@ -417,12 +423,12 @@ export const DataObject = <T extends PacketFormat>(
     },
 
     write: async (t: PacketArguments<T>) => {
-        let buffers = [] as Buffer[]
+        let buffers = [] as PacketBuffer[]
         for (const [key, type] of Object.entries(types)) {
             const elt = await type.write(t[key as keyof typeof t])
             buffers.push(elt)
         }
-        return Buffer.concat(buffers)
+        return PacketBuffer.concat(buffers)
     },
 })
 
@@ -450,9 +456,9 @@ export const DataObject = <T extends PacketFormat>(
 //         return await Object.entries(types).reduce(
 //             (acc, [key, type]) =>
 //                 acc.then(async (acc) =>
-//                     Buffer.concat([acc, await type.write(t[key])])
+//                     PacketBuffer.concat([acc, await type.write(t[key])])
 //                 ),
-//             Promise.resolve(Buffer.from([]))
+//             Promise.resolve(PacketBuffer.from([]))
 //         )
 //     },
 // })
@@ -462,7 +468,7 @@ export const DataWithDefault = <T>(
     type: Type<T>,
     defaultValue: T
 ): Type<T, T | undefined> => ({
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         return await type.read(buffer, offset)
     },
     write: async (t?: T) => {
@@ -472,7 +478,7 @@ export const DataWithDefault = <T>(
 })
 
 export const DataVec3: Type<Vec3> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: x, length: lenX } = await DataFloat.read(buffer, offset)
         const { t: y, length: lenY } = await DataFloat.read(
             buffer,
@@ -486,7 +492,7 @@ export const DataVec3: Type<Vec3> = {
     },
 
     write: async (t: Vec3) => {
-        const buffer = Buffer.allocUnsafe(3 * FLOAT_SIZE)
+        const buffer = PacketBuffer.allocUnsafe(3 * FLOAT_SIZE)
         buffer.writeFloatBE(t.x, 0)
         buffer.writeFloatBE(t.y, FLOAT_SIZE)
         buffer.writeFloatBE(t.z, 2 * FLOAT_SIZE)
@@ -495,7 +501,7 @@ export const DataVec3: Type<Vec3> = {
 }
 
 export const DataPackedXZ: Type<{ x: number; z: number }> = {
-    read: async (buffer: Buffer, offset: number) => {
+    read: async (buffer: PacketBuffer, offset: number) => {
         const { t: encoded, length } = await DataByte.read(buffer, offset)
         const x = encoded >> 4
         const z = encoded & 15

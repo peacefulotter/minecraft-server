@@ -2,13 +2,13 @@ import type { SocketId, SocketWithId } from '../socket'
 import { MainHandler } from '../handlers/main'
 import { Client } from './client'
 import { log } from '../logger'
-import { unwrap } from './packets/server'
-import { type PacketId } from './packets'
 import { GameLoop } from '~/worker/loop'
 import type { ClientBoundPacket } from './packets/create'
 import { EntityHandler } from '~/entity/handler'
 import { PlayerInfoRemove } from './packets/client'
 import { CommandHandler } from '~/commands/handler'
+import { unwrap, type PacketIdAndOffset } from './packets/server/unwrap'
+import { PacketBuffer } from './PacketBuffer'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -42,18 +42,21 @@ export class Server {
 
     handlePacket = async (
         client: Client,
-        { packetId, buffer }: { packetId: PacketId; buffer: number[] }
+        buffer: Buffer,
+        packetId: number,
+        offset: number
     ) => {
-        const response = await this.handler.handle({
+        const { response, packetLength } = await this.handler.handle({
             server: this,
             client,
             packetId,
             buffer,
+            offset,
         })
 
-        if (!response) return
+        if (response) await client.write(response)
 
-        client.write(response)
+        return packetLength
     }
 
     broadcast = (
@@ -68,9 +71,31 @@ export class Server {
 
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]
-        const packets = await unwrap(data)
-        for (const packet of packets) {
-            await this.handlePacket(client, packet)
+        const buffer = new PacketBuffer(data)
+        console.log(buffer)
+
+        let totalOffset = 0
+        while (totalOffset < buffer.length) {
+            const {
+                packetId,
+                packetLen,
+                offset: wrapOffset,
+            } = await unwrap(buffer, totalOffset)
+
+            totalOffset += wrapOffset
+
+            if (packetLen === 0) {
+                continue
+            }
+
+            const packetBufferLen = await this.handlePacket(
+                client,
+                buffer,
+                packetId,
+                totalOffset
+            )
+
+            totalOffset += packetBufferLen
         }
     }
 

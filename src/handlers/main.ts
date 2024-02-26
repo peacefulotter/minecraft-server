@@ -19,10 +19,8 @@ export class MainHandler {
     }
 
     constructor() {
-        for (const key in this.subhandlers) {
-            logHandler(
-                this.subhandlers[parseInt(key) as keyof typeof this.subhandlers]
-            )
+        for (const handler of Object.values(this.subhandlers)) {
+            logHandler(handler)
         }
     }
 

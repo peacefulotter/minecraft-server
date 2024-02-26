@@ -1,6 +1,7 @@
 import { decrypt } from '~/auth'
 import type { InnerReadType, InnerWriteType, Type } from '~/data/types'
 import type { PacketId } from '.'
+import type { Server } from '../server'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
@@ -44,20 +45,30 @@ export const ServerBoundPacketCreator = <
 ): ServerBoundPacketDeserializer<I, N, T> => ({
     id,
     name,
-    deserialize: async (buf: Buffer, encripted: boolean) => {
+    deserialize: async (buf: Buffer, offset: number, encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
         let data = {} as ServerBoundPacketData<T>
-        let offset = 0
         for (const [key, type] of Object.entries(types)) {
             const { t: elt, length } = await type.read(buffer, offset)
             data[key as keyof typeof data] = elt
             offset += length
         }
-        return { id, name, data }
+        const packet = { id, name, data }
+        return { packet, offset }
     },
 })
 
 export type ServerBoundPacketCreator = typeof ServerBoundPacketCreator
+
+export type DeserializerReturn<
+    I extends PacketId = number,
+    N extends string = string,
+    T extends PacketFormat = PacketFormat
+> = Promise<{
+    packet: Packet<ServerBoundPacketData<T>, I, N>
+    offset: number
+}>
+
 export type ServerBoundPacketDeserializer<
     I extends PacketId = number,
     N extends string = string,
@@ -67,8 +78,9 @@ export type ServerBoundPacketDeserializer<
     name: N
     deserialize: (
         buf: Buffer,
+        offset: number,
         encripted: boolean
-    ) => Promise<Packet<ServerBoundPacketData<T>, I, N>>
+    ) => DeserializerReturn<I, N, T>
 }
 
 // ========================== WRITE PACKET ==========================

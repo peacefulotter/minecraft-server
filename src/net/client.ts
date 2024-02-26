@@ -1,9 +1,7 @@
 import * as NBT from 'nbtify'
 
 import { logClientBoundPacket } from '../logger'
-import { formatPacket } from './packets'
 import type { ClientBoundPacket } from './packets/create'
-import type { ClientInfo } from './packets/server'
 import type { SocketWithId } from '../socket'
 import Long from 'long'
 import {
@@ -12,14 +10,16 @@ import {
     PlayDisconnect,
 } from './packets/client'
 import { Player } from '~/entity/player'
+import { formatPacket } from './packets/format'
+import type { ClientInfo } from './packets/server/configuration'
 
 export enum ClientState {
-    HANDSHAKING,
-    STATUS,
-    LOGIN,
-    CONFIGURATION,
-    PLAY,
-    DISCONNECTED,
+    HANDSHAKING = 'handshake',
+    STATUS = 'status',
+    LOGIN = 'login',
+    CONFIGURATION = 'configuration',
+    PLAY = 'play',
+    DISCONNECTED = 'disconnected',
 }
 
 export const REFRESH_INTERVAL = 5000 // ms
@@ -109,7 +109,7 @@ export class Client extends Player {
     public toString(): string {
         return `Client 
             username: ${this.username}
-            state: ${ClientState[this.state]}
+            state: ${this.state.toUpperCase()}
             ping: ${this.ping}ms
             ${super.toString()}            
         `

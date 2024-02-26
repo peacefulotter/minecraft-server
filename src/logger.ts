@@ -4,7 +4,7 @@ import type {
     ServerBoundPacket,
     ServerBoundPacketDeserializer,
 } from './net/packets/create'
-import { ClientState, type Client } from './net/client'
+import { type Client } from './net/client'
 import type { Handler, PacketHandler } from './handlers'
 import type { PacketId } from './net/packets'
 import type { Command } from './commands/handler'
@@ -38,8 +38,10 @@ export const logHandler = <
         '\n' +
             Object.values(handler.handlers)
                 .map(
-                    ({ packet }) =>
-                        `${chalk.yellowBright(hex(packet.id))} - ${packet.name}`
+                    ({ deserializer }) =>
+                        `${chalk.yellowBright(hex(deserializer.id))} - ${
+                            deserializer.name
+                        }`
                 )
                 .join('\n')
     )
@@ -51,7 +53,7 @@ const logPacket =
         log(
             chalk.gray(client.entityId),
             chalk.redBright(side),
-            chalk.cyan(ClientState[client.state]),
+            chalk.cyan(client.state.toUpperCase()),
             chalk.rgb(150, 255, 0)(hex(packet.id) + ' : ' + packet.name),
             packet.data
         )
