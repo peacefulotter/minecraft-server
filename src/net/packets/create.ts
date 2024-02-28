@@ -1,7 +1,7 @@
 import { decrypt } from '~/auth'
 import type { InnerReadType, InnerWriteType, Type } from '~/data/types'
 import type { PacketId } from '.'
-import type { Server } from '../server'
+import { PacketBuffer } from '../PacketBuffer'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
@@ -45,16 +45,13 @@ export const ServerBoundPacketCreator = <
 ): ServerBoundPacketDeserializer<I, N, T> => ({
     id,
     name,
-    deserialize: async (buf: Buffer, offset: number, encripted: boolean) => {
+    deserialize: async (buf: PacketBuffer, encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
         let data = {} as ServerBoundPacketData<T>
         for (const [key, type] of Object.entries(types)) {
-            const { t: elt, length } = await type.read(buffer, offset)
-            data[key as keyof typeof data] = elt
-            offset += length
+            data[key as keyof typeof data] = await type.read(buffer)
         }
-        const packet = { id, name, data }
-        return { packet, offset }
+        return { id, name, data }
     },
 })
 
@@ -64,10 +61,7 @@ export type DeserializerReturn<
     I extends PacketId = number,
     N extends string = string,
     T extends PacketFormat = PacketFormat
-> = Promise<{
-    packet: Packet<ServerBoundPacketData<T>, I, N>
-    offset: number
-}>
+> = Promise<Packet<ServerBoundPacketData<T>, I, N>>
 
 export type ServerBoundPacketDeserializer<
     I extends PacketId = number,
@@ -77,8 +71,7 @@ export type ServerBoundPacketDeserializer<
     id: I
     name: N
     deserialize: (
-        buf: Buffer,
-        offset: number,
+        buf: PacketBuffer,
         encripted: boolean
     ) => DeserializerReturn<I, N, T>
 }
@@ -103,8 +96,8 @@ export const ClientBoundPacketCreator =
             const elt = await type.write(args[key])
             buffers.push(elt)
         }
-        const data = Buffer.concat(buffers)
-        return { id, name, data } as Packet<Buffer, I, N>
+        const data = PacketBuffer.concat(buffers)
+        return { id, name, data } as Packet<PacketBuffer, I, N>
     }
 
 export type ClientBoundPacketCreator = typeof ClientBoundPacketCreator

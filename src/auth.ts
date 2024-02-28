@@ -1,6 +1,7 @@
 import * as crypto from 'crypto'
 import { mojangPublicKeyPem } from './constants'
 import NodeRSA from 'node-rsa'
+import { PacketBuffer } from './net/PacketBuffer'
 
 const { publicKey: pubKey, privateKey } = await new Promise<{
     publicKey: crypto.KeyObject
@@ -38,7 +39,7 @@ export const encrypt = (buffer: Buffer) => {
     )
 }
 
-export const decrypt = (buffer: Buffer) => {
+export const decrypt = (pb: PacketBuffer) => {
     const decrypted = crypto.privateDecrypt(
         {
             key: privateKey,
@@ -48,9 +49,9 @@ export const decrypt = (buffer: Buffer) => {
             padding: crypto.constants.RSA_PKCS1_PADDING,
             oaepHash: 'sha256WithRSAEncryption',
         },
-        buffer
+        pb.buffer
     )
-    return decrypted
+    return new PacketBuffer(decrypted)
 }
 
 // From: https://gist.github.com/andrewrk/4425843

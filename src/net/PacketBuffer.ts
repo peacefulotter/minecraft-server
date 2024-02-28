@@ -12,10 +12,6 @@ export class PacketBuffer {
     writeOffset = 0
     constructor(public buffer: Buffer) {}
 
-    get(index: number) {
-        return this.buffer[index]
-    }
-
     get length() {
         return this.buffer.length
     }
@@ -52,12 +48,38 @@ export class PacketBuffer {
         return new PacketBuffer(Buffer.from(str, encoding))
     }
 
-    subarray(start: number, end?: number) {
-        const buf = this.buffer.subarray(start, end)
-        return new PacketBuffer(buf)
+    toString(
+        read: boolean,
+        encoding?: BufferEncoding | undefined,
+        start?: number,
+        end?: number
+    ) {
+        const offset = read ? this.readOffset : this.writeOffset
+        const realStart = start ? start + offset : offset
+        const realEnd = end ? end + offset : this.buffer.length
+        return this.buffer.toString(encoding, realStart, realEnd)
     }
 
-    // allocUnsafe
+    static allocUnsafe(size: number) {
+        return new PacketBuffer(Buffer.allocUnsafe(size))
+    }
+
+    static alloc(size: number) {
+        return new PacketBuffer(Buffer.alloc(size))
+    }
+
+    static concat(list: Buffer[] | PacketBuffer[], totalLength?: number) {
+        const buffers =
+            list[0] instanceof PacketBuffer
+                ? (list as PacketBuffer[]).map((buf) => buf.buffer)
+                : (list as Buffer[])
+        return new PacketBuffer(Buffer.concat(buffers, totalLength))
+    }
+
+    get(index: number, read: boolean) {
+        const offset = read ? this.readOffset : this.writeOffset
+        return this.buffer[index + offset]
+    }
 
     // ========================== READ ==========================
 
@@ -85,6 +107,12 @@ export class PacketBuffer {
         return val
     }
 
+    readUnsignedShort() {
+        const val = this.buffer.readUInt16BE(this.readOffset)
+        this.readOffset += SHORT_SIZE
+        return val
+    }
+
     readByte() {
         const val = this.buffer.readInt8(this.readOffset)
         this.readOffset += BYTE_SIZE
@@ -103,7 +131,23 @@ export class PacketBuffer {
         return val
     }
 
+    readSlice(length?: number) {
+        const realEnd = length ? length + this.readOffset : this.buffer.length
+        const buffer = this.buffer.subarray(this.readOffset, realEnd)
+        this.readOffset += buffer.length
+        return buffer
+    }
+
+    readRest() {
+        this.readOffset = this.buffer.length
+        return this.buffer
+    }
+
     // ========================== WRITE ==========================
+
+    set(index: number, val: number) {
+        this.buffer[index + this.writeOffset] = val
+    }
 
     writeDouble(val: number) {
         this.buffer.writeDoubleBE(val, this.writeOffset)
@@ -122,6 +166,11 @@ export class PacketBuffer {
 
     writeShort(val: number) {
         this.buffer.writeInt16BE(val, this.writeOffset)
+        this.writeOffset += SHORT_SIZE
+    }
+
+    writeUnsignedShort(val: number) {
+        this.buffer.writeUInt16BE(val, this.writeOffset)
         this.writeOffset += SHORT_SIZE
     }
 

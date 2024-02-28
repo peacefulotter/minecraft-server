@@ -5,6 +5,7 @@ import type {
     DimensionMonsterSpawnLightLevel,
     DimensionMonsterSpawnLightLevelRange,
 } from '../../Region-Types/src/java'
+import { PacketBuffer } from '~/net/PacketBuffer'
 
 // TODO: replace this with fixed type
 type _IntegerDistribution = {
@@ -31,7 +32,7 @@ const DataIntegerDistribution: Type<_IntegerDistribution> = DataObject({
 
 export const DataDimensionMonsterSpawnLightLevel: Type<DimensionMonsterSpawnLightLevel> =
     {
-        read: async (buffer: number[]) => {
+        read: async (buffer: PacketBuffer) => {
             const tagId = await VarInt.read(buffer)
             if (tagId === 0) {
                 return new Int32(
@@ -47,12 +48,12 @@ export const DataDimensionMonsterSpawnLightLevel: Type<DimensionMonsterSpawnLigh
         },
         write: async (t: DimensionMonsterSpawnLightLevel) => {
             if (typeof t === 'number') {
-                return Buffer.concat([
+                return PacketBuffer.concat([
                     await VarInt.write(0),
                     await DataInt.write(t as number),
                 ])
             } else if (isIntegerDistribution(t)) {
-                return Buffer.concat([
+                return PacketBuffer.concat([
                     await VarInt.write(1),
                     await DataIntegerDistribution.write(t),
                 ])

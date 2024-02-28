@@ -39,15 +39,15 @@ const packetTester = async <T extends PacketFormat, U>(
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
     const buffer = await writePacket(packet)
-    const res = await readPacket.deserialize(buffer.data, 0, false)
+    const res = await readPacket.deserialize(buffer.data, false)
     // console.log('Expected', packet)
-    // console.log('Obtained', res.packet.data)
+    // console.log('Obtained', res.data)
     if (processRes && processArg) {
-        expect(processRes(res.packet.data)).toEqual(processArg(packet))
+        expect(processRes(res.data)).toEqual(processArg(packet))
     } else if (processArg) {
-        expect(res.packet.data).toEqual(processArg(packet) as PacketResult<T>)
+        expect(res.data).toEqual(processArg(packet) as PacketResult<T>)
     } else {
-        expect(res.packet.data).toEqual(packet as PacketResult<T>)
+        expect(res.data).toEqual(packet as PacketResult<T>)
     }
 }
 
@@ -62,7 +62,7 @@ const performanceTester = async <T extends PacketFormat>(
     const now = performance.now()
     for (let i = 0; i < iterations; i++) {
         const buffer = await writePacket(packet)
-        await readPacket.deserialize(buffer.data, 0, false)
+        await readPacket.deserialize(buffer.data, false)
     }
     console.log('perf:', (performance.now() - now) / iterations, 'ms')
 }
@@ -102,6 +102,19 @@ describe('formats', () => {
                 a: Math.round((Math.random() - 0.5) * 1000000),
             })
         }
+    })
+
+    test('string', async () => {
+        const format = {
+            a: DataString,
+        }
+        await packetTester(format, {
+            a: 'hello world',
+        })
+
+        await packetTester(format, {
+            a: 'a'.repeat(32767),
+        })
     })
 
     test('array', async () => {
