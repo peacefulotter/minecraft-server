@@ -12,20 +12,20 @@ export const EncryptionRequest = ClientBoundPacketCreator(
     0x01,
     'EncryptionRequest',
     {
-        serverId: DataString,
-        publicKey: VarIntPrefixedByteArray,
-        verifyToken: VarIntPrefixedByteArray,
+        serverId: new DataString(),
+        publicKey: new VarIntPrefixedByteArray(),
+        verifyToken: new VarIntPrefixedByteArray(),
     }
 )
 
 export const LoginSuccess = ClientBoundPacketCreator(0x02, 'LoginSuccess', {
-    uuid: DataUUID,
-    username: DataString,
-    properties: DataArray(
-        DataObject({
-            name: DataString,
-            value: DataString,
-            signature: DataOptional(DataString),
+    uuid: new DataUUID(),
+    username: new DataString(),
+    properties: new DataArray(
+        new DataObject({
+            name: new DataString(),
+            value: new DataString(),
+            signature: new DataOptional(new DataString()),
         })
     ),
 })

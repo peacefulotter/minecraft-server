@@ -17,8 +17,8 @@ export const ConfigurationPluginMessage = ClientBoundPacketCreator(
     0x00,
     'ConfigurationPluginMessage',
     {
-        channel: DataString,
-        data: DataByteArray(),
+        channel: new DataString(),
+        data: new DataByteArray(),
     }
 )
 
@@ -26,7 +26,7 @@ export const DisconnectConfiguration = ClientBoundPacketCreator(
     0x01,
     'DisconnectConfiguration',
     {
-        reason: DataString, // TODO: This is a chat component
+        reason: new DataString(), // TODO: This is a chat component
     }
 )
 
@@ -40,7 +40,7 @@ export const ConfigurationClientBoundKeepAlive = ClientBoundPacketCreator(
     0x03,
     'ConfigurationKeepAlive',
     {
-        id: DataLong,
+        id: new DataLong(),
     }
 )
 
@@ -48,19 +48,19 @@ export const ConfigurationPing = ClientBoundPacketCreator(
     0x04,
     'ConfigurationPing',
     {
-        id: DataInt,
+        id: new DataInt(),
     }
 )
 
 export const RegistryData = ClientBoundPacketCreator(0x05, 'RegistryData', {
-    codec: DataNBT,
+    codec: new DataNBT(),
 })
 
 export const ConfigurationRemoveResourcePack = ClientBoundPacketCreator(
     0x06,
     'ConfigurationRemoveResourcePack',
     {
-        uuid: DataOptional(DataUUID),
+        uuid: new DataOptional(new DataUUID()),
     }
 )
 
@@ -68,11 +68,11 @@ export const ConfigurationAddResourcePack = ClientBoundPacketCreator(
     0x07,
     'ConfigurationAddResourcePack',
     {
-        uuid: DataUUID,
-        url: DataString,
-        hash: DataString,
-        forced: DataBoolean,
-        promptMessage: DataOptional(DataString), // TODO: This is a chat component
+        uuid: new DataUUID(),
+        url: new DataString(),
+        hash: new DataString(),
+        forced: new DataBoolean(),
+        promptMessage: new DataOptional(new DataString()), // TODO: This is a chat component
     }
 )
 
@@ -80,6 +80,6 @@ export const ConfigurationFeatureFlags = ClientBoundPacketCreator(
     0x08,
     'ConfigurationFeatureFlags',
     {
-        featureFlags: DataArray(DataString as Type<FeatureFlags>),
+        featureFlags: new DataArray(new DataString() as Type<FeatureFlags>),
     }
 )

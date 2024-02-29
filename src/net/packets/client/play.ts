@@ -17,7 +17,6 @@ import {
     DataOptional,
     DataPackedXZ,
     DataUUID,
-    DataAngle,
     DataNBT,
     DataSlot,
 } from '~/data/types'
@@ -28,7 +27,7 @@ import type { ValueOf } from 'type-fest'
 import type { UUID } from '@minecraft-js/uuid'
 import type { EntityId } from '~/entity/entity'
 import type { EntityTypeId } from '~/data/entities'
-import { DataEntityMetadata } from '~/entity/metadata'
+import { DataEntityMetadata, type MetadataSchema } from '~/entity/metadata'
 
 export const BundleDelimiter = ClientBoundPacketCreator(
     0x00,
@@ -37,33 +36,33 @@ export const BundleDelimiter = ClientBoundPacketCreator(
 )
 
 export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
-    entityId: VarInt,
-    entityUUID: DataUUID,
-    type: VarInt as Type<EntityTypeId>,
-    x: DataDouble,
-    y: DataDouble,
-    z: DataDouble,
-    pitch: DataAngle,
-    yaw: DataAngle,
-    headYaw: DataAngle,
-    data: VarInt,
-    velocityX: DataShort,
-    velocityY: DataShort,
-    velocityZ: DataShort,
+    entityId: new VarInt(),
+    entityUUID: new DataUUID(),
+    type: new VarInt() as Type<EntityTypeId>,
+    x: new DataDouble(),
+    y: new DataDouble(),
+    z: new DataDouble(),
+    pitch: new DataByte(),
+    yaw: new DataByte(),
+    headYaw: new DataByte(),
+    data: new VarInt(),
+    velocityX: new DataShort(),
+    velocityY: new DataShort(),
+    velocityZ: new DataShort(),
 })
 
 export const CloseContainer = ClientBoundPacketCreator(0x12, 'CloseContainer', {
-    windowId: DataByte,
+    windowId: new DataByte(),
 })
 
 export const SetContainerContent = ClientBoundPacketCreator(
     0x13,
     'SetContainerContent',
     {
-        windowId: DataByte, // 0 for player inventory
-        stateId: VarInt,
-        count: VarInt,
-        carriedItems: DataArray(DataSlot), // Item being dragged with the mouse
+        windowId: new DataByte(), // 0 for player inventory
+        stateId: new VarInt(),
+        count: new VarInt(),
+        carriedItems: new DataArray(new DataSlot()), // Item being dragged with the mouse
     }
 )
 
@@ -131,9 +130,9 @@ export const SetContainerPropery = ClientBoundPacketCreator(
     0x14,
     'SetContainerProperty',
     {
-        windowId: DataByte,
-        property: DataShort, // Propery to be updated
-        value: DataShort, // New value for the property
+        windowId: new DataByte(),
+        property: new DataShort(), // Propery to be updated
+        value: new DataShort(), // New value for the property
     }
 )
 
@@ -141,15 +140,15 @@ export const SetContainerSlot = ClientBoundPacketCreator(
     0x15,
     'SetContainerSlot',
     {
-        windowId: DataByte,
-        stateId: VarInt,
-        slot: DataShort,
-        item: DataSlot,
+        windowId: new DataByte(),
+        stateId: new VarInt(),
+        slot: new DataShort(),
+        item: new DataSlot(),
     }
 )
 
 export const PlayDisconnect = ClientBoundPacketCreator(0x19, 'PlayDisconnect', {
-    reason: DataNBT,
+    reason: new DataNBT(),
 })
 
 type GameEffect<N extends string, E extends number, V extends number> = {
@@ -179,9 +178,9 @@ type GameEvents = ValueOf<{
 }>
 
 export const GameEvent = ClientBoundPacketCreator(0x20, 'GameEvent', {
-    event: DataObject({
-        effect: DataByte,
-        value: DataFloat,
+    event: new DataObject({
+        effect: new DataByte(),
+        value: new DataFloat(),
     }) as Type<GameEvents>,
 })
 
@@ -189,7 +188,7 @@ export const PlayClientBoundKeepAlive = ClientBoundPacketCreator(
     0x24,
     'KeepAlive',
     {
-        id: DataLong,
+        id: new DataLong(),
     }
 )
 
@@ -197,51 +196,51 @@ export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
     0x25,
     'ChunkDataAndUpdateLight',
     {
-        chunkX: DataInt,
-        chunkZ: DataInt,
-        heightMaps: DataNBT,
-        data: VarIntPrefixedByteArray, // TODO: long array?
-        blockEntity: DataArray(
-            DataObject({
-                packedXZ: DataPackedXZ,
-                y: DataShort,
-                type: VarInt,
-                data: DataNBT,
+        chunkX: new DataInt(),
+        chunkZ: new DataInt(),
+        heightMaps: new DataNBT(),
+        data: new VarIntPrefixedByteArray(), // TODO: long array?
+        blockEntity: new DataArray(
+            new DataObject({
+                packedXZ: new DataPackedXZ(),
+                y: new DataShort(),
+                type: new VarInt(),
+                data: new DataNBT(),
             })
         ),
-        skyLightMask: DataBitSet,
-        blockLightMask: DataBitSet,
-        emptySkyLightMask: DataBitSet,
-        emptyBlockLightMask: DataBitSet,
-        skyLightArray: DataArray(VarIntPrefixedByteArray),
-        blockLightArray: DataArray(VarIntPrefixedByteArray),
+        skyLightMask: new DataBitSet(),
+        blockLightMask: new DataBitSet(),
+        emptySkyLightMask: new DataBitSet(),
+        emptyBlockLightMask: new DataBitSet(),
+        skyLightArray: new DataArray(new VarIntPrefixedByteArray()),
+        blockLightArray: new DataArray(new VarIntPrefixedByteArray()),
     }
 )
 
 export const PlayLogin = ClientBoundPacketCreator(0x29, 'PlayLogin', {
-    entityId: DataInt,
-    isHardcore: DataBoolean,
-    dimensionNames: DataArray(DataString as Type<DimensionResource>),
-    maxPlayers: VarInt,
-    viewDistance: VarInt,
-    simulationDistance: VarInt,
-    reducedDebugInfo: DataBoolean,
-    enableRespawnScreen: DataBoolean,
-    doLimitedCrafting: DataBoolean,
-    dimensionType: DataString as Type<DimensionResource>,
-    dimensionName: DataString as Type<DimensionResource>,
-    hashedSeed: DataLong,
-    gameMode: DataByte as Type<GameMode>,
-    previousGameMode: DataByte as Type<GameMode>,
-    isDebug: DataBoolean,
-    isFlat: DataBoolean,
-    death: DataOptional(
-        DataObject({
-            dimensionName: DataString as Type<DimensionResource>,
-            location: DataPosition,
+    entityId: new DataInt(),
+    isHardcore: new DataBoolean(),
+    dimensionNames: new DataArray(new DataString() as Type<DimensionResource>),
+    maxPlayers: new VarInt(),
+    viewDistance: new VarInt(),
+    simulationDistance: new VarInt(),
+    reducedDebugInfo: new DataBoolean(),
+    enableRespawnScreen: new DataBoolean(),
+    doLimitedCrafting: new DataBoolean(),
+    dimensionType: new DataString() as Type<DimensionResource>,
+    dimensionName: new DataString() as Type<DimensionResource>,
+    hashedSeed: new DataLong(),
+    gameMode: new DataByte() as Type<GameMode>,
+    previousGameMode: new DataByte() as Type<GameMode>,
+    isDebug: new DataBoolean(),
+    isFlat: new DataBoolean(),
+    death: new DataOptional(
+        new DataObject({
+            dimensionName: new DataString() as Type<DimensionResource>,
+            location: new DataPosition(),
         })
     ),
-    portalCooldown: VarInt,
+    portalCooldown: new VarInt(),
 })
 
 // TODO: be able to concatenate packets to avoid repetition
@@ -250,11 +249,11 @@ export const UpdateEntityPosition = ClientBoundPacketCreator(
     0x2c,
     'UpdateEntityPosition',
     {
-        entityId: VarInt,
-        deltaX: DataShort, // (currentX * 32 - prevX * 32) * 128
-        deltaY: DataShort, // (currentY * 32 - prevY * 32) * 128
-        deltaZ: DataShort, // (currentZ * 32 - prevZ * 32) * 128
-        onGround: DataBoolean,
+        entityId: new VarInt(),
+        deltaX: new DataShort(), // (currentX * 32 - prevX * 32) * 128
+        deltaY: new DataShort(), // (currentY * 32 - prevY * 32) * 128
+        deltaZ: new DataShort(), // (currentZ * 32 - prevZ * 32) * 128
+        onGround: new DataBoolean(),
     }
 )
 
@@ -262,13 +261,13 @@ export const UpdateEntityPositionAndRotation = ClientBoundPacketCreator(
     0x2d,
     'UpdateEntityPositionRotation',
     {
-        entityId: VarInt,
-        deltaX: DataShort, // (currentX * 32 - prevX * 32) * 128
-        deltaY: DataShort, // (currentY * 32 - prevY * 32) * 128
-        deltaZ: DataShort, // (currentZ * 32 - prevZ * 32) * 128
-        yaw: DataAngle,
-        pitch: DataAngle,
-        onGround: DataBoolean,
+        entityId: new VarInt(),
+        deltaX: new DataShort(), // (currentX * 32 - prevX * 32) * 128
+        deltaY: new DataShort(), // (currentY * 32 - prevY * 32) * 128
+        deltaZ: new DataShort(), // (currentZ * 32 - prevZ * 32) * 128
+        yaw: new DataByte(),
+        pitch: new DataByte(),
+        onGround: new DataBoolean(),
     }
 )
 
@@ -276,10 +275,10 @@ export const UpdateEntityRotation = ClientBoundPacketCreator(
     0x2e,
     'UpdateEntityRotation',
     {
-        entityId: VarInt,
-        yaw: DataAngle,
-        pitch: DataAngle,
-        onGround: DataBoolean,
+        entityId: new VarInt(),
+        yaw: new DataByte(),
+        pitch: new DataByte(),
+        onGround: new DataBoolean(),
     }
 )
 
@@ -287,46 +286,46 @@ export const PlayerInfoRemove = ClientBoundPacketCreator(
     0x3b,
     'PlayerInfoRemove',
     {
-        players: DataArray(DataUUID),
+        players: new DataArray(new DataUUID()),
     }
 )
 
-const AddPlayerAction = DataObject({
-    name: DataString,
-    properties: DataArray(
-        DataObject({
-            name: DataString,
-            value: DataString,
-            signature: DataOptional(DataString),
+const AddPlayerAction = new DataObject({
+    name: new DataString(),
+    properties: new DataArray(
+        new DataObject({
+            name: new DataString(),
+            value: new DataString(),
+            signature: new DataOptional(new DataString()),
         })
     ),
 })
 
-const InitializeChatAction = DataObject({
-    signatureData: DataOptional(
-        DataObject({
-            chatSessionId: DataUUID,
-            publicKeyExpiryTime: DataLong,
-            encodedPublicKey: VarIntPrefixedByteArray,
-            publicKeySignature: VarIntPrefixedByteArray,
+const InitializeChatAction = new DataObject({
+    signatureData: new DataOptional(
+        new DataObject({
+            chatSessionId: new DataUUID(),
+            publicKeyExpiryTime: new DataLong(),
+            encodedPublicKey: new VarIntPrefixedByteArray(),
+            publicKeySignature: new VarIntPrefixedByteArray(),
         })
     ),
 })
 
-const UpdateGameModeAction = DataObject({
-    gameMode: VarInt as Type<GameMode>,
+const UpdateGameModeAction = new DataObject({
+    gameMode: new VarInt() as Type<GameMode>,
 })
 
-const UpdateListedAction = DataObject({
-    listed: DataBoolean,
+const UpdateListedAction = new DataObject({
+    listed: new DataBoolean(),
 })
 
-const UpdateLatencyAction = DataObject({
-    ping: VarInt,
+const UpdateLatencyAction = new DataObject({
+    ping: new VarInt(),
 })
 
-const UpdateDisplayNameAction = DataObject({
-    displayName: DataOptional(DataNBT), // TODO: must be DataNBT
+const UpdateDisplayNameAction = new DataObject({
+    displayName: new DataOptional(new DataNBT()), // TODO: must be DataNBT
 })
 
 const PlayerActions = {
@@ -348,12 +347,12 @@ const PlayerActionsMask: Record<keyof typeof PlayerActions, number> = {
 }
 
 const _PlayerInfoUpdate = ClientBoundPacketCreator(0x3c, 'PlayerInfoUpdate', {
-    actions: DataByte,
-    players: DataArray(
-        DataObject({
+    actions: new DataByte(),
+    players: new DataArray(
+        new DataObject({
             // TODO: check uuid v3 (see spawn entity below table)
-            uuid: DataUUID, // player uuid
-            playerActions: DataObject(PlayerActions),
+            uuid: new DataUUID(), // player uuid
+            playerActions: new DataObject(PlayerActions),
         })
     ),
 })
@@ -411,13 +410,13 @@ export const SynchronizePlayerPosition = ClientBoundPacketCreator(
     0x3e,
     'SynchronizePlayerPosition',
     {
-        x: DataDouble,
-        y: DataDouble,
-        z: DataDouble,
-        yaw: DataFloat,
-        pitch: DataFloat,
-        flags: DataByte as Type<PlayerPositionFlag>,
-        teleportId: VarInt,
+        x: new DataDouble(),
+        y: new DataDouble(),
+        z: new DataDouble(),
+        yaw: new DataFloat(),
+        pitch: new DataFloat(),
+        flags: new DataByte() as Type<PlayerPositionFlag>,
+        teleportId: new VarInt(),
     }
 )
 
@@ -425,25 +424,25 @@ export const SetHeadRotation = ClientBoundPacketCreator(
     0x46,
     'SetHeadRotation',
     {
-        entityId: VarInt,
-        headYaw: DataAngle,
+        entityId: new VarInt(),
+        headYaw: new DataByte(),
     }
 )
 
 export const SetHeldItem = ClientBoundPacketCreator(0x51, 'SetHeldItem', {
-    slot: DataByte,
+    slot: new DataByte(),
 })
 
 export const SetCenterChunk = ClientBoundPacketCreator(0x52, 'SetCenterChunk', {
-    chunkX: VarInt,
-    chunkZ: VarInt,
+    chunkX: new VarInt(),
+    chunkZ: new VarInt(),
 })
 
 export const SetRenderDistance = ClientBoundPacketCreator(
     0x53,
     'SetRenderDistance',
     {
-        viewDistance: VarInt, // 2 - 32
+        viewDistance: new VarInt(), // 2 - 32
     }
 )
 
@@ -451,24 +450,21 @@ export const SetDefaultSpawnPosition = ClientBoundPacketCreator(
     0x54,
     'SetDefaultSpawnPosition',
     {
-        location: DataPosition,
-        angle: DataFloat,
+        location: new DataPosition(),
+        angle: new DataFloat(),
     }
 )
 
 // Updates one or more metadata properties for an existing entity.
 // Any properties not included in the Metadata field are left unchanged.
-export const SetEntityMetadata = ClientBoundPacketCreator(
-    0x56,
-    'SetEntityMetadata',
-    {
-        entityId: VarInt,
-        metadata: DataEntityMetadata,
-    }
-)
+export const SetEntityMetadata = <S extends MetadataSchema>(raw: S) =>
+    ClientBoundPacketCreator(0x56, 'SetEntityMetadata', {
+        entityId: new VarInt(),
+        metadata: new DataEntityMetadata(raw),
+    })
 
 // This packet is sent when an entity has been leashed to another entity.
 export const LinkEntities = ClientBoundPacketCreator(0x57, 'LinkEntities', {
-    attachedEntityId: DataInt as Type<EntityId>,
-    holdingEntityId: DataInt as Type<EntityId>, // -1 to detach
+    attachedEntityId: new DataInt() as Type<EntityId>,
+    holdingEntityId: new DataInt() as Type<EntityId>, // -1 to detach
 })

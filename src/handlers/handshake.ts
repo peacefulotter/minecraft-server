@@ -1,12 +1,13 @@
 import { Handshake, LegacyServerListPing } from '~/net/packets/server'
 import { MINECRAFT_SERVER_VERSION, PROTOCOL_VERSION } from '~/constants'
 import { Handler } from '.'
+import { ClientState } from '~/net/client'
 
 export const HandshakeHandler = Handler.init('Handshake')
 
     .register(Handshake, async (args) => {
         const { client, packet } = args
-        client.state = packet.nextState
+        client.state = Object.values(ClientState)[packet.nextState]
     })
 
     // https://wiki.vg/Server_List_Ping#1.6

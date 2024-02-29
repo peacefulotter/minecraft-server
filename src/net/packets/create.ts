@@ -78,7 +78,7 @@ export type ServerBoundPacketDeserializer<
 
 // ========================== WRITE PACKET ==========================
 
-export type ClientBoundPacket = Packet<Buffer>
+export type ClientBoundPacket = Packet<PacketBuffer>
 
 export const ClientBoundPacketCreator =
     <

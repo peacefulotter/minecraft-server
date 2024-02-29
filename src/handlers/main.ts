@@ -28,7 +28,7 @@ export class MainHandler {
         if (args.client.state === ClientState.DISCONNECTED) {
             throw new Error('Client is disconnected')
         }
-        // Dispatch to the appropriate subhandler based on the client's state
+        // Dispatch to the appropriate subhandler based on the client's stat
         return await this.subhandlers[args.client.state].handle(args)
     }
 }

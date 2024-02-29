@@ -54,7 +54,7 @@ export class Client extends Player {
     ) {
         const formatted = await formatPacket(packet)
         if (log) logClientBoundPacket(formatted, this)
-        this.socket.write(formatted.data)
+        this.socket.write(formatted.data.buffer)
     }
 
     async kick() {

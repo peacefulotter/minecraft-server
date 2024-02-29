@@ -71,7 +71,7 @@ describe('formats', () => {
     test('uuid', async () => {
         await packetTester(
             {
-                uuid: DataUUID,
+                uuid: new DataUUID(),
             },
             {
                 uuid: generateV4(),
@@ -83,7 +83,7 @@ describe('formats', () => {
 
     test('optional', async () => {
         const format = {
-            opt: DataOptional(DataString),
+            opt: new DataOptional(new DataString()),
         }
         await packetTester(format, {
             opt: 'aaa',
@@ -95,7 +95,7 @@ describe('formats', () => {
 
     test('int', async () => {
         const format = {
-            a: DataInt,
+            a: new DataInt(),
         }
         for (let i = 0; i < 100; i++) {
             await packetTester(format, {
@@ -106,7 +106,7 @@ describe('formats', () => {
 
     test('string', async () => {
         const format = {
-            a: DataString,
+            a: new DataString(),
         }
         await packetTester(format, {
             a: 'hello world',
@@ -119,7 +119,7 @@ describe('formats', () => {
 
     test('array', async () => {
         const format = {
-            arr: DataArray(DataString),
+            arr: new DataArray(new DataString()),
         }
         await packetTester(format, {
             arr: ['aaa', 'bbb', 'ccc'],
@@ -128,9 +128,9 @@ describe('formats', () => {
 
     test('object', async () => {
         const format = {
-            obj: DataObject({
-                a: DataString,
-                b: DataInt,
+            obj: new DataObject({
+                a: new DataString(),
+                b: new DataInt(),
             }),
         }
         await packetTester(format, {
@@ -148,7 +148,7 @@ describe('formats', () => {
             )
             await packetTester(
                 {
-                    a: DataLong,
+                    a: new DataLong(),
                 },
                 {
                     a: data,
@@ -162,7 +162,7 @@ describe('formats', () => {
             const data = BitSet.fromBinaryString(s)
             await packetTester(
                 {
-                    a: DataBitSet,
+                    a: new DataBitSet(),
                 },
                 {
                     a: data,
@@ -187,7 +187,7 @@ describe('formats', () => {
             const data = BitSet.fromBinaryString(s)
             await packetTester(
                 {
-                    a: DataFixedBitSet(s.length),
+                    a: new DataFixedBitSet(s.length),
                 },
                 {
                     a: data,
@@ -207,7 +207,7 @@ describe('formats', () => {
     test('with default', async () => {
         const defaultValue = 'default'
         const format = {
-            a: DataWithDefault(DataString, defaultValue),
+            a: new DataWithDefault(new DataString(), defaultValue),
         }
         await packetTester(format, {
             a: 'different_default',
@@ -226,27 +226,27 @@ describe('formats', () => {
 
     test('is identity when writing -> reading', async () => {
         const format = {
-            a: DataByte,
-            b: VarIntPrefixedByteArray,
-            c: DataShort,
-            d: DataInt,
-            e: DataString,
-            f: VarInt,
-            g: VarLong,
-            h: DataUUID,
-            i: DataOptional(DataString),
-            j: DataObject({
-                a: DataString,
-                b: DataInt,
+            a: new DataByte(),
+            b: new VarIntPrefixedByteArray(),
+            c: new DataShort(),
+            d: new DataInt(),
+            e: new DataString(),
+            f: new VarInt(),
+            g: new VarLong(),
+            h: new DataUUID(),
+            i: new DataOptional(new DataString()),
+            j: new DataObject({
+                a: new DataString(),
+                b: new DataInt(),
             }),
-            k: DataArray(DataString),
-            l: DataOptional(
-                DataObject({
-                    a: DataString,
-                    b: DataArray(DataInt),
+            k: new DataArray(new DataString()),
+            l: new DataOptional(
+                new DataObject({
+                    a: new DataString(),
+                    b: new DataArray(new DataInt()),
                 })
             ),
-            m: DataLong,
+            m: new DataLong(),
         }
 
         const packet: PacketArguments<typeof format> = {
@@ -294,25 +294,25 @@ describe('formats', () => {
 
     test('dataobject perf', async () => {
         const format = {
-            a: DataObject({
-                b: DataObject({
-                    c: DataObject({
-                        d: DataObject({
-                            e: DataInt,
+            a: new DataObject({
+                b: new DataObject({
+                    c: new DataObject({
+                        d: new DataObject({
+                            e: new DataInt(),
                         }),
                     }),
                 }),
-                f: DataObject({
-                    g: DataObject({
-                        h: DataObject({
-                            i: DataInt,
+                f: new DataObject({
+                    g: new DataObject({
+                        h: new DataObject({
+                            i: new DataInt(),
                         }),
                     }),
                 }),
-                j: DataObject({
-                    k: DataObject({
-                        l: DataObject({
-                            m: DataInt,
+                j: new DataObject({
+                    k: new DataObject({
+                        l: new DataObject({
+                            m: new DataInt(),
                         }),
                     }),
                 }),
@@ -331,7 +331,7 @@ describe('formats', () => {
 
     test('string perf', async () => {
         const format = {
-            a: DataString,
+            a: new DataString(),
         }
         const packet = {
             a: 'a'.repeat(32767),
@@ -348,15 +348,26 @@ describe('formats', () => {
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
-        const root = await NBT.read(file)
+        const root = await NBT.read(file, { rootName: null })
+        console.log('=====', { name: root.rootName })
 
-        const format = {
-            nbt: DataNBT,
-        }
-        const packet = {
+        const format = { a: new DataInt(), nbt: new DataNBT() }
+
+        await packetTester(format, {
+            a: 42,
             nbt: root,
-        }
+        })
 
-        await performanceTester(format, packet, 1000)
+        await packetTester(format, { a: 42, nbt: file })
+
+        await performanceTester(
+            {
+                nbt: new DataNBT(),
+            },
+            {
+                nbt: root,
+            },
+            1000
+        )
     })
 })

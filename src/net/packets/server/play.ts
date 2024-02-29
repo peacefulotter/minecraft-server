@@ -25,12 +25,12 @@ export const ConfirmTeleportation = ServerBoundPacketCreator(
     0x00,
     'ConfirmTeleportation',
     {
-        id: VarInt,
+        id: new VarInt(),
     }
 )
 
 // export const QueryBlockEntityTag =  ServerBoundPacket(0x01, {
-//     transactionId: VarInt,
+//     transactionId: new VarInt,
 //     location: Position,
 // })
 
@@ -38,7 +38,7 @@ export const ChangeDifficulty = ServerBoundPacketCreator(
     0x02,
     'ChangeDifficulty',
     {
-        difficulty: DataByte as Type<Difficulty>,
+        difficulty: new DataByte() as Type<Difficulty>,
     }
 )
 
@@ -46,31 +46,31 @@ export const AcknowledgeMessage = ServerBoundPacketCreator(
     0x03,
     'AcknowledgeMessage',
     {
-        id: VarInt,
+        id: new VarInt(),
     }
 )
 
 export const ChatCommand = ServerBoundPacketCreator(0x04, 'ChatCommand', {
-    command: DataString,
-    timestamp: DataLong,
-    salt: DataLong,
-    args: DataArray(
-        DataObject({
-            name: DataString,
-            signature: DataByteArray(256),
+    command: new DataString(),
+    timestamp: new DataLong(),
+    salt: new DataLong(),
+    args: new DataArray(
+        new DataObject({
+            name: new DataString(),
+            signature: new DataByteArray(256),
         })
     ),
-    messageCount: VarInt,
-    acknowledged: DataFixedBitSet(20),
+    messageCount: new VarInt(),
+    acknowledged: new DataFixedBitSet(20),
 })
 
 export const ChatMessage = ServerBoundPacketCreator(0x05, 'ChatMessage', {
-    message: DataString,
-    timestamp: DataLong,
-    salt: DataLong,
-    signature: DataOptional(DataByteArray(256)),
-    messageCount: VarInt,
-    acknowledged: DataFixedBitSet(20),
+    message: new DataString(),
+    timestamp: new DataLong(),
+    salt: new DataLong(),
+    signature: new DataOptional(new DataByteArray(256)),
+    messageCount: new VarInt(),
+    acknowledged: new DataFixedBitSet(20),
 })
 
 export const PlayerSession = ServerBoundPacketCreator(0x06, 'PlayerSession', {
@@ -81,26 +81,26 @@ export const ChunkBatchReceived = ServerBoundPacketCreator(
     0x07,
     'ChunkBatchReceived',
     {
-        chunkPerTick: DataFloat,
+        chunkPerTick: new DataFloat(),
     }
 )
 
 export const ClientStatus = ServerBoundPacketCreator(0x08, 'ClientStatus', {
-    actionId: VarInt as Type<0 | 1>,
+    actionId: new VarInt() as Type<0 | 1>,
 })
 
 export const PlayClientInformation = ServerBoundPacketCreator(
     0x09,
     'ClientInformation',
     {
-        locale: DataString,
-        viewDistance: DataByte,
-        chatMode: VarInt,
-        chatColors: DataByte,
-        displayedSkinParts: DataByte,
-        mainHand: VarInt,
-        enableTextFiltering: DataBoolean,
-        allowServerListings: DataBoolean,
+        locale: new DataString(),
+        viewDistance: new DataByte(),
+        chatMode: new VarInt(),
+        chatColors: new DataByte(),
+        displayedSkinParts: new DataByte(),
+        mainHand: new VarInt(),
+        enableTextFiltering: new DataBoolean(),
+        allowServerListings: new DataBoolean(),
     }
 )
 
@@ -108,7 +108,7 @@ export const PlayServerBoundKeepAlive = ServerBoundPacketCreator(
     0x15,
     'KeepAlive',
     {
-        id: DataLong,
+        id: new DataLong(),
     }
 )
 
@@ -116,10 +116,10 @@ export const SetPlayerPosition = ServerBoundPacketCreator(
     0x17,
     'SetPlayerPosition',
     {
-        x: DataDouble,
-        y: DataDouble,
-        z: DataDouble,
-        onGround: DataBoolean,
+        x: new DataDouble(),
+        y: new DataDouble(),
+        z: new DataDouble(),
+        onGround: new DataBoolean(),
     }
 )
 
@@ -127,12 +127,12 @@ export const SetPlayerPositionAndRotation = ServerBoundPacketCreator(
     0x18,
     'PlayerPositionAndRotation',
     {
-        x: DataDouble,
-        y: DataDouble,
-        z: DataDouble,
-        yaw: DataFloat,
-        pitch: DataFloat,
-        onGround: DataBoolean,
+        x: new DataDouble(),
+        y: new DataDouble(),
+        z: new DataDouble(),
+        yaw: new DataFloat(),
+        pitch: new DataFloat(),
+        onGround: new DataBoolean(),
     }
 )
 
@@ -140,9 +140,9 @@ export const SetPlayerRotation = ServerBoundPacketCreator(
     0x19,
     'PlayerRotation',
     {
-        yaw: DataFloat,
-        pitch: DataFloat,
-        onGround: DataBoolean,
+        yaw: new DataFloat(),
+        pitch: new DataFloat(),
+        onGround: new DataBoolean(),
     }
 )
 
@@ -150,29 +150,29 @@ export const SetPlayerOnGround = ServerBoundPacketCreator(
     0x1a,
     'PlayerOnGround',
     {
-        onGround: DataBoolean,
+        onGround: new DataBoolean(),
     }
 )
 
 export const MoveVehicle = ServerBoundPacketCreator(0x1b, 'MoveVehicle', {
-    x: DataDouble,
-    y: DataDouble,
-    z: DataDouble,
-    yaw: DataFloat,
-    pitch: DataFloat,
+    x: new DataDouble(),
+    y: new DataDouble(),
+    z: new DataDouble(),
+    yaw: new DataFloat(),
+    pitch: new DataFloat(),
 })
 
 export const PaddleBoat = ServerBoundPacketCreator(0x1c, 'PaddleBoat', {
-    leftPaddle: DataBoolean,
-    rightPaddle: DataBoolean,
+    leftPaddle: new DataBoolean(),
+    rightPaddle: new DataBoolean(),
 })
 
 export const PickItem = ServerBoundPacketCreator(0x1d, 'PickItem', {
-    slotToUse: VarInt,
+    slotToUse: new VarInt(),
 })
 
 export const PingRequest = ServerBoundPacketCreator(0x1e, 'PingRequest', {
-    payload: DataLong,
+    payload: new DataLong(),
 })
 
 enum ActionStatus {
@@ -195,10 +195,10 @@ enum Face {
 }
 
 export const PlayerAction = ServerBoundPacketCreator(0x21, 'PlayerAction', {
-    status: VarInt as Type<ActionStatus>,
-    location: DataPosition,
-    face: DataByte as Type<Face>,
-    sequence: VarInt,
+    status: new VarInt() as Type<ActionStatus>,
+    location: new DataPosition(),
+    face: new DataByte() as Type<Face>,
+    sequence: new VarInt(),
 })
 
 enum PlayerCommandAction {
@@ -214,17 +214,17 @@ enum PlayerCommandAction {
 }
 
 export const PlayerCommand = ServerBoundPacketCreator(0x22, 'PlayerCommand', {
-    entity: VarInt as Type<EntityId>,
-    action: VarInt as Type<PlayerCommandAction>,
-    jump_boost: VarInt,
+    entity: new VarInt() as Type<EntityId>,
+    action: new VarInt() as Type<PlayerCommandAction>,
+    jump_boost: new VarInt(),
 })
 
 export const PlayPong = ServerBoundPacketCreator(0x24, 'Pong', {
-    id: DataInt,
+    id: new DataInt(),
 })
 
 export const SetHeldItem = ServerBoundPacketCreator(0x2c, 'SetHeldItem', {
-    slot: DataShort,
+    slot: new DataShort(),
 })
 
 enum Hand {
@@ -233,13 +233,13 @@ enum Hand {
 }
 
 export const SwingHand = ServerBoundPacketCreator(0x33, 'SwingHand', {
-    hand: VarInt as Type<Hand>,
+    hand: new VarInt() as Type<Hand>,
 })
 
 export const TeleportToEntity = ServerBoundPacketCreator(
     0x34,
     'TeleportToEntity',
     {
-        target: DataUUID,
+        target: new DataUUID(),
     }
 )

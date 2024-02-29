@@ -1,12 +1,15 @@
+import * as NBT from 'nbtify'
 import { PacketBuffer } from '~/net/PacketBuffer'
+import { type Type } from '.'
 import {
     BYTE_SIZE,
     DOUBLE_SIZE,
     FLOAT_SIZE,
     INT_SIZE,
     SHORT_SIZE,
-    type Type,
-} from '.'
+    UUID_SIZE,
+} from './constants'
+import { parseUUID, type UUID } from '@minecraft-js/uuid'
 
 type ReadFuncs<R> = keyof {
     [key in keyof PacketBuffer as PacketBuffer[key] extends () => R
@@ -42,52 +45,97 @@ abstract class Simple<R, W = R> implements Type<R, W> {
     }
 }
 
-class _DataByte extends Simple<number> {
+export class DataByte extends Simple<number> {
     constructor() {
         super(BYTE_SIZE, 'readByte', 'writeByte')
     }
 }
 
-class _DataUnsignedByte extends Simple<number> {
+export class DataUnsignedByte extends Simple<number> {
     constructor() {
         super(BYTE_SIZE, 'readUnsignedByte', 'writeUnsignedByte')
     }
 }
 
-class _DataShort extends Simple<number> {
+export class DataShort extends Simple<number> {
     constructor() {
         super(SHORT_SIZE, 'readShort', 'writeShort')
     }
 }
 
-class _DataUnsignedShort extends Simple<number> {
+export class DataUnsignedShort extends Simple<number> {
     constructor() {
         super(SHORT_SIZE, 'readUnsignedShort', 'writeUnsignedShort')
     }
 }
 
-class _DataInt extends Simple<number> {
+export class DataInt extends Simple<number> {
     constructor() {
         super(INT_SIZE, 'readInt', 'writeInt')
     }
 }
 
-class _DataFloat extends Simple<number> {
+export class DataFloat extends Simple<number> {
     constructor() {
         super(FLOAT_SIZE, 'readFloat', 'writeFloat')
     }
 }
 
-class _DataDouble extends Simple<number> {
+export class DataDouble extends Simple<number> {
     constructor() {
         super(DOUBLE_SIZE, 'readDouble', 'writeDouble')
     }
 }
 
-export const DataByte = new _DataByte()
-export const DataUnsignedByte = new _DataUnsignedByte()
-export const DataShort = new _DataShort()
-export const DataUnsignedShort = new _DataUnsignedShort()
-export const DataInt = new _DataInt()
-export const DataFloat = new _DataFloat()
-export const DataDouble = new _DataDouble()
+export class DataByteArray implements Type<Buffer, PacketBuffer> {
+    constructor(private length?: number) {}
+
+    async readWithLength(buffer: PacketBuffer, length: number) {
+        return buffer.readSlice(length)
+    }
+
+    async read(buffer: PacketBuffer) {
+        if (this.length) {
+            return this.readWithLength(buffer, this.length)
+        }
+        return buffer.readRest()
+    }
+
+    async write(t: PacketBuffer) {
+        return t
+    }
+}
+
+export class DataUUID implements Type<UUID> {
+    async read(buffer: PacketBuffer) {
+        const str = buffer.readString('hex', 0, UUID_SIZE)
+        return parseUUID(str)
+    }
+
+    async write(t: UUID) {
+        return PacketBuffer.fromString(t.toString(false), 'hex')
+    }
+}
+
+export class DataNBT
+    implements
+        Type<
+            NBT.NBTData<NBT.RootTagLike> | NBT.RootTagLike,
+            NBT.NBTData<NBT.RootTagLike> | NBT.RootTagLike | PacketBuffer
+        >
+{
+    async read(buffer: PacketBuffer) {
+        const sub = buffer.readRest()
+        return await NBT.read(sub)
+    }
+
+    async write(
+        t: NBT.RootTagLike | NBT.NBTData<NBT.RootTagLike> | PacketBuffer
+    ) {
+        if (t instanceof PacketBuffer) {
+            return t
+        }
+        const buf = await NBT.write(t, { rootName: null })
+        return PacketBuffer.from(buf)
+    }
+}

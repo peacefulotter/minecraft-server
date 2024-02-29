@@ -2,16 +2,16 @@ import { DataString, DataUUID, VarIntPrefixedByteArray } from '~/data/types'
 import { ServerBoundPacketCreator } from '../create'
 
 export const LoginStart = ServerBoundPacketCreator(0x00, 'LoginStart', {
-    username: DataString,
-    uuid: DataUUID,
+    username: new DataString(),
+    uuid: new DataUUID(),
 })
 
 export const EncryptionResponse = ServerBoundPacketCreator(
     0x01,
     'EncryptionResponse',
     {
-        sharedSecret: VarIntPrefixedByteArray,
-        verifyToken: VarIntPrefixedByteArray,
+        sharedSecret: new VarIntPrefixedByteArray(),
+        verifyToken: new VarIntPrefixedByteArray(),
     }
 )
 

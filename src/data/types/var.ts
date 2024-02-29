@@ -5,13 +5,23 @@ import Long from 'long'
 const SEGMENT_BITS = 0x7f
 const CONTINUE_BIT = 0x80
 
-class _VarInt implements Type<number> {
+export class VarInt implements Type<number> {
     async read(buffer: PacketBuffer) {
+        return await VarInt.read(buffer)
+    }
+
+    async write(t: number) {
+        return await VarInt.write(t)
+    }
+
+    static async read(buffer: PacketBuffer) {
+        const composite = new DataByte()
+
         let value = 0
         let position = 0
 
         while (true) {
-            const byte = await DataByte.read(buffer)
+            const byte = await composite.read(buffer)
 
             value |= (byte & SEGMENT_BITS) << position
 
@@ -25,7 +35,7 @@ class _VarInt implements Type<number> {
         return value
     }
 
-    async write(t: number) {
+    static async write(t: number) {
         const buffer = []
         while (true) {
             if ((t & ~SEGMENT_BITS) == 0) {
@@ -43,13 +53,15 @@ class _VarInt implements Type<number> {
 }
 
 // TODO: /!\ Fix issue with negative longs
-class _VarLong implements Type<Long> {
+export class VarLong implements Type<Long> {
+    composite = new DataByte()
+
     async read(buffer: PacketBuffer) {
         let value = new Long(0, 0)
         let position = 0
 
         while (true) {
-            const byte = await DataByte.read(buffer)
+            const byte = await this.composite.read(buffer)
 
             value = value.or(new Long(byte & SEGMENT_BITS).shiftLeft(position))
 
@@ -78,6 +90,3 @@ class _VarLong implements Type<Long> {
         return PacketBuffer.from(buffer)
     }
 }
-
-export const VarInt = new _VarInt()
-export const VarLong = new _VarLong()

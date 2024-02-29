@@ -7,7 +7,7 @@ import type { ClientBoundPacket } from './packets/create'
 import { EntityHandler } from '~/entity/handler'
 import { PlayerInfoRemove } from './packets/client'
 import { CommandHandler } from '~/commands/handler'
-import { unwrap, type PacketIdAndOffset } from './packets/server/unwrap'
+import { unwrap } from './packets/server/unwrap'
 import { PacketBuffer } from './PacketBuffer'
 
 // class ServerWorker {
@@ -42,21 +42,17 @@ export class Server {
 
     handlePacket = async (
         client: Client,
-        buffer: Buffer,
-        packetId: number,
-        offset: number
+        buffer: PacketBuffer,
+        packetId: number
     ) => {
-        const { response, packetLength } = await this.handler.handle({
+        const res = await this.handler.handle({
             server: this,
             client,
             packetId,
             buffer,
-            offset,
         })
 
-        if (response) await client.write(response)
-
-        return packetLength
+        if (res) await client.write(res)
     }
 
     broadcast = (
@@ -72,30 +68,15 @@ export class Server {
     data = async (socket: SocketWithId, data: Buffer) => {
         const client = this.clients[socket.id]
         const buffer = new PacketBuffer(data)
-        console.log(buffer)
 
-        let totalOffset = 0
-        while (totalOffset < buffer.length) {
-            const {
-                packetId,
-                packetLen,
-                offset: wrapOffset,
-            } = await unwrap(buffer, totalOffset)
-
-            totalOffset += wrapOffset
+        while (buffer.readOffset < buffer.length) {
+            const { packetId, packetLen } = await unwrap(buffer)
 
             if (packetLen === 0) {
                 continue
             }
 
-            const packetBufferLen = await this.handlePacket(
-                client,
-                buffer,
-                packetId,
-                totalOffset
-            )
-
-            totalOffset += packetBufferLen
+            await this.handlePacket(client, buffer, packetId)
         }
     }
 

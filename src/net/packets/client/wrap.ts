@@ -2,23 +2,22 @@ import { DataByteArray, VarInt } from '~/data/types'
 import { ClientBoundPacketCreator, type ClientBoundPacket } from '../create'
 
 const ResponseFormat = {
-    packetLen: VarInt,
-    id: VarInt,
-    data: DataByteArray(),
+    packetLen: new VarInt(),
+    id: new VarInt(),
+    data: new DataByteArray(),
 }
 
 export const wrap = async (packet: ClientBoundPacket) => {
-    const creator = ClientBoundPacketCreator(
-        packet.id,
-        packet.name,
-        ResponseFormat
-    )
+    const { id, name, data } = packet
+
+    const creator = ClientBoundPacketCreator(id, name, ResponseFormat)
 
     const packetId = await VarInt.write(packet.id)
-    const packetLen = packet.data.length + packetId.length
+    const packetLen = data.length + packetId.length
 
     return creator({
         packetLen,
-        ...packet,
+        id,
+        data: data,
     })
 }

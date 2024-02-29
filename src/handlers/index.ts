@@ -8,13 +8,13 @@ import type {
     ServerBoundPacketDeserializer,
 } from '~/net/packets/create'
 import type { Server } from '~/net/server'
+import type { PacketBuffer } from '~/net/PacketBuffer'
 
 export type RawHandlerArgs = {
     server: Server
     client: Client
     packetId: number
-    buffer: Buffer
-    offset: number
+    buffer: PacketBuffer
 }
 
 export type ProcessHandlerArgs = Omit<RawHandlerArgs, 'buffer' | 'offset'>
@@ -75,25 +75,17 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
     }
 
     handle = async (args: RawHandlerArgs) => {
-        const { server, client, packetId, buffer, offset } = args
+        const { server, client, packetId, buffer } = args
         const { deserializer, callback } = this.getHandler(packetId, client)
-        const { packet, offset: packetLength } = await deserializer.deserialize(
-            buffer,
-            offset,
-            client.encrypted
-        )
-
-        // as ServerBoundPacket
+        const packet = await deserializer.deserialize(buffer, client.encrypted)
 
         logServerBoundPacket(packet, client)
 
-        const response = await callback({
+        return await callback({
             server,
             client,
             packetId,
             packet: packet.data,
         })
-
-        return { response, packetLength }
     }
 }

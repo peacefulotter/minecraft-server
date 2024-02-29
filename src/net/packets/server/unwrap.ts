@@ -1,5 +1,4 @@
 import { VarInt } from '~/data/types'
-import type { PacketId } from '..'
 import type { PacketBuffer } from '~/net/PacketBuffer'
 
 const LEGACY_SERVER_LIST_PING_ID = 254
@@ -9,14 +8,9 @@ const LEGACY_SERVER_LIST_PING_ID = 254
 //     return head.length === 2 && head[0] === 0x1f && head[1] === 0x8b;
 // }
 
-export type PacketIdAndOffset = {
-    packetId: PacketId
-    offset: number
-}
-
-export const unwrap = async (buffer: PacketBuffer, offset: number) => {
+export const unwrap = async (buffer: PacketBuffer) => {
     // Handle legacy server list ping
-    if (buffer.get(0) == LEGACY_SERVER_LIST_PING_ID) {
+    if (buffer.get(0, true) == LEGACY_SERVER_LIST_PING_ID) {
         return {
             packetLen: buffer.length,
             packetId: LEGACY_SERVER_LIST_PING_ID,
@@ -24,13 +18,7 @@ export const unwrap = async (buffer: PacketBuffer, offset: number) => {
         }
     }
 
-    const { t: packetLen, length: packetLenLen } = await VarInt.read(
-        buffer,
-        offset
-    )
-    const { t: packetId, length: packetIdLen } = await VarInt.read(
-        buffer,
-        offset
-    )
-    return { packetId, packetLen, offset: packetLenLen + packetIdLen }
+    const packetLen = await VarInt.read(buffer)
+    const packetId = await VarInt.read(buffer)
+    return { packetId, packetLen }
 }

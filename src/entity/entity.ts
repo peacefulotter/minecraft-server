@@ -100,9 +100,9 @@ export abstract class Entity<
     // Updates metadata and returns the packet to send to the client
     async setMetadata(metadata: MetadataArgs<Schema & EntitySchema>) {
         this.metadata = { ...this.metadata, ...metadata }
-        return await SetEntityMetadata({
+        return await SetEntityMetadata(this.metadataSchema)({
             entityId: this.entityId,
-            metadata: { raw: this.metadataSchema, metadata },
+            metadata,
         })
     }
 

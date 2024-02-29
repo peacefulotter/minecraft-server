@@ -5,7 +5,7 @@ import {
     INT_SIZE,
     LONG_SIZE,
     SHORT_SIZE,
-} from '~/data/types'
+} from '~/data/types/constants'
 
 export class PacketBuffer {
     readOffset = 0
@@ -46,18 +46,6 @@ export class PacketBuffer {
         encoding?: BufferEncoding | undefined
     ) {
         return new PacketBuffer(Buffer.from(str, encoding))
-    }
-
-    toString(
-        read: boolean,
-        encoding?: BufferEncoding | undefined,
-        start?: number,
-        end?: number
-    ) {
-        const offset = read ? this.readOffset : this.writeOffset
-        const realStart = start ? start + offset : offset
-        const realEnd = end ? end + offset : this.buffer.length
-        return this.buffer.toString(encoding, realStart, realEnd)
     }
 
     static allocUnsafe(size: number) {
@@ -131,6 +119,18 @@ export class PacketBuffer {
         return val
     }
 
+    readString(
+        encoding?: BufferEncoding | undefined,
+        start?: number,
+        end?: number
+    ) {
+        const offset = this.readOffset
+        const realStart = (start || 0) + offset
+        const realEnd = end ? end + offset : this.buffer.length
+        this.readOffset += realEnd - realStart
+        return this.buffer.toString(encoding, realStart, realEnd)
+    }
+
     readSlice(length?: number) {
         const realEnd = length ? length + this.readOffset : this.buffer.length
         const buffer = this.buffer.subarray(this.readOffset, realEnd)
@@ -139,8 +139,7 @@ export class PacketBuffer {
     }
 
     readRest() {
-        this.readOffset = this.buffer.length
-        return this.buffer
+        return this.readSlice()
     }
 
     // ========================== WRITE ==========================

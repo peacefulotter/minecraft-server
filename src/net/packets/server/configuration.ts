@@ -24,14 +24,14 @@ export const ConfigurationClientInformation = ServerBoundPacketCreator(
     0x00,
     'ClientInformation' as const,
     {
-        locale: DataString,
-        viewDistance: DataByte,
-        chatMode: VarInt,
-        chatColors: DataByte as Type<ChatMode>,
-        displayedSkinParts: DataByte,
-        mainHand: VarInt as Type<MainHand>,
-        enableTextFiltering: DataBoolean,
-        allowServerListings: DataBoolean,
+        locale: new DataString(),
+        viewDistance: new DataByte(),
+        chatMode: new VarInt(),
+        chatColors: new DataByte() as Type<ChatMode>,
+        displayedSkinParts: new DataByte(),
+        mainHand: new VarInt() as Type<MainHand>,
+        enableTextFiltering: new DataBoolean(),
+        allowServerListings: new DataBoolean(),
     }
 )
 
@@ -43,8 +43,8 @@ export const PluginMessage = ServerBoundPacketCreator(
     0x01,
     'PluginMessage' as const,
     {
-        channel: DataString as Type<PluginChannel>,
-        data: DataByteArray(),
+        channel: new DataString() as Type<PluginChannel>,
+        data: new DataByteArray(),
     }
 )
 
@@ -58,19 +58,19 @@ export const ConfigurationServerBoundKeepAlive = ServerBoundPacketCreator(
     0x03,
     'KeepAlive',
     {
-        id: DataLong,
+        id: new DataLong(),
     }
 )
 
 export const Pong = ServerBoundPacketCreator(0x04, 'Pong', {
-    id: DataInt,
+    id: new DataInt(),
 })
 
 export const ResourcePackResponse = ServerBoundPacketCreator(
     0x05,
     'ResourcePackResponse',
     {
-        uuid: DataUUID,
-        result: VarInt as Type<ResourcePackResult>,
+        uuid: new DataUUID(),
+        result: new VarInt() as Type<ResourcePackResult>,
     }
 )

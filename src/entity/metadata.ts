@@ -15,6 +15,7 @@ import {
     type InnerWriteType,
 } from '~/data/types'
 import type { DimensionID, VillagerLevel } from '../../Region-Types/src/java'
+import { PacketBuffer } from '~/net/PacketBuffer'
 
 const TextComponent = DataNBT
 const Slot = DataNBT
@@ -32,7 +33,6 @@ export enum Direction {
 }
 
 type BlockId = number // TODO: define this properly
-const DataBlockId = VarInt as Type<BlockId>
 
 export enum VillagerType {
     'minecraft:desert',
@@ -62,11 +62,16 @@ export enum VillagerProfession {
     'minecraft:weaponsmith',
 }
 
-const DataVillagerData = DataObject({
-    type: VarInt as Type<VillagerType>,
-    profession: VarInt as Type<VillagerProfession>,
-    level: VarInt as Type<VillagerLevel>,
-})
+class DataVillagerData extends DataObject<typeof DataVillagerData.format> {
+    static format = {
+        type: new VarInt() as Type<VillagerType>,
+        profession: new VarInt() as Type<VillagerProfession>,
+        level: new VarInt() as Type<VillagerLevel>,
+    }
+    constructor() {
+        super(DataVillagerData.format)
+    }
+}
 
 export enum EntityPose {
     STANDING = 0,
@@ -86,12 +91,17 @@ export enum EntityPose {
     DIGGING,
 }
 
-const DataGlobalPos = DataObject({
-    dimension: VarInt as Type<DimensionID>,
-    x: VarLong,
-    y: VarLong,
-    z: VarLong,
-})
+class DataGlobalPos extends DataObject<typeof DataGlobalPos.format> {
+    static format = {
+        dimension: new VarInt() as Type<DimensionID>,
+        x: new VarLong(),
+        y: new VarLong(),
+        z: new VarLong(),
+    }
+    constructor() {
+        super(DataGlobalPos.format)
+    }
+}
 
 export enum SnifferState {
     IDLING = 0,
@@ -103,42 +113,49 @@ export enum SnifferState {
     RISING,
 }
 
-const DataQuaternion = DataObject({
-    x: DataFloat,
-    y: DataFloat,
-    z: DataFloat,
-    w: DataFloat,
-})
+class DataQuaternion extends DataObject<typeof DataQuaternion.format> {
+    static format = {
+        x: new DataFloat(),
+        y: new DataFloat(),
+        z: new DataFloat(),
+        w: new DataFloat(),
+    }
+    constructor() {
+        super(DataQuaternion.format)
+    }
+}
+
+class DataBlockId extends VarInt implements Type<BlockId> {}
 
 const TypeMap = {
-    0: DataByte,
-    1: VarInt,
-    2: VarLong,
-    3: DataFloat,
-    4: DataString,
-    5: TextComponent,
-    6: DataOptional(TextComponent),
-    7: Slot,
-    8: DataBoolean,
-    9: DataRotation,
-    10: DataPosition,
-    11: DataOptional(DataPosition),
-    12: VarInt as Type<Direction>,
-    13: DataOptional(DataUUID),
-    14: DataBlockId,
-    15: DataOptional(DataBlockId),
-    16: DataNBT,
-    17: DataParticle, // TODO: DataParticle ???,
-    18: DataVillagerData,
-    19: DataOptional(VarInt),
-    20: VarInt as Type<EntityPose>,
-    21: VarInt, // CAT_VARIANT
-    22: VarInt, // FROG_VARIANT
-    23: DataOptional(DataGlobalPos),
-    24: VarInt, // PAINTING_VARIANT
-    25: VarInt as Type<SnifferState>,
-    26: DataVec3,
-    27: DataQuaternion,
+    0: new DataByte(),
+    1: new VarInt(),
+    2: new VarLong(),
+    3: new DataFloat(),
+    4: new DataString(),
+    5: new TextComponent(),
+    6: new DataOptional(new TextComponent()),
+    7: new Slot(),
+    8: new DataBoolean(),
+    9: new DataRotation(),
+    10: new DataPosition(),
+    11: new DataOptional(new DataPosition()),
+    12: new VarInt() as Type<Direction>,
+    13: new DataOptional(new DataUUID()),
+    14: new DataBlockId(),
+    15: new DataOptional(new DataBlockId()),
+    16: new DataNBT(),
+    17: new DataParticle(), // TODO: new DataParticle ???,
+    18: new DataVillagerData(),
+    19: new DataOptional(VarInt),
+    20: new VarInt() as Type<EntityPose>,
+    21: new VarInt(), // CAT_VARIANT
+    22: new VarInt(), // FROG_VARIANT
+    23: new DataOptional(new DataGlobalPos()),
+    24: new VarInt(), // PAINTING_VARIANT
+    25: new VarInt() as Type<SnifferState>,
+    26: new DataVec3(),
+    27: new DataQuaternion(),
 } as const
 
 type TypeIndex = keyof typeof TypeMap
@@ -174,64 +191,57 @@ export type MetadataArgs<Schema extends MetadataSchema = MetadataSchema> = {
 
 const METADATA_END_INDEX = 0xff
 
-const readMetadata = async (
-    buffer: Buffer,
-    offset: number,
-    metadata: any
-): Promise<any> => {
-    // Read index
-    const { t: index, length: idxLen } = await DataByte.read(buffer, offset)
-    if (index === METADATA_END_INDEX) {
-        return { metadata, offset: offset + idxLen }
+export class DataEntityMetadata<Schema extends MetadataSchema>
+    implements Type<MetadataArgs<Schema>>
+{
+    constructor(private raw: Schema) {}
+
+    readMetadata = async (
+        buffer: PacketBuffer,
+        metadata: MetadataArgs<Schema>
+    ): Promise<MetadataArgs<Schema>> => {
+        // Read index
+        const b = new DataByte()
+        const index = await b.read(buffer)
+        if (index === METADATA_END_INDEX) {
+            return metadata
+        }
+
+        // Read type
+        const typeIndex = await VarInt.read(buffer)
+
+        // Read value
+        const type = TypeMap[typeIndex as TypeIndex]
+        const value = await type.read(buffer)
+
+        metadata[index] = value as any
+
+        return await this.readMetadata(buffer, metadata)
     }
 
-    // Read type
-    const { t: typeIndex, length: typeLen } = await VarInt.read(
-        buffer,
-        offset + idxLen
-    )
+    async read(buffer: PacketBuffer) {
+        return await this.readMetadata(buffer, {})
+    }
 
-    // Read value
-    const type = TypeMap[typeIndex as TypeIndex]
-    const { t: value, length: valLen } = await type.read(
-        buffer,
-        offset + idxLen + typeLen
-    )
+    async write(t: MetadataArgs<Schema>) {
+        let buffers: PacketBuffer[] = []
 
-    metadata[index] = value
+        const b = new DataByte()
 
-    return await readMetadata(
-        buffer,
-        offset + idxLen + typeLen + valLen,
-        metadata
-    )
-}
-
-export const DataEntityMetadata = {
-    read: async (buffer: Buffer, offset: number) => {
-        return readMetadata(buffer, offset, {})
-    },
-    write: async <Schema extends MetadataSchema>(args: {
-        raw: Schema
-        metadata: MetadataArgs<Schema>
-    }) => {
-        const { raw, metadata } = args
-        let buffers: Buffer[] = []
-
-        for (const [index, data] of Object.entries(metadata)) {
+        for (const [index, data] of Object.entries(t)) {
             if (data === undefined) continue
-            const { typeIndex } = raw[parseInt(index)]
+            const { typeIndex } = this.raw[parseInt(index)]
             const type = TypeMap[typeIndex as TypeIndex]
             // log('Writing metadata', { index, typeIndex, data })
             buffers.push(
-                await DataByte.write(parseInt(index)),
+                await b.write(parseInt(index)),
                 await VarInt.write(typeIndex),
                 await type.write(data as never)
             )
         }
 
-        buffers.push(await DataByte.write(METADATA_END_INDEX))
+        buffers.push(await b.write(METADATA_END_INDEX))
 
-        return Buffer.concat(buffers)
-    },
+        return PacketBuffer.concat(buffers)
+    }
 }
