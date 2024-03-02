@@ -12,6 +12,10 @@ export class PacketBuffer {
     writeOffset = 0
     constructor(public buffer: Buffer) {}
 
+    static fromArrayBuffer(buffer: ArrayBuffer) {
+        return new PacketBuffer(Buffer.from(buffer))
+    }
+
     get length() {
         return this.buffer.length
     }
@@ -120,15 +124,16 @@ export class PacketBuffer {
     }
 
     readString(
-        encoding?: BufferEncoding | undefined,
-        start?: number,
+        encoding: BufferEncoding | undefined,
+        start: number,
         end?: number
     ) {
         const offset = this.readOffset
-        const realStart = (start || 0) + offset
+        const realStart = start + offset
         const realEnd = end ? end + offset : this.buffer.length
-        this.readOffset += realEnd - realStart
-        return this.buffer.toString(encoding, realStart, realEnd)
+        const str = this.buffer.toString(encoding, realStart, realEnd)
+        this.readOffset += str.length
+        return str
     }
 
     readSlice(length?: number) {
@@ -187,4 +192,16 @@ export class PacketBuffer {
         this.buffer.writeBigInt64BE(val, this.writeOffset)
         this.writeOffset += LONG_SIZE
     }
+
+    // toString() {
+    //     return `${this.buffer}`
+    // }
+
+    // public [Symbol.toPrimitive](): string {
+    //     return this.toString()
+    // }
+
+    // public [Symbol.for('nodejs.util.inspect.custom')](): string {
+    //     return this.toString()
+    // }
 }

@@ -64,6 +64,66 @@ export const ConfigurationHandler = Handler.init('Configuration')
             }
         }
 
+        const l = await PlayLogin({
+            entityId: entities.player.typeId, // see data-types/entities.ts
+            isHardcore: false,
+            dimensionNames: [
+                DimensionResource.overworld,
+                DimensionResource.the_nether,
+                DimensionResource.the_end,
+            ],
+            maxPlayers: 0, // ignored
+            viewDistance: 5,
+            simulationDistance: 5,
+            reducedDebugInfo: false,
+            enableRespawnScreen: false,
+            doLimitedCrafting: false,
+            dimensionType: DimensionResource.overworld,
+            dimensionName: DimensionResource.overworld,
+            hashedSeed: hashSeed(WORLD_SEED),
+            gameMode: GameMode.CREATIVE,
+            previousGameMode: GameMode.UNDEFINED,
+            isDebug: false,
+            isFlat: false,
+            death: undefined,
+            portalCooldown: 0,
+        })
+
+        console.log(l)
+
+        // const a = [
+        //     0, 0, 0, 124, 0, 3, 19, 109, 105, 110, 101, 99, 114, 97, 102, 116,
+        //     58, 111, 118, 101, 114, 119, 111, 114, 108, 100, 20, 109, 105, 110,
+        //     101, 99, 114, 97, 102, 116, 58, 116, 104, 101, 95, 110, 101, 116,
+        //     104, 101, 114, 17, 109, 105, 110, 101, 99, 114, 97, 102, 116, 58,
+        //     116, 104, 101, 95, 101, 110, 100, 0, 5, 5, 0, 0, 0, 19, 109, 105,
+        //     110, 101, 99, 114, 97, 102, 116, 58, 111, 118, 101, 114, 119, 111,
+        //     114, 108, 100, 19, 109, 105, 110, 101, 99, 114, 97, 102, 116, 58,
+        //     111, 118, 101, 114, 119, 111, 114, 108, 100, 10, 86, 142, 141, 115,
+        //     71, 92, 180, 1, 255, 0, 0, 0, 0,
+        // ]
+
+        const b = [
+            0, 0, 0, 124, 0, 3, 19, 109, 105, 110, 101, 99, 114, 97, 102, 116,
+            58, 111, 118, 101, 114, 119, 111, 114, 108, 100, 20, 109, 105, 110,
+            101, 99, 114, 97, 102, 116, 58, 116, 104, 101, 95, 110, 101, 116,
+            104, 101, 114, 17, 109, 105, 110, 101, 99, 114, 97, 102, 116, 58,
+            116, 104, 101, 95, 101, 110, 100, 0, 5, 5, 0, 0, 0, 19, 109, 105,
+            110, 101, 99, 114, 97, 102, 116, 58, 111, 118, 101, 114, 119, 111,
+            114, 108, 100, 19, 109, 105, 110, 101, 99, 114, 97, 102, 116, 58,
+            111, 118, 101, 114, 119, 111, 114, 108, 100, 115, 71, 92, 180, 10,
+            86, 142, 141, 1, 255, 0, 0, 0, 0,
+        ]
+
+        const m = await SetDefaultSpawnPosition({
+            location: SPAWN_POSITION,
+            angle: 0,
+        })
+
+        // 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0
+
+        console.log(m)
+
         const packets = [
             await PlayLogin({
                 entityId: entities.player.typeId, // see data-types/entities.ts

@@ -27,15 +27,15 @@ export class DataBoolean implements Type<boolean> {
 
 export class DataLong implements Type<Long> {
     async read(buffer: PacketBuffer) {
-        const low = buffer.readInt()
         const high = buffer.readInt()
+        const low = buffer.readInt()
         return new Long(low, high)
     }
 
     async write(t: Long) {
         const buffer = PacketBuffer.allocUnsafe(LONG_SIZE)
-        buffer.writeInt(t.low)
         buffer.writeInt(t.high)
+        buffer.writeInt(t.low)
         return buffer
     }
 }

@@ -67,7 +67,7 @@ const is2DPackets = (
 
 export const formatPacket = async (
     packet: ClientBoundPacket | ClientBoundPacket[] | ClientBoundPacket[][]
-) => {
+): Promise<ClientBoundPacket> => {
     if (is1DPackets(packet)) {
         return formatPacketGroup(packet)
     }

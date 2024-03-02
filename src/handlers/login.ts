@@ -100,9 +100,8 @@ export const LoginHandler = Handler.init('Login')
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
-        const root = await NBT.read(file)
-        return RegistryData({
-            codec: root,
+        return await RegistryData({
+            codec: file,
         })
     })
 

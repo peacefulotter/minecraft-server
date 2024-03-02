@@ -113,7 +113,8 @@ export class DataUUID implements Type<UUID> {
     }
 
     async write(t: UUID) {
-        return PacketBuffer.fromString(t.toString(false), 'hex')
+        const str = t.toString(false)
+        return PacketBuffer.fromString(str, 'hex')
     }
 }
 
@@ -126,7 +127,8 @@ export class DataNBT
 {
     async read(buffer: PacketBuffer) {
         const sub = buffer.readRest()
-        return await NBT.read(sub)
+        const nbt = await NBT.read(sub)
+        return new NBT.NBTData(nbt, { rootName: null })
     }
 
     async write(
@@ -134,6 +136,11 @@ export class DataNBT
     ) {
         if (t instanceof PacketBuffer) {
             return t
+        } else if (t instanceof ArrayBuffer) {
+            console.log('here', t)
+            const nbt = new NBT.NBTData(t, { rootName: null })
+            return PacketBuffer.from(await NBT.write(nbt))
+            // return PacketBuffer.fromArrayBuffer(t)
         }
         const buf = await NBT.write(t, { rootName: null })
         return PacketBuffer.from(buf)

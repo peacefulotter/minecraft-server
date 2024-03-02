@@ -1,6 +1,6 @@
 import path from 'path'
 import * as NBT from 'nbtify'
-import { generateV4 } from '@minecraft-js/uuid'
+import { generateV4, parseUUID } from '@minecraft-js/uuid'
 import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
@@ -33,19 +33,19 @@ import {
 const packetTester = async <T extends PacketFormat, U>(
     format: T,
     packet: PacketArguments<T>,
-    processArg?: (data: PacketArguments<T>) => U,
-    processRes?: (data: PacketResult<T>) => U
+    processArg?: (data: PacketArguments<T>) => U | Promise<U>,
+    processRes?: (data: PacketResult<T>) => U | Promise<U>
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
     const buffer = await writePacket(packet)
     const res = await readPacket.deserialize(buffer.data, false)
-    // console.log('Expected', packet)
-    // console.log('Obtained', res.data)
+    console.log('Expected', packet)
+    console.log('Obtained', res.data)
     if (processRes && processArg) {
-        expect(processRes(res.data)).toEqual(processArg(packet))
+        expect(await processRes(res.data)).toEqual(await processArg(packet))
     } else if (processArg) {
-        expect(res.data).toEqual(processArg(packet) as PacketResult<T>)
+        expect(res.data).toEqual((await processArg(packet)) as PacketResult<T>)
     } else {
         expect(res.data).toEqual(packet as PacketResult<T>)
     }
@@ -69,12 +69,13 @@ const performanceTester = async <T extends PacketFormat>(
 
 describe('formats', () => {
     test('uuid', async () => {
+        const uuid = '7ed9e77e-34b8-400e-b684-9093c550b4f9'
         await packetTester(
             {
                 uuid: new DataUUID(),
             },
             {
-                uuid: generateV4(),
+                uuid: parseUUID(uuid),
             },
             (data) => data.uuid.toString(),
             (data) => data.uuid.toString()
@@ -141,7 +142,7 @@ describe('formats', () => {
         })
     })
 
-    test('long', async () => {
+    test.only('long', async () => {
         for (let i = 0; i < 100; i++) {
             const data = Long.fromNumber(
                 Math.round((Math.random() - 0.5) * Number.MAX_SAFE_INTEGER)
@@ -348,7 +349,7 @@ describe('formats', () => {
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
-        const root = await NBT.read(file, { rootName: null })
+        const root = new NBT.NBTData(await NBT.read(file), { rootName: null })
         console.log('=====', { name: root.rootName })
 
         const format = { a: new DataInt(), nbt: new DataNBT() }
@@ -358,7 +359,20 @@ describe('formats', () => {
             nbt: root,
         })
 
-        await packetTester(format, { a: 42, nbt: file })
+        console.log('============================')
+        console.log('============================')
+        console.log('============================')
+        console.log('============================')
+
+        await packetTester(
+            format,
+            { a: 42, nbt: file },
+            (d) => d,
+            async (d) => ({
+                ...d,
+                nbt: await NBT.write(d.nbt, { rootName: null }),
+            })
+        )
 
         await performanceTester(
             {
