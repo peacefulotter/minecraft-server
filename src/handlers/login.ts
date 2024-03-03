@@ -38,7 +38,7 @@ export const LoginHandler = Handler.init('Login')
             chalk.green('successfully')
         )
 
-        return LoginSuccess({
+        return LoginSuccess.serialize({
             uuid: client.uuid,
             username: client.username,
             properties: [],
@@ -100,7 +100,7 @@ export const LoginHandler = Handler.init('Login')
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
-        return await RegistryData({
+        return await RegistryData.serialize({
             codec: file,
         })
     })

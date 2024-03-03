@@ -120,3 +120,34 @@ export type PluginChannel =
 export type FeatureFlags = MCPrefixed<
     'vanilla' | 'bundle' | 'trade_rebalance' | 'update_1_21'
 >
+
+export enum ActionStatus {
+    STARTED_DIGGING = 0,
+    CANCELLED_DIGGING,
+    FINISHED_DIGGING,
+    DROP_ITEM_STACK,
+    DROP_ITEM,
+    SHOOT_ARROW_OR_FINISH_EATING,
+    SWAP_ITEM_IN_HAND,
+}
+
+export enum Face {
+    BOTTOM = 0,
+    TOP,
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST,
+}
+
+export enum PlayerCommandAction {
+    START_SNEAKING = 0,
+    STOP_SNEAKING,
+    LEAVE_BED,
+    START_SPRINTING,
+    STOP_SPRINTING,
+    START_HORSE_JUMP,
+    STOP_HORSE_JUMP,
+    OPEN_VEHICLE_INVENTORY,
+    START_FLYING_WITH_ELYTRA,
+}

@@ -8,7 +8,7 @@ import {
     PlayClientBoundKeepAlive,
     PlayDisconnect,
 } from './packets/client'
-import { Player } from '~/entity/player'
+import { Player } from '~/entity/entities'
 import { formatPacket } from './packets/format'
 import type { ClientInfo } from './packets/server/configuration'
 import Long from 'long'
@@ -60,7 +60,7 @@ export class Client extends Player {
     async kick() {
         this.state = ClientState.DISCONNECTED
         this.write(
-            await PlayDisconnect({
+            await PlayDisconnect.serialize({
                 // TODO: fix Chat type
                 reason: NBT.parse(
                     JSON.stringify({
@@ -90,7 +90,7 @@ export class Client extends Player {
             [ClientState.PLAY]: PlayClientBoundKeepAlive,
         }[this.state]
 
-        this.write(await KeepAlive({ id }), false)
+        this.write(await KeepAlive.serialize({ id }), false)
 
         this.refreshIn = REFRESH_INTERVAL
         this.aliveTimeout[id.toString()] = {
@@ -106,20 +106,11 @@ export class Client extends Player {
         this.ping = Date.now() - date
     }
 
-    public toString(): string {
-        return `Client 
-            username: ${this.username}
-            state: ${this.state.toUpperCase()}
-            ping: ${this.ping}ms
-            ${super.toString()}            
-        `
-    }
-
-    public [Symbol.toPrimitive](): string {
-        return this.toString()
-    }
-
-    public [Symbol.for('nodejs.util.inspect.custom')](): string {
-        return this.toString()
+    public [Bun.inspect.custom]() {
+        return {
+            state: this.state.toUpperCase(),
+            ping: this.ping,
+            ...super[Bun.inspect.custom](),
+        }
     }
 }

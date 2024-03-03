@@ -5,11 +5,11 @@ export interface Type<R, W = R> {
     write: (t: W) => Promise<PacketBuffer>
 }
 
-export type InnerWriteType<T extends Type<any>> = T extends Type<any, infer U>
+export type InnerReadType<T extends Type<any>> = T extends Type<infer U, any>
     ? U
     : never
 
-export type InnerReadType<T extends Type<any>> = T extends Type<infer U, any>
+export type InnerWriteType<T extends Type<any>> = T extends Type<any, infer U>
     ? U
     : never
 
@@ -17,3 +17,4 @@ export * from './simple'
 export * from './var'
 export * from './composite'
 export * from './meta'
+export * from './custom'

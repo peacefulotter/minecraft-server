@@ -6,12 +6,13 @@ import {
     DEFAULT_ROTATION,
     DEFAULT_VELOCITY,
     Entity,
-} from './entity'
-import { MD } from './metadata'
+} from '..'
+import { MD } from '../metadata'
 import { GameMode, MainHand } from '~/data/enum'
-import { LivingEntity } from './living-entity'
+import { LivingEntity } from '../living-entity'
 import { NBTData } from 'nbtify'
 import type { Vec3 } from 'vec3'
+import { PlayerInventory } from '../inventory/inventory'
 
 enum SkinPartsMask {
     NOTHING = 0x00,
@@ -35,7 +36,10 @@ export const PlayerMetadata = {
 }
 
 export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
+    inventory = new PlayerInventory()
+
     username: string | undefined
+    isFlying = false
 
     constructor(
         position: Position = DEFAULT_POSITION,
@@ -59,17 +63,11 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
         )
     }
 
-    public toString(): string {
-        return `Player
-            username: ${this.username}
-            ${super.toString()}`
-    }
-
-    public [Symbol.toPrimitive](): string {
-        return this.toString()
-    }
-
-    public [Symbol.for('nodejs.util.inspect.custom')](): string {
-        return this.toString()
+    public [Bun.inspect.custom]() {
+        return {
+            username: this.username,
+            isFlying: this.isFlying,
+            ...super[Bun.inspect.custom](),
+        }
     }
 }

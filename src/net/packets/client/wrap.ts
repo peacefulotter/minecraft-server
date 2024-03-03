@@ -10,12 +10,12 @@ const ResponseFormat = {
 export const wrap = async (packet: ClientBoundPacket) => {
     const { id, name, data } = packet
 
-    const creator = ClientBoundPacketCreator(id, name, ResponseFormat)
+    const creator = new ClientBoundPacketCreator(id, name, ResponseFormat)
 
     const packetId = await VarInt.write(packet.id)
     const packetLen = data.length + packetId.length
 
-    return creator({
+    return creator.serialize({
         packetLen,
         id,
         data: data,

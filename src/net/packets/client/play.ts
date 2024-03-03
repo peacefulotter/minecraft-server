@@ -22,20 +22,20 @@ import {
 } from '~/data/types'
 import { GameMode } from '~/data/enum'
 import type { DimensionResource } from 'region-types'
-import { ClientBoundPacketCreator, type PacketArguments } from '../create'
+import { ClientBoundPacketCreator, type ClientBoundPacketData } from '../create'
 import type { ValueOf } from 'type-fest'
 import type { UUID } from '@minecraft-js/uuid'
-import type { EntityId } from '~/entity/entity'
+import type { EntityId } from '~/entity'
 import type { EntityTypeId } from '~/data/entities'
 import { DataEntityMetadata, type MetadataSchema } from '~/entity/metadata'
 
-export const BundleDelimiter = ClientBoundPacketCreator(
+export const BundleDelimiter = new ClientBoundPacketCreator(
     0x00,
     'BundleDelimiter',
     {}
 )
 
-export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
+export const SpawnEntity = new ClientBoundPacketCreator(0x01, 'SpawnEntity', {
     entityId: new VarInt(),
     entityUUID: new DataUUID(),
     type: new VarInt() as Type<EntityTypeId>,
@@ -51,11 +51,23 @@ export const SpawnEntity = ClientBoundPacketCreator(0x01, 'SpawnEntity', {
     velocityZ: new DataShort(),
 })
 
-export const CloseContainer = ClientBoundPacketCreator(0x12, 'CloseContainer', {
-    windowId: new DataByte(),
-})
+export const AcknowledgeBlockChange = new ClientBoundPacketCreator(
+    0x05,
+    'AcknowledgeBlockChange',
+    {
+        sequence: new VarInt(),
+    }
+)
 
-export const SetContainerContent = ClientBoundPacketCreator(
+export const CloseContainer = new ClientBoundPacketCreator(
+    0x12,
+    'CloseContainer',
+    {
+        windowId: new DataByte(),
+    }
+)
+
+export const SetContainerContent = new ClientBoundPacketCreator(
     0x13,
     'SetContainerContent',
     {
@@ -126,7 +138,7 @@ export type ContainerProperties = {
     lectern: LecternProperties
 }
 
-export const SetContainerPropery = ClientBoundPacketCreator(
+export const SetContainerPropery = new ClientBoundPacketCreator(
     0x14,
     'SetContainerProperty',
     {
@@ -136,7 +148,7 @@ export const SetContainerPropery = ClientBoundPacketCreator(
     }
 )
 
-export const SetContainerSlot = ClientBoundPacketCreator(
+export const SetContainerSlot = new ClientBoundPacketCreator(
     0x15,
     'SetContainerSlot',
     {
@@ -147,9 +159,13 @@ export const SetContainerSlot = ClientBoundPacketCreator(
     }
 )
 
-export const PlayDisconnect = ClientBoundPacketCreator(0x19, 'PlayDisconnect', {
-    reason: new DataNBT(),
-})
+export const PlayDisconnect = new ClientBoundPacketCreator(
+    0x19,
+    'PlayDisconnect',
+    {
+        reason: new DataNBT(),
+    }
+)
 
 type GameEffect<N extends string, E extends number, V extends number> = {
     name: N
@@ -177,22 +193,23 @@ type GameEvents = ValueOf<{
     [K in GameEventEffect as K['name']]: Omit<K, 'name'>
 }>
 
-export const GameEvent = ClientBoundPacketCreator(0x20, 'GameEvent', {
+export const GameEvent = new ClientBoundPacketCreator(0x20, 'GameEvent', {
     event: new DataObject({
         effect: new DataByte(),
         value: new DataFloat(),
     }) as Type<GameEvents>,
 })
 
-export const PlayClientBoundKeepAlive = ClientBoundPacketCreator(
+export const PlayClientBoundKeepAlive = new ClientBoundPacketCreator(
     0x24,
     'KeepAlive',
     {
         id: new DataLong(),
-    }
+    },
+    false
 )
 
-export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
+export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
     0x25,
     'ChunkDataAndUpdateLight',
     {
@@ -217,7 +234,7 @@ export const ChunkDataAndUpdateLight = ClientBoundPacketCreator(
     }
 )
 
-export const PlayLogin = ClientBoundPacketCreator(0x29, 'PlayLogin', {
+export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     entityId: new DataInt(),
     isHardcore: new DataBoolean(),
     dimensionNames: new DataArray(new DataString() as Type<DimensionResource>),
@@ -245,7 +262,7 @@ export const PlayLogin = ClientBoundPacketCreator(0x29, 'PlayLogin', {
 
 // TODO: be able to concatenate packets to avoid repetition
 
-export const UpdateEntityPosition = ClientBoundPacketCreator(
+export const UpdateEntityPosition = new ClientBoundPacketCreator(
     0x2c,
     'UpdateEntityPosition',
     {
@@ -257,7 +274,7 @@ export const UpdateEntityPosition = ClientBoundPacketCreator(
     }
 )
 
-export const UpdateEntityPositionAndRotation = ClientBoundPacketCreator(
+export const UpdateEntityPositionAndRotation = new ClientBoundPacketCreator(
     0x2d,
     'UpdateEntityPositionRotation',
     {
@@ -271,7 +288,7 @@ export const UpdateEntityPositionAndRotation = ClientBoundPacketCreator(
     }
 )
 
-export const UpdateEntityRotation = ClientBoundPacketCreator(
+export const UpdateEntityRotation = new ClientBoundPacketCreator(
     0x2e,
     'UpdateEntityRotation',
     {
@@ -282,7 +299,7 @@ export const UpdateEntityRotation = ClientBoundPacketCreator(
     }
 )
 
-export const PlayerInfoRemove = ClientBoundPacketCreator(
+export const PlayerInfoRemove = new ClientBoundPacketCreator(
     0x3b,
     'PlayerInfoRemove',
     {
@@ -346,16 +363,20 @@ const PlayerActionsMask: Record<keyof typeof PlayerActions, number> = {
     updateDisplayName: 0x20,
 }
 
-const _PlayerInfoUpdate = ClientBoundPacketCreator(0x3c, 'PlayerInfoUpdate', {
-    actions: new DataByte(),
-    players: new DataArray(
-        new DataObject({
-            // TODO: check uuid v3 (see spawn entity below table)
-            uuid: new DataUUID(), // player uuid
-            playerActions: new DataObject(PlayerActions),
-        })
-    ),
-})
+const _PlayerInfoUpdate = new ClientBoundPacketCreator(
+    0x3c,
+    'PlayerInfoUpdate',
+    {
+        actions: new DataByte(),
+        players: new DataArray(
+            new DataObject({
+                // TODO: check uuid v3 (see spawn entity below table)
+                uuid: new DataUUID(), // player uuid
+                playerActions: new DataObject(PlayerActions),
+            })
+        ),
+    }
+)
 
 // Wrapper for private PlayerInfoUpdate to compute the actions byte
 export const PlayerInfoUpdate =
@@ -373,11 +394,11 @@ export const PlayerInfoUpdate =
         players: {
             uuid: UUID
             // Enforce all player actions to be the same type (same keys defined)
-            playerActions: PacketArguments<typeof PlayerActions>
+            playerActions: ClientBoundPacketData<typeof PlayerActions>
         }[]
     ) => {
         if (players.length === 0) {
-            return _PlayerInfoUpdate({
+            return _PlayerInfoUpdate.serialize({
                 actions: 0,
                 players: [],
             })
@@ -391,7 +412,7 @@ export const PlayerInfoUpdate =
             },
             0
         )
-        return _PlayerInfoUpdate({
+        return _PlayerInfoUpdate.serialize({
             actions,
             players,
         })
@@ -406,7 +427,7 @@ export enum PlayerPositionFlag {
     X_ROT = 0x10,
 }
 
-export const SynchronizePlayerPosition = ClientBoundPacketCreator(
+export const SynchronizePlayerPosition = new ClientBoundPacketCreator(
     0x3e,
     'SynchronizePlayerPosition',
     {
@@ -420,7 +441,7 @@ export const SynchronizePlayerPosition = ClientBoundPacketCreator(
     }
 )
 
-export const SetHeadRotation = ClientBoundPacketCreator(
+export const SetHeadRotation = new ClientBoundPacketCreator(
     0x46,
     'SetHeadRotation',
     {
@@ -429,16 +450,20 @@ export const SetHeadRotation = ClientBoundPacketCreator(
     }
 )
 
-export const SetHeldItem = ClientBoundPacketCreator(0x51, 'SetHeldItem', {
+export const SetHeldItem = new ClientBoundPacketCreator(0x51, 'SetHeldItem', {
     slot: new DataByte(),
 })
 
-export const SetCenterChunk = ClientBoundPacketCreator(0x52, 'SetCenterChunk', {
-    chunkX: new VarInt(),
-    chunkZ: new VarInt(),
-})
+export const SetCenterChunk = new ClientBoundPacketCreator(
+    0x52,
+    'SetCenterChunk',
+    {
+        chunkX: new VarInt(),
+        chunkZ: new VarInt(),
+    }
+)
 
-export const SetRenderDistance = ClientBoundPacketCreator(
+export const SetRenderDistance = new ClientBoundPacketCreator(
     0x53,
     'SetRenderDistance',
     {
@@ -446,7 +471,7 @@ export const SetRenderDistance = ClientBoundPacketCreator(
     }
 )
 
-export const SetDefaultSpawnPosition = ClientBoundPacketCreator(
+export const SetDefaultSpawnPosition = new ClientBoundPacketCreator(
     0x54,
     'SetDefaultSpawnPosition',
     {
@@ -458,13 +483,13 @@ export const SetDefaultSpawnPosition = ClientBoundPacketCreator(
 // Updates one or more metadata properties for an existing entity.
 // Any properties not included in the Metadata field are left unchanged.
 export const SetEntityMetadata = <S extends MetadataSchema>(raw: S) =>
-    ClientBoundPacketCreator(0x56, 'SetEntityMetadata', {
+    new ClientBoundPacketCreator(0x56, 'SetEntityMetadata', {
         entityId: new VarInt(),
         metadata: new DataEntityMetadata(raw),
     })
 
 // This packet is sent when an entity has been leashed to another entity.
-export const LinkEntities = ClientBoundPacketCreator(0x57, 'LinkEntities', {
+export const LinkEntities = new ClientBoundPacketCreator(0x57, 'LinkEntities', {
     attachedEntityId: new DataInt() as Type<EntityId>,
     holdingEntityId: new DataInt() as Type<EntityId>, // -1 to detach
 })

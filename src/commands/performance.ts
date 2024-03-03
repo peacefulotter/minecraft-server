@@ -1,13 +1,13 @@
 import { SpawnEntity } from '~/net/packets/client'
 import type { CmdArgs, Command } from './handler'
-import { ArmorStand } from '~/entity/armor-stand'
+import { ArmorStand } from '~/entity/entities'
 import v from 'vec3'
 
 export const perf: Command<[]> = {
     name: 'perf',
     description: 'Performs performance tests',
     callback: async ({ client }: CmdArgs) => {
-        const length = 100
+        const length = 150
         const r = 5
         const stands = new Array(length).fill(0).map((_, i) => {
             const as = new ArmorStand()
@@ -19,7 +19,7 @@ export const perf: Command<[]> = {
         await client.write(
             await Promise.all(
                 stands.map(async (as, i) => {
-                    return await SpawnEntity({
+                    return await SpawnEntity.serialize({
                         entityId: as.entityId,
                         entityUUID: as.entityUUID,
                         type: as.info.typeId,

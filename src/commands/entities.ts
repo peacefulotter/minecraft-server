@@ -10,7 +10,7 @@ export const ntt: Command<[]> = {
         for (let i = 0; i < 12; i++) {
             for (let j = 0; j < 11; j++) {
                 packets.push(
-                    await SpawnEntity({
+                    await SpawnEntity.serialize({
                         entityId: i * 10 + j,
                         entityUUID: generateV4(),
                         type: (i * 10 + j) as any,

@@ -73,7 +73,7 @@ export const formatPacket = async (
     }
 
     if (is2DPackets(packet)) {
-        const delimiter = await BundleDelimiter({})
+        const delimiter = await BundleDelimiter.serialize({})
         const bundles = packet.map(async (packets) => {
             const group = await formatPacketGroup(packets)
             return bundlePackets(

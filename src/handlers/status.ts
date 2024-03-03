@@ -6,9 +6,9 @@ import { Handler } from '.'
 export const StatusHandler = Handler.init('Status')
 
     .register(StatusRequest, async () => {
-        return StatusResponse({ json: STATUS_RESPONSE })
+        return StatusResponse.serialize({ json: STATUS_RESPONSE })
     })
 
     .register(StatusPingRequest, async ({ packet }) => {
-        return PingResponse(packet)
+        return PingResponse.serialize(packet)
     })

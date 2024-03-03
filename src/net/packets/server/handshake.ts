@@ -8,14 +8,14 @@ import {
 } from '~/data/types'
 import { ServerBoundPacketCreator } from '../create'
 
-export const Handshake = ServerBoundPacketCreator(0x00, 'Handshake', {
+export const Handshake = new ServerBoundPacketCreator(0x00, 'Handshake', {
     protocol: new VarInt(),
     hostname: new DataString(),
     port: new DataShort(),
     nextState: new VarInt(),
 })
 
-export const LegacyServerListPing = ServerBoundPacketCreator(
+export const LegacyServerListPing = new ServerBoundPacketCreator(
     0xfe,
     'LegacyServerListPing',
     {

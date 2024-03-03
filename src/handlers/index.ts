@@ -3,9 +3,9 @@ import { hex, logServerBoundPacket } from '~/logger'
 import type { PacketId } from '~/net/packets'
 import type {
     ClientBoundPacket,
-    ServerBoundPacket,
+    ServerBoundPacketCreator,
     ServerBoundPacketData,
-    ServerBoundPacketDeserializer,
+    ServerBoundPacketDataFromCreator,
 } from '~/net/packets/create'
 import type { Server } from '~/net/server'
 import type { PacketBuffer } from '~/net/PacketBuffer'
@@ -19,28 +19,20 @@ export type RawHandlerArgs = {
 
 export type ProcessHandlerArgs = Omit<RawHandlerArgs, 'buffer' | 'offset'>
 
-type PacketArg<Deserializer extends ServerBoundPacketDeserializer> = {
-    packet: Deserializer extends ServerBoundPacketDeserializer<
-        any,
-        any,
-        infer Format
-    >
-        ? ServerBoundPacketData<Format>
-        : never
-}
+export type Args<Creator extends ServerBoundPacketCreator> =
+    ProcessHandlerArgs & {
+        packet: ServerBoundPacketDataFromCreator<Creator>
+    }
 
-export type Args<Deserializer extends ServerBoundPacketDeserializer> =
-    ProcessHandlerArgs & PacketArg<Deserializer>
-
-type HandleFunc<Deserializer extends ServerBoundPacketDeserializer> = (
-    args: Args<Deserializer>
+type HandleCallback<Creator extends ServerBoundPacketCreator> = (
+    args: Args<Creator>
 ) => Promise<ClientBoundPacket | ClientBoundPacket[] | void>
 
 export type PacketHandler<
-    Deserializer extends ServerBoundPacketDeserializer = ServerBoundPacketDeserializer
+    Creator extends ServerBoundPacketCreator = ServerBoundPacketCreator
 > = {
-    deserializer: Deserializer
-    callback: HandleFunc<Deserializer>
+    creator: Creator
+    callback: HandleCallback<Creator>
 }
 
 export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
@@ -48,13 +40,13 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
 
     static init = (name: string) => new Handler(name, {})
 
-    register = <Deserializer extends ServerBoundPacketDeserializer>(
-        deserializer: Deserializer,
-        callback: HandleFunc<Deserializer>
+    register = <Creator extends ServerBoundPacketCreator>(
+        creator: Creator,
+        callback: HandleCallback<Creator>
     ) => {
-        this.handlers[deserializer.id] = {
-            deserializer,
-            callback: callback as HandleFunc<ServerBoundPacketDeserializer>,
+        this.handlers[creator.id] = {
+            creator,
+            callback,
         }
         return this
     }
@@ -76,8 +68,8 @@ export class Handler<T extends { [key: PacketId]: PacketHandler } = {}> {
 
     handle = async (args: RawHandlerArgs) => {
         const { server, client, packetId, buffer } = args
-        const { deserializer, callback } = this.getHandler(packetId, client)
-        const packet = await deserializer.deserialize(buffer, client.encrypted)
+        const { creator, callback } = this.getHandler(packetId, client)
+        const packet = await creator.deserialize(buffer, client.encrypted)
 
         logServerBoundPacket(packet, client)
 

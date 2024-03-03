@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import type {
     ClientBoundPacket,
     ServerBoundPacket,
-    ServerBoundPacketDeserializer,
+    ServerBoundPacketCreator,
 } from './net/packets/create'
 import { type Client } from './net/client'
 import type { Handler, PacketHandler } from './handlers'
@@ -29,7 +29,7 @@ export const logCmdHandler = (commands: Map<string, Command>) => {
 }
 
 export const logHandler = <
-    T extends { [key: PacketId]: PacketHandler<ServerBoundPacketDeserializer> }
+    T extends { [key: PacketId]: PacketHandler<ServerBoundPacketCreator> }
 >(
     handler: Handler<T>
 ) => {
@@ -38,9 +38,9 @@ export const logHandler = <
         '\n' +
             Object.values(handler.handlers)
                 .map(
-                    ({ deserializer }) =>
-                        `${chalk.yellowBright(hex(deserializer.id))} - ${
-                            deserializer.name
+                    ({ creator }) =>
+                        `${chalk.yellowBright(hex(creator.id))} - ${
+                            creator.name
                         }`
                 )
                 .join('\n')
@@ -50,6 +50,7 @@ export const logHandler = <
 const logPacket =
     (side: string) =>
     (packet: ClientBoundPacket | ServerBoundPacket, client: Client) => {
+        if (!packet.loggable) return
         log(
             chalk.gray(client.entityId),
             chalk.redBright(side),

@@ -40,11 +40,7 @@ export class Server {
     cmd = new CommandHandler()
     entities: EntityHandler = new EntityHandler()
 
-    handlePacket = async (
-        client: Client,
-        buffer: PacketBuffer,
-        packetId: number
-    ) => {
+    async handlePacket(client: Client, buffer: PacketBuffer, packetId: number) {
         const res = await this.handler.handle({
             server: this,
             client,
@@ -55,13 +51,13 @@ export class Server {
         if (res) await client.write(res)
     }
 
-    broadcast = (
+    async broadcast(
         origin: Client, // Client originating the broadcast
         packet: ClientBoundPacket | ClientBoundPacket[]
-    ) => {
+    ) {
         for (const [socketId, client] of Object.entries(this.clients)) {
             if (parseInt(socketId) === origin.socket.id) continue
-            client.write(packet)
+            await client.write(packet)
         }
     }
 
@@ -80,7 +76,7 @@ export class Server {
         }
     }
 
-    open = (socket: SocketWithId) => {
+    open = async (socket: SocketWithId) => {
         const client = new Client(socket)
         console.log(client)
         this.entities.addPlayer(client)
@@ -93,16 +89,16 @@ export class Server {
         log('Socket disconnected', socket.id)
         const client = this.clients[socket.id]
         this.entities.removePlayer(client)
-        this.broadcast(
+        await this.broadcast(
             client,
-            await PlayerInfoRemove({
+            await PlayerInfoRemove.serialize({
                 players: [client.entityUUID],
             })
         )
         delete this.clients[socket.id]
     }
 
-    error = (socket: SocketWithId, error: object) => {
+    async error(socket: SocketWithId, error: object) {
         log(JSON.stringify(error, null, 2))
     }
 

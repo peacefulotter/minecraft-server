@@ -2,18 +2,27 @@ import {
     AcknowledgeMessage,
     ChatCommand,
     ChatMessage,
+    CloseContainer as ServerCloseContainer,
     ConfirmTeleportation,
+    Interact,
     PlayServerBoundKeepAlive,
     PlayerAction,
     PlayerCommand,
+    SetHeldItem,
     SetPlayerOnGround,
     SetPlayerPosition,
     SetPlayerPositionAndRotation,
     SetPlayerRotation,
     SwingHand,
+    SetCreativeModeSlot,
+    PlayerAbilities,
+    TeleportToEntity,
+    UseItemOn,
+    UseItem,
 } from '~/net/packets/server'
 import { Handler } from '.'
 import {
+    CloseContainer as ClientCloseContainer,
     SetHeadRotation,
     SpawnEntity,
     UpdateEntityPosition,
@@ -26,9 +35,9 @@ import v from 'vec3'
 export const PlayHandler = Handler.init('Play')
 
     .register(ConfirmTeleportation, async ({ server, client }) => {
-        server.broadcast(
+        await server.broadcast(
             client,
-            await SpawnEntity({
+            await SpawnEntity.serialize({
                 entityId: client.entityId,
                 entityUUID: client.entityUUID,
                 type: client.info.typeId,
@@ -46,14 +55,27 @@ export const PlayHandler = Handler.init('Play')
         )
     })
 
-    .register(AcknowledgeMessage, async ({ packet }) => {})
+    .register(AcknowledgeMessage, async ({ packet }) => {
+        console.log('TODO: ACKNOWLEDGE MESSAGE')
+    })
 
     .register(ChatCommand, async (args) => {
         await args.server.cmd.handle(args)
     })
 
     .register(ChatMessage, async ({ client, packet }) => {
-        console.log(packet)
+        console.log('TODO: CHAT MESSAGE')
+    })
+
+    .register(ServerCloseContainer, async ({ server, client, packet }) => {
+        const res = await ClientCloseContainer.serialize({
+            windowId: packet.windowId,
+        })
+        await server.broadcast(client, res)
+    })
+
+    .register(Interact, async ({ client, packet }) => {
+        console.log('TODO: INTERACT')
     })
 
     .register(PlayServerBoundKeepAlive, async ({ client, packet }) => {
@@ -69,9 +91,9 @@ export const PlayHandler = Handler.init('Play')
         client.position = newPosition
         client.onGround = onGround
 
-        server.broadcast(
+        await server.broadcast(
             client,
-            await UpdateEntityPosition({
+            await UpdateEntityPosition.serialize({
                 entityId: client.entityId,
                 ...delta,
                 onGround: client.onGround,
@@ -90,15 +112,15 @@ export const PlayHandler = Handler.init('Play')
             client.position = newPosition
             client.rotation = { yaw, pitch }
 
-            server.broadcast(client, [
-                await UpdateEntityPositionAndRotation({
+            await server.broadcast(client, [
+                await UpdateEntityPositionAndRotation.serialize({
                     entityId: client.entityId,
                     ...delta,
                     yaw: client.yaw,
                     pitch: client.pitch,
                     onGround: client.onGround,
                 }),
-                await SetHeadRotation({
+                await SetHeadRotation.serialize({
                     entityId: client.entityId,
                     headYaw: client.yaw, // TODO: headYaw
                 }),
@@ -111,14 +133,14 @@ export const PlayHandler = Handler.init('Play')
         client.rotation = rotation
         if (client.position !== undefined) client.onGround = onGround
 
-        server.broadcast(client, [
-            await UpdateEntityRotation({
+        await server.broadcast(client, [
+            await UpdateEntityRotation.serialize({
                 entityId: client.entityId,
                 yaw: rotation.yaw,
                 pitch: rotation.pitch,
                 onGround: onGround,
             }),
-            await SetHeadRotation({
+            await SetHeadRotation.serialize({
                 entityId: client.entityId,
                 headYaw: client.yaw, // TODO: headYaw
             }),
@@ -130,13 +152,42 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(PlayerCommand, async ({ client, packet }) => {
-        // TODO: handle player commands
+        console.log('TODO: PLAYER COMMAND')
+    })
+
+    .register(PlayerAbilities, async ({ client, packet }) => {
+        client.isFlying = packet.flags === 0x02
     })
 
     .register(PlayerAction, async ({ client, packet }) => {
-        // TODO: handle player actions
+        console.log('TODO: PLAYER ACTION')
+    })
+
+    .register(SetHeldItem, async ({ client, packet }) => {
+        console.log('TODO: SETTING HELD ITEM')
+    })
+
+    .register(SetCreativeModeSlot, async ({ client, packet }) => {
+        const { slot, item } = packet
+        client.inventory.setItemFromSlot(slot, item)
+        console.log(client.inventory)
     })
 
     .register(SwingHand, async ({ client, packet }) => {
         // TODO: handle swing hand
+        console.log('TODO: SWINGING HAND')
+    })
+
+    .register(TeleportToEntity, async ({ client, packet }) => {
+        console.log('TODO: TELEPORT TO ENTITY')
+    })
+
+    .register(UseItemOn, async ({ client, packet }) => {
+        console.log('TODO: USE ITEM ON')
+        // if ok: AcknowledgeBlockChange
+    })
+
+    .register(UseItem, async ({ client, packet }) => {
+        console.log('TODO: USE ITEM')
+        // if ok: AcknowledgeBlockChange
     })

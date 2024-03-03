@@ -13,7 +13,7 @@ import {
 import type { FeatureFlags } from '~/data/enum'
 import { ClientBoundPacketCreator } from '../create'
 
-export const ConfigurationPluginMessage = ClientBoundPacketCreator(
+export const ConfigurationPluginMessage = new ClientBoundPacketCreator(
     0x00,
     'ConfigurationPluginMessage',
     {
@@ -22,7 +22,7 @@ export const ConfigurationPluginMessage = ClientBoundPacketCreator(
     }
 )
 
-export const DisconnectConfiguration = ClientBoundPacketCreator(
+export const DisconnectConfiguration = new ClientBoundPacketCreator(
     0x01,
     'DisconnectConfiguration',
     {
@@ -30,13 +30,13 @@ export const DisconnectConfiguration = ClientBoundPacketCreator(
     }
 )
 
-export const FinishConfiguration = ClientBoundPacketCreator(
+export const FinishConfiguration = new ClientBoundPacketCreator(
     0x02,
     'FinishConfiguration',
     {}
 )
 
-export const ConfigurationClientBoundKeepAlive = ClientBoundPacketCreator(
+export const ConfigurationClientBoundKeepAlive = new ClientBoundPacketCreator(
     0x03,
     'ConfigurationKeepAlive',
     {
@@ -44,7 +44,7 @@ export const ConfigurationClientBoundKeepAlive = ClientBoundPacketCreator(
     }
 )
 
-export const ConfigurationPing = ClientBoundPacketCreator(
+export const ConfigurationPing = new ClientBoundPacketCreator(
     0x04,
     'ConfigurationPing',
     {
@@ -52,11 +52,11 @@ export const ConfigurationPing = ClientBoundPacketCreator(
     }
 )
 
-export const RegistryData = ClientBoundPacketCreator(0x05, 'RegistryData', {
+export const RegistryData = new ClientBoundPacketCreator(0x05, 'RegistryData', {
     codec: new DataNBT(),
 })
 
-export const ConfigurationRemoveResourcePack = ClientBoundPacketCreator(
+export const ConfigurationRemoveResourcePack = new ClientBoundPacketCreator(
     0x06,
     'ConfigurationRemoveResourcePack',
     {
@@ -64,7 +64,7 @@ export const ConfigurationRemoveResourcePack = ClientBoundPacketCreator(
     }
 )
 
-export const ConfigurationAddResourcePack = ClientBoundPacketCreator(
+export const ConfigurationAddResourcePack = new ClientBoundPacketCreator(
     0x07,
     'ConfigurationAddResourcePack',
     {
@@ -76,7 +76,7 @@ export const ConfigurationAddResourcePack = ClientBoundPacketCreator(
     }
 )
 
-export const ConfigurationFeatureFlags = ClientBoundPacketCreator(
+export const ConfigurationFeatureFlags = new ClientBoundPacketCreator(
     0x08,
     'ConfigurationFeatureFlags',
     {

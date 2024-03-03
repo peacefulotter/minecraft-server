@@ -1,5 +1,5 @@
-import type { Entity, EntityId } from './entity'
-import type { Player } from './player'
+import type { Entity, EntityId } from '.'
+import type { Player } from './entities/player'
 
 export class EntityHandler {
     entities: Record<EntityId, Entity> = {}

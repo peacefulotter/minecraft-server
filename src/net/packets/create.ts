@@ -5,51 +5,52 @@ import { PacketBuffer } from '../PacketBuffer'
 
 export type PacketFormat = { [key: string]: Type<any> }
 
-// Packet type after serialization (when performing a write)
-export type PacketArguments<Format extends PacketFormat> = {
-    [key in keyof Format]: InnerWriteType<Format[key]>
-}
-
-// Packet type after deserialization (when performing a read)
-export type PacketResult<Format extends PacketFormat> = {
-    [key in keyof Format]: InnerReadType<Format[key]>
-}
-
 type Packet<D, I extends PacketId = number, N extends string = string> = {
     id: I
     name: N
     data: D
+    loggable: boolean
 }
 
 // ========================== READ PACKET ==========================
 
-// Get the packet return type format, equivalent to packet arguments
-export type ServerBoundPacketData<T extends PacketFormat> = PacketResult<T>
+// Packet type after deserialization (when performing a read)
+export type ServerBoundPacketData<Format extends PacketFormat> = {
+    [key in keyof Format]: InnerReadType<Format[key]>
+}
 
-export type ServerBoundPacket = Packet<ServerBoundPacketData<PacketFormat>>
-
-export type ServerBoundPacketDataFromDeserializer<
-    T extends ServerBoundPacketDeserializer
-> = T extends ServerBoundPacketDeserializer<any, any, infer Format>
-    ? ServerBoundPacketData<Format>
-    : never
-
-export const ServerBoundPacketCreator = <
+export type ServerBoundPacket<
     I extends PacketId = number,
     N extends string = string,
     T extends PacketFormat = PacketFormat
->(
-    id: I,
-    name: N,
-    types: T
-): ServerBoundPacketDeserializer<I, N, T> => ({
-    id,
-    name,
-    deserialize: async (buf: PacketBuffer, encripted: boolean) => {
+> = Packet<ServerBoundPacketData<T>, I, N>
+
+export type ServerBoundPacketDataFromCreator<
+    C extends ServerBoundPacketCreator
+> = C extends ServerBoundPacketCreator<any, any, infer T>
+    ? ServerBoundPacketData<T>
+    : never
+
+export class ServerBoundPacketCreator<
+    I extends PacketId = number,
+    N extends string = string,
+    T extends PacketFormat = PacketFormat
+> {
+    constructor(
+        public readonly id: I,
+        public readonly name: N,
+        private readonly types: T,
+        public readonly loggable: boolean = true
+    ) {}
+
+    async deserialize(
+        buf: PacketBuffer,
+        encripted: boolean
+    ): Promise<ServerBoundPacket<I, N, T>> {
         const buffer = encripted ? decrypt(buf) : buf
         // console.log(buffer)
         let data = {} as ServerBoundPacketData<T>
-        for (const [key, type] of Object.entries(types)) {
+        for (const [key, type] of Object.entries(this.types)) {
             // console.log(
             //     'before',
             //     buffer.readOffset,
@@ -65,56 +66,41 @@ export const ServerBoundPacketCreator = <
             //     data[key as keyof typeof data]
             // )
         }
-        return { id, name, data }
-    },
-})
-
-export type ServerBoundPacketCreator = typeof ServerBoundPacketCreator
-
-export type DeserializerReturn<
-    I extends PacketId = number,
-    N extends string = string,
-    T extends PacketFormat = PacketFormat
-> = Promise<Packet<ServerBoundPacketData<T>, I, N>>
-
-export type ServerBoundPacketDeserializer<
-    I extends PacketId = number,
-    N extends string = string,
-    T extends PacketFormat = PacketFormat
-> = {
-    id: I
-    name: N
-    deserialize: (
-        buf: PacketBuffer,
-        encripted: boolean
-    ) => DeserializerReturn<I, N, T>
+        return { id: this.id, name: this.name, data, loggable: this.loggable }
+    }
 }
 
 // ========================== WRITE PACKET ==========================
 
+// Packet type after serialization (when performing a write)
+export type ClientBoundPacketData<Format extends PacketFormat> = {
+    [key in keyof Format]: InnerWriteType<Format[key]>
+}
+
 export type ClientBoundPacket = Packet<PacketBuffer>
 
-export const ClientBoundPacketCreator =
-    <
-        I extends PacketId = number,
-        N extends string = string,
-        T extends PacketFormat = PacketFormat
-    >(
-        id: I,
-        name: N,
-        types: T
-    ) =>
-    async (args: PacketArguments<T>) => {
+export class ClientBoundPacketCreator<
+    I extends PacketId = number,
+    N extends string = string,
+    T extends PacketFormat = PacketFormat
+> {
+    constructor(
+        public readonly id: I,
+        public readonly name: N,
+        private readonly types: T,
+        public readonly loggable: boolean = true
+    ) {}
+
+    async serialize(args: ClientBoundPacketData<T>) {
         let buffers = []
-        for (const [key, type] of Object.entries(types)) {
+        for (const [key, type] of Object.entries(this.types)) {
             // console.log('before', key, args[key])
             const elt = await type.write(args[key])
             // console.log('after ', elt)
             buffers.push(elt)
         }
         const data = PacketBuffer.concat(buffers)
-        return { id, name, data } as Packet<PacketBuffer, I, N>
-    }
 
-export type ClientBoundPacketCreator = typeof ClientBoundPacketCreator
-export type ClientBoundPacketSerializer = ReturnType<ClientBoundPacketCreator>
+        return { id: this.id, name: this.name, data, loggable: this.loggable }
+    }
+}

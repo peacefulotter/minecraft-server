@@ -17,7 +17,6 @@ import {
     DataShort,
     DataString,
     DataUUID,
-    DataWithDefault,
     VarInt,
     VarIntPrefixedByteArray,
     VarLong,
@@ -26,15 +25,15 @@ import {
     ClientBoundPacketCreator,
     ServerBoundPacketCreator,
     type PacketFormat,
-    type PacketArguments,
-    type PacketResult,
+    type ClientBoundPacketData,
+    type ServerBoundPacketData,
 } from '~/net/packets/create'
 
 const packetTester = async <T extends PacketFormat, U>(
     format: T,
-    packet: PacketArguments<T>,
-    processArg?: (data: PacketArguments<T>) => U | Promise<U>,
-    processRes?: (data: PacketResult<T>) => U | Promise<U>
+    packet: ClientBoundPacketData<T>,
+    processArg?: (data: ClientBoundPacketData<T>) => U | Promise<U>,
+    processRes?: (data: ServerBoundPacketData<T>) => U | Promise<U>
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
@@ -45,15 +44,17 @@ const packetTester = async <T extends PacketFormat, U>(
     if (processRes && processArg) {
         expect(await processRes(res.data)).toEqual(await processArg(packet))
     } else if (processArg) {
-        expect(res.data).toEqual((await processArg(packet)) as PacketResult<T>)
+        expect(res.data).toEqual(
+            (await processArg(packet)) as ServerBoundPacketData<T>
+        )
     } else {
-        expect(res.data).toEqual(packet as PacketResult<T>)
+        expect(res.data).toEqual(packet as ServerBoundPacketData<T>)
     }
 }
 
 const performanceTester = async <T extends PacketFormat>(
     format: T,
-    packet: PacketArguments<T>,
+    packet: ClientBoundPacketData<T>,
     iterations: number = 10000
 ) => {
     const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
@@ -205,25 +206,25 @@ describe('formats', () => {
         }
     })
 
-    test('with default', async () => {
-        const defaultValue = 'default'
-        const format = {
-            a: new DataWithDefault(new DataString(), defaultValue),
-        }
-        await packetTester(format, {
-            a: 'different_default',
-        })
-        await packetTester(
-            format,
-            {
-                a: undefined,
-            },
-            (data) => {
-                // Since undefined gets replaced by the default value
-                return { a: defaultValue }
-            }
-        )
-    })
+    // test('with default', async () => {
+    //     const defaultValue = 'default'
+    //     const format = {
+    //         a: new DataWithDefault(new DataString(), defaultValue),
+    //     }
+    //     await packetTester(format, {
+    //         a: 'different_default',
+    //     })
+    //     await packetTester(
+    //         format,
+    //         {
+    //             a: undefined,
+    //         },
+    //         (data) => {
+    //             // Since undefined gets replaced by the default value
+    //             return { a: defaultValue }
+    //         }
+    //     )
+    // })
 
     test('is identity when writing -> reading', async () => {
         const format = {
@@ -250,7 +251,7 @@ describe('formats', () => {
             m: new DataLong(),
         }
 
-        const packet: PacketArguments<typeof format> = {
+        const packet: ClientBoundPacketData<typeof format> = {
             a: 42,
             b: Buffer.from([1, 2, 3]),
             c: 5,
@@ -272,7 +273,7 @@ describe('formats', () => {
             m: Long.fromNumber(Date.now()),
         } as const
 
-        const formatter = (data: PacketArguments<typeof format>) => {
+        const formatter = (data: ClientBoundPacketData<typeof format>) => {
             return {
                 ...data,
                 h: data.h.toString(),

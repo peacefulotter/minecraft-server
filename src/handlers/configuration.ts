@@ -34,7 +34,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
     .register(ConfigurationClientInformation, async ({ client, packet }) => {
         client.clientInfo = packet
-        return ClientFinishConfiguration({})
+        return ClientFinishConfiguration.serialize({})
     })
 
     .register(PluginMessage, async (args) => {})
@@ -47,7 +47,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
         for (let i = -size; i <= size; i++) {
             for (let j = -size; j <= size; j++) {
                 chunks.push(
-                    await ChunkDataAndUpdateLight({
+                    await ChunkDataAndUpdateLight.serialize({
                         chunkX: i,
                         chunkZ: j,
                         heightMaps: new NBT.NBTData({}, { rootName: null }),
@@ -65,7 +65,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
         }
 
         const packets = [
-            await PlayLogin({
+            await PlayLogin.serialize({
                 entityId: entities.player.typeId, // see data-types/entities.ts
                 isHardcore: false,
                 dimensionNames: [
@@ -89,19 +89,19 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 death: undefined,
                 portalCooldown: 0,
             }),
-            await SetDefaultSpawnPosition({
+            await SetDefaultSpawnPosition.serialize({
                 location: SPAWN_POSITION,
                 angle: 0,
             }),
-            await SetCenterChunk({ chunkX: 0, chunkZ: 0 }),
-            await GameEvent({
+            await SetCenterChunk.serialize({ chunkX: 0, chunkZ: 0 }),
+            await GameEvent.serialize({
                 event: {
                     effect: 13, // TODO: define effects
                     value: 0,
                 },
             }),
             ...chunks,
-            await SynchronizePlayerPosition({
+            await SynchronizePlayerPosition.serialize({
                 ...SPAWN_POSITION,
                 yaw: client.yaw,
                 pitch: client.pitch,
@@ -157,7 +157,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
         packets.push(
             ...(await Promise.all(
                 server.entities.getAll().map((entity) =>
-                    SpawnEntity({
+                    SpawnEntity.serialize({
                         entityId: entity.entityId,
                         entityUUID: entity.entityUUID,
                         type: entity.info.typeId,

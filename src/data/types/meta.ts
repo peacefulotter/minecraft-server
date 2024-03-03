@@ -1,14 +1,12 @@
 import { PacketBuffer } from '~/net/PacketBuffer'
-import {
-    DataByte,
-    DataNBT,
-    type InnerReadType,
-    type InnerWriteType,
-    type Type,
-} from '.'
-import { DataBoolean, VarIntPrefixedByteArray } from './composite'
+import { type InnerReadType, type InnerWriteType, type Type } from '.'
+import { DataBoolean } from './composite'
 import { VarInt } from './var'
-import type { PacketArguments, PacketFormat } from '~/net/packets/create'
+import type {
+    ClientBoundPacketData,
+    PacketFormat,
+    ServerBoundPacketData,
+} from '~/net/packets/create'
 
 export class DataOptional<T extends Type<any>>
     implements Type<InnerReadType<T> | undefined, InnerWriteType<T>>
@@ -33,21 +31,23 @@ export class DataOptional<T extends Type<any>>
     }
 }
 
-export class DataArray<T> implements Type<T[]> {
+export class DataArray<T extends Type<any>>
+    implements Type<InnerReadType<T>[], InnerWriteType<T>[]>
+{
     boolean: Type<boolean> = new DataBoolean()
 
-    constructor(private type: Type<T>) {}
+    constructor(private type: T) {}
 
     async read(buffer: PacketBuffer) {
         const size = await VarInt.read(buffer)
-        const arr: T[] = new Array(size)
+        const arr: InnerReadType<T>[] = new Array(size)
         for (let i = 0; i < size; i++) {
             arr[i] = await this.type.read(buffer)
         }
         return arr
     }
 
-    async write(ts: T[]) {
+    async write(ts: InnerWriteType<T>[]) {
         const length = await VarInt.write(ts.length)
         const arr = new Array(ts.length)
         for (let i = 0; i < ts.length; i++) {
@@ -57,20 +57,20 @@ export class DataArray<T> implements Type<T[]> {
     }
 }
 
-export class DataObject<T extends PacketFormat = PacketFormat>
-    implements Type<PacketArguments<T>>
+export class DataObject<T extends PacketFormat>
+    implements Type<ServerBoundPacketData<T>, ClientBoundPacketData<T>>
 {
     constructor(private types: T) {}
 
     async read(buffer: PacketBuffer) {
-        const obj = {} as PacketArguments<T>
+        const obj = {} as ServerBoundPacketData<T>
         for (const [key, type] of Object.entries(this.types)) {
             obj[key as keyof typeof obj] = await type.read(buffer)
         }
         return obj
     }
 
-    async write(t: PacketArguments<T>) {
+    async write(t: ClientBoundPacketData<T>) {
         let buffers = [] as Buffer[]
         for (const [key, type] of Object.entries(this.types)) {
             const elt = await type.write(t[key as keyof typeof t])
@@ -111,29 +111,20 @@ export class DataObject<T extends PacketFormat = PacketFormat>
 //     },
 // })
 
-// TODO: remove if not used
-export class DataWithDefault<T> implements Type<T, T | undefined> {
-    constructor(private type: Type<T>, private defaultValue: T) {}
+// // TODO: remove if not used
+// export class DataWithDefault<T extends Type<any>>
+//     implements Type<InnerReadType<T>, InnerWriteType<T> | undefined>
+// {
+//     constructor(
+//         private type: Type<InnerReadType<T>, InnerWriteType<T>>,
+//         private defaultValue: InnerWriteType<T>
+//     ) {}
 
-    async read(buffer: PacketBuffer) {
-        return await this.type.read(buffer)
-    }
-    async write(t?: T) {
-        const definedT = t === undefined ? this.defaultValue : t
-        return await this.type.write(definedT)
-    }
-}
-
-// https://wiki.vg/Slot_Data
-// Differs from the docs since the present field is taken care by DataOptional
-export class DataSlot extends DataOptional<DataObject<typeof DataSlot.format>> {
-    static format = {
-        present: new DataBoolean(),
-        itemId: new VarInt(),
-        itemCount: new DataByte(),
-        nbt: new DataOptional(new DataNBT()),
-    }
-    constructor() {
-        super(new DataObject(DataSlot.format))
-    }
-}
+//     async read(buffer: PacketBuffer) {
+//         return await this.type.read(buffer)
+//     }
+//     async write(t?: InnerWriteType<T>) {
+//         const definedT = t === undefined ? this.defaultValue : t
+//         return await this.type.write(definedT)
+//     }
+// }

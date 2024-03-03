@@ -17,10 +17,10 @@ import type {
 } from '~/data/enum'
 import {
     ServerBoundPacketCreator,
-    type ServerBoundPacketDataFromDeserializer,
+    type ServerBoundPacketDataFromCreator,
 } from '../create'
 
-export const ConfigurationClientInformation = ServerBoundPacketCreator(
+export const ConfigurationClientInformation = new ServerBoundPacketCreator(
     0x00,
     'ClientInformation' as const,
     {
@@ -35,11 +35,11 @@ export const ConfigurationClientInformation = ServerBoundPacketCreator(
     }
 )
 
-export type ClientInfo = ServerBoundPacketDataFromDeserializer<
+export type ClientInfo = ServerBoundPacketDataFromCreator<
     typeof ConfigurationClientInformation
 >
 
-export const PluginMessage = ServerBoundPacketCreator(
+export const PluginMessage = new ServerBoundPacketCreator(
     0x01,
     'PluginMessage' as const,
     {
@@ -48,13 +48,13 @@ export const PluginMessage = ServerBoundPacketCreator(
     }
 )
 
-export const FinishConfiguration = ServerBoundPacketCreator(
+export const FinishConfiguration = new ServerBoundPacketCreator(
     0x02,
     'FinishConfiguration',
     {}
 )
 
-export const ConfigurationServerBoundKeepAlive = ServerBoundPacketCreator(
+export const ConfigurationServerBoundKeepAlive = new ServerBoundPacketCreator(
     0x03,
     'KeepAlive',
     {
@@ -62,11 +62,11 @@ export const ConfigurationServerBoundKeepAlive = ServerBoundPacketCreator(
     }
 )
 
-export const Pong = ServerBoundPacketCreator(0x04, 'Pong', {
+export const Pong = new ServerBoundPacketCreator(0x04, 'Pong', {
     id: new DataInt(),
 })
 
-export const ResourcePackResponse = ServerBoundPacketCreator(
+export const ResourcePackResponse = new ServerBoundPacketCreator(
     0x05,
     'ResourcePackResponse',
     {

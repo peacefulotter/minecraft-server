@@ -7,7 +7,7 @@ import {
     DEFAULT_ROTATION,
     DEFAULT_VELOCITY,
     Entity,
-} from './entity'
+} from '.'
 import type { Position, Rotation } from '~/position'
 import { MD, type MetadataSchema } from './metadata'
 import { GameMode } from '~/data/enum'
@@ -60,17 +60,8 @@ export abstract class LivingEntity<
         )
     }
 
-    public toString(): string {
-        return `LivingEntity
-            ${super.toString()}`
-    }
-
-    public [Symbol.toPrimitive](): string {
-        return this.toString()
-    }
-
-    public [Symbol.for('nodejs.util.inspect.custom')](): string {
-        return this.toString()
+    public [Bun.inspect.custom]() {
+        return super[Bun.inspect.custom]()
     }
 
     // health: number

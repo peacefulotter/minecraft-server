@@ -110,7 +110,7 @@ export abstract class Entity<
     // Updates metadata and returns the packet to send to the client
     async setMetadata(metadata: MetadataArgs<Schema & EntitySchema>) {
         this.metadata = { ...this.metadata, ...metadata }
-        return await SetEntityMetadata(this.metadataSchema)({
+        return await SetEntityMetadata(this.metadataSchema).serialize({
             entityId: this.entityId,
             metadata,
         })
@@ -144,27 +144,19 @@ export abstract class Entity<
         return this.entityUUID
     }
 
-    public toString(): string {
-        return `Entity 
-            entityId: ${this.entityId}
-            entityUUID: ${this.entityUUID}
-            name: ${this.name}
-            info: ${this.info}
-            metadata: ${this.metadata}
-            gameMode: ${GameMode[this.gameMode]}
-            position: ${JSON.stringify(this.position)}
-            rotation: ${JSON.stringify(this.rotation)}
-            velocity: ${JSON.stringify(this.velocity)}
-            headYaw: ${this.headYaw}
-            data: ${this.data}
-        `
-    }
-
-    public [Symbol.toPrimitive](): string {
-        return this.toString()
-    }
-
-    public [Symbol.for('nodejs.util.inspect.custom')](): string {
-        return this.toString()
+    public [Bun.inspect.custom]() {
+        return {
+            entityId: this.entityId,
+            entityUUID: this.entityUUID,
+            name: this.name,
+            info: this.info,
+            metadata: this.metadata,
+            gameMode: GameMode[this.gameMode],
+            position: this.position,
+            rotation: this.rotation,
+            velocity: this.velocity,
+            headYaw: this.headYaw,
+            data: this.data,
+        }
     }
 }

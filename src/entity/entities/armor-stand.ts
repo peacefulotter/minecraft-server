@@ -1,6 +1,6 @@
 import { ORIGIN_VEC } from '~/position'
-import { LivingEntity } from './living-entity'
-import { MD } from './metadata'
+import { LivingEntity } from '../living-entity'
+import { MD } from '../metadata'
 import v from 'vec3'
 
 enum ArmorStandMask {

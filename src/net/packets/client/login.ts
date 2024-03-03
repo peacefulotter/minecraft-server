@@ -8,7 +8,7 @@ import {
 } from '~/data/types'
 import { ClientBoundPacketCreator } from '../create'
 
-export const EncryptionRequest = ClientBoundPacketCreator(
+export const EncryptionRequest = new ClientBoundPacketCreator(
     0x01,
     'EncryptionRequest',
     {
@@ -18,7 +18,7 @@ export const EncryptionRequest = ClientBoundPacketCreator(
     }
 )
 
-export const LoginSuccess = ClientBoundPacketCreator(0x02, 'LoginSuccess', {
+export const LoginSuccess = new ClientBoundPacketCreator(0x02, 'LoginSuccess', {
     uuid: new DataUUID(),
     username: new DataString(),
     properties: new DataArray(

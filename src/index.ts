@@ -3,12 +3,18 @@ import path from 'path'
 import chalk from 'chalk'
 import { log } from './logger'
 import { Server } from './net/server'
-import Long from 'long'
 
-// Long toString override
+// ============================= toString overrides =============================
+import Long from 'long'
 ;(Long.prototype as any)[Bun.inspect.custom] = function () {
     return `Long { ${this.toString()} }`
 }
+
+import { Vec3 } from 'vec3'
+;(Vec3.prototype as any)[Bun.inspect.custom] = function () {
+    return `Vec3 { ${this.x}, ${this.y}, ${this.z} }`
+}
+// ============================= ================== =============================
 
 const runSocket = () => {
     const socket = Bun.listen({
