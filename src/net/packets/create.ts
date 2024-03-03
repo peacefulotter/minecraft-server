@@ -47,9 +47,23 @@ export const ServerBoundPacketCreator = <
     name,
     deserialize: async (buf: PacketBuffer, encripted: boolean) => {
         const buffer = encripted ? decrypt(buf) : buf
+        // console.log(buffer)
         let data = {} as ServerBoundPacketData<T>
         for (const [key, type] of Object.entries(types)) {
+            // console.log(
+            //     'before',
+            //     buffer.readOffset,
+            //     key,
+            //     buffer.length,
+            //     'got:',
+            //     buffer.get(0, true)
+            // )
             data[key as keyof typeof data] = await type.read(buffer)
+            // console.log(
+            //     'after ',
+            //     buffer.readOffset,
+            //     data[key as keyof typeof data]
+            // )
         }
         return { id, name, data }
     },
@@ -93,7 +107,9 @@ export const ClientBoundPacketCreator =
     async (args: PacketArguments<T>) => {
         let buffers = []
         for (const [key, type] of Object.entries(types)) {
+            // console.log('before', key, args[key])
             const elt = await type.write(args[key])
+            // console.log('after ', elt)
             buffers.push(elt)
         }
         const data = PacketBuffer.concat(buffers)

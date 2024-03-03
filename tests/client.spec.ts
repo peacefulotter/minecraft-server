@@ -23,8 +23,8 @@ const getClient = async () => {
     return new Client(socket)
 }
 
-const DummyPacket = ClientBoundPacketCreator(0xf, 'dummy', {
-    test: DataString,
+const DummyPacket = ClientBoundPacketCreator(0x0, 'dummy', {
+    test: new DataString(),
 })
 
 const packet0 = [

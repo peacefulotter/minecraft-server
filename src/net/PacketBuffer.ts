@@ -1,3 +1,4 @@
+import { read } from 'nbtify'
 import {
     BYTE_SIZE,
     DOUBLE_SIZE,
@@ -132,7 +133,7 @@ export class PacketBuffer {
         const realStart = start + offset
         const realEnd = end ? end + offset : this.buffer.length
         const str = this.buffer.toString(encoding, realStart, realEnd)
-        this.readOffset += str.length
+        this.readOffset += realEnd - realStart
         return str
     }
 

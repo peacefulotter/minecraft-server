@@ -41,14 +41,17 @@ export class DataLong implements Type<Long> {
 }
 
 export class DataString implements Type<string> {
-    private composite = new VarIntPrefixedByteArray()
     async read(buffer: PacketBuffer) {
-        const arr = await this.composite.read(buffer)
-        return arr.toString('utf-8')
+        const length = await VarInt.read(buffer)
+        return buffer.readString('utf-8', 0, length)
     }
     async write(t: string) {
-        const buffer = PacketBuffer.fromString(t, 'utf-8')
-        return this.composite.write(buffer)
+        const bufStr = Buffer.from(t, 'utf-8')
+        const length = await VarInt.write(bufStr.length)
+        const buffer = Buffer.allocUnsafe(length.length + bufStr.length)
+        length.buffer.copy(buffer)
+        bufStr.copy(buffer, length.length)
+        return new PacketBuffer(buffer)
     }
 }
 

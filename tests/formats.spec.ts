@@ -40,8 +40,8 @@ const packetTester = async <T extends PacketFormat, U>(
     const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
     const buffer = await writePacket(packet)
     const res = await readPacket.deserialize(buffer.data, false)
-    console.log('Expected', packet)
-    console.log('Obtained', res.data)
+    // console.log('Expected', packet)
+    // console.log('Obtained', res.data)
     if (processRes && processArg) {
         expect(await processRes(res.data)).toEqual(await processArg(packet))
     } else if (processArg) {
@@ -142,7 +142,7 @@ describe('formats', () => {
         })
     })
 
-    test.only('long', async () => {
+    test('long', async () => {
         for (let i = 0; i < 100; i++) {
             const data = Long.fromNumber(
                 Math.round((Math.random() - 0.5) * Number.MAX_SAFE_INTEGER)
@@ -258,7 +258,7 @@ describe('formats', () => {
             e: 'hello world',
             f: 255,
             g: Long.fromNumber(Date.now()),
-            h: generateV4(),
+            h: parseUUID('7ed9e77e-34b8-400e-b684-9093c550b4f9'),
             i: 'aaa',
             j: {
                 a: 'bbb',
@@ -335,7 +335,7 @@ describe('formats', () => {
             a: new DataString(),
         }
         const packet = {
-            a: 'a'.repeat(32767),
+            a: 'a'.repeat(132767),
         }
         await performanceTester(format, packet)
     })
@@ -349,28 +349,27 @@ describe('formats', () => {
             'registry-data-packet.nbt'
         )
         const file = await Bun.file(p).arrayBuffer()
-        const root = new NBT.NBTData(await NBT.read(file), { rootName: null })
-        console.log('=====', { name: root.rootName })
 
         const format = { a: new DataInt(), nbt: new DataNBT() }
 
-        await packetTester(format, {
-            a: 42,
-            nbt: root,
-        })
-
-        console.log('============================')
-        console.log('============================')
-        console.log('============================')
-        console.log('============================')
+        await packetTester(format, { a: 42, nbt: file }, async (d) => ({
+            ...d,
+            nbt: new NBT.NBTData(await NBT.read(file), {
+                rootName: null,
+            }),
+        }))
 
         await packetTester(
             format,
-            { a: 42, nbt: file },
-            (d) => d,
+            {
+                a: 42,
+                nbt: file,
+            },
             async (d) => ({
                 ...d,
-                nbt: await NBT.write(d.nbt, { rootName: null }),
+                nbt: new NBT.NBTData(await NBT.read(file), {
+                    rootName: null,
+                }),
             })
         )
 
@@ -379,7 +378,7 @@ describe('formats', () => {
                 nbt: new DataNBT(),
             },
             {
-                nbt: root,
+                nbt: file,
             },
             1000
         )

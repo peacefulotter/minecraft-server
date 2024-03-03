@@ -54,14 +54,21 @@ export class VarInt implements Type<number> {
 
 // TODO: /!\ Fix issue with negative longs
 export class VarLong implements Type<Long> {
-    composite = new DataByte()
-
     async read(buffer: PacketBuffer) {
+        return await VarLong.read(buffer)
+    }
+
+    async write(t: Long) {
+        return await VarLong.write(t)
+    }
+
+    static async read(buffer: PacketBuffer) {
         let value = new Long(0, 0)
         let position = 0
 
+        const composite = new DataByte()
         while (true) {
-            const byte = await this.composite.read(buffer)
+            const byte = await composite.read(buffer)
 
             value = value.or(new Long(byte & SEGMENT_BITS).shiftLeft(position))
 
@@ -75,7 +82,7 @@ export class VarLong implements Type<Long> {
         return value
     }
 
-    async write(t: Long) {
+    static async write(t: Long) {
         const buffer: number[] = []
         while (true) {
             if (t.and(~SEGMENT_BITS).eq(0)) {

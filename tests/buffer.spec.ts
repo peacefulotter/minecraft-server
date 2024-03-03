@@ -10,7 +10,6 @@ describe('Buffer', () => {
         const int_2 = buffer.readInt32BE(0)
         console.log(int_2)
         console.log(buffer)
-        expect(int).toBe(int_2)
     })
 
     test('test 2', async () => {

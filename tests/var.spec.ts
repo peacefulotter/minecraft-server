@@ -1,12 +1,13 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
 import { VarInt, VarLong } from '~/data/types'
+import { PacketBuffer } from '~/net/PacketBuffer'
 
 describe('vars work', () => {
     test('some varints', async () => {
         console.log(await VarInt.write(53))
-        console.log(await VarInt.read(Buffer.from([254, 1]), 0))
-        console.log(await VarInt.read(Buffer.from([250, 0]), 0))
+        console.log(await VarInt.read(new PacketBuffer(Buffer.from([254, 1]))))
+        console.log(await VarInt.read(new PacketBuffer(Buffer.from([250, 0]))))
     })
 
     test('sample varints', async () => {
@@ -27,10 +28,10 @@ describe('vars work', () => {
             0, 1, 2, 127, 128, 255, 25565, 2097151, 2147483647, -1, -2147483648,
         ]
         for (let i = 0; i < buffers.length; i++) {
-            const { t: read } = await VarInt.read(buffers[i], 0)
+            const read = await VarInt.read(new PacketBuffer(buffers[i]))
             const original = await VarInt.write(read)
             expect(read).toEqual(values[i])
-            expect(original).toEqual(buffers[i])
+            expect(original.buffer).toEqual(buffers[i])
         }
     })
 
@@ -68,7 +69,7 @@ describe('vars work', () => {
             new Long(0x80000000, 0x00000000),
         ]
         for (let i = 0; i < buffers.length; i++) {
-            const { t: read } = await VarLong.read(buffers[i], 0)
+            const read = await VarLong.read(new PacketBuffer(buffers[i]))
             const original = await VarLong.write(read)
             console.log(
                 'expected',
@@ -80,7 +81,7 @@ describe('vars work', () => {
                 read.high,
                 read.toNumber()
             )
-            expect(original).toEqual(buffers[i])
+            expect(original.buffer).toEqual(buffers[i])
             expect(read).toEqual(values[i])
         }
     })
