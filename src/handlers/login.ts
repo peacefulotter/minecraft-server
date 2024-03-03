@@ -83,12 +83,12 @@ export const LoginHandler = Handler.init('Login')
     })
 
     .register(EncryptionResponse, async ({ client, packet }) => {
-        console.log(packet)
+        console.log('TODO: EncryptionResponse')
         client.encrypted = true
     })
 
     .register(LoginPluginResponse, async ({ client, packet }) => {
-        console.log(packet)
+        console.log('TODO: LoginPluginResponse')
     })
 
     .register(LoginAcknowledged, async ({ client }) => {

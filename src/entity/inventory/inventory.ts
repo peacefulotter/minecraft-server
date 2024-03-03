@@ -1,4 +1,5 @@
 import * as NBT from 'nbtify'
+import items_id_to_name from '~/data/db/items_id_to_name.json'
 
 type Slot = {
     itemId: number
@@ -10,7 +11,7 @@ type Range = Readonly<[number, number]>
 type Ranges<K extends string = string> = {
     readonly [k in K]: Range
 }
-type Slots<K extends string = string> = { [k in K]: Slot[] }
+type Slots<K extends string = string> = { [k in K]: (Slot | undefined)[] }
 
 type Section = {
     name: string
@@ -19,9 +20,9 @@ type Section = {
 }
 
 export class Inventory<SectionNames extends string> {
-    private inventory: Slots<SectionNames>
+    protected inventory: Slots<SectionNames>
 
-    constructor(private readonly ranges: Ranges<SectionNames>) {
+    constructor(protected readonly ranges: Ranges<SectionNames>) {
         this.inventory = Object.fromEntries(
             Object.keys(ranges).map((k) => [k, [] as Slot[]])
         ) as Slots<SectionNames>
@@ -52,6 +53,16 @@ export class Inventory<SectionNames extends string> {
         this.inventory[section][index] = item
     }
 
+    itemToBlock(section: SectionNames, index: number) {
+        const item = this.inventory[section][index]
+        if (item) {
+            return items_id_to_name[
+                item.itemId.toString() as keyof typeof items_id_to_name
+            ]
+        }
+        return undefined
+    }
+
     public [Bun.inspect.custom]() {
         return this.inventory
     }
@@ -69,9 +80,16 @@ export class PlayerInventory extends Inventory<
         offhand: [45, 45],
     } as const
 
+    heldSlotIdx: number = 0
+
     constructor() {
         super(PlayerInventory.ranges)
     }
 
-    static sections = [] as const
+    getHeldItem() {
+        return this.heldSlotIdx < 0 ||
+            this.heldSlotIdx >= this.inventory.hotbar.length
+            ? undefined
+            : this.inventory.hotbar[this.heldSlotIdx]
+    }
 }

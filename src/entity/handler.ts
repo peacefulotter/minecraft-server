@@ -15,12 +15,16 @@ export class EntityHandler {
     }
 
     removeEntity(entity: Entity) {
+        const removed = entity.entityId in this.entities
         delete this.entities[entity.entityId]
+        return removed
     }
 
     removePlayer(player: Player) {
         this.removeEntity(player)
+        const removed = player.entityId in this.players
         delete this.players[player.entityId]
+        return removed
     }
 
     getAll() {

@@ -59,6 +59,11 @@ export const AcknowledgeBlockChange = new ClientBoundPacketCreator(
     }
 )
 
+export const BlockUpdate = new ClientBoundPacketCreator(0x09, 'BlockUpdate', {
+    location: new DataPosition(),
+    blockId: new VarInt(),
+})
+
 export const CloseContainer = new ClientBoundPacketCreator(
     0x12,
     'CloseContainer',
@@ -318,8 +323,9 @@ const AddPlayerAction = new DataObject({
     ),
 })
 
-const InitializeChatAction = new DataObject({
-    signatureData: new DataOptional(
+const PlayerActions = {
+    addPlayer: AddPlayerAction,
+    signature: new DataOptional(
         new DataObject({
             chatSessionId: new DataUUID(),
             publicKeyExpiryTime: new DataLong(),
@@ -327,40 +333,19 @@ const InitializeChatAction = new DataObject({
             publicKeySignature: new VarIntPrefixedByteArray(),
         })
     ),
-})
-
-const UpdateGameModeAction = new DataObject({
     gameMode: new VarInt() as Type<GameMode>,
-})
-
-const UpdateListedAction = new DataObject({
     listed: new DataBoolean(),
-})
-
-const UpdateLatencyAction = new DataObject({
     ping: new VarInt(),
-})
-
-const UpdateDisplayNameAction = new DataObject({
-    displayName: new DataOptional(new DataNBT()), // TODO: must be DataNBT
-})
-
-const PlayerActions = {
-    addPlayer: AddPlayerAction,
-    initializeChat: InitializeChatAction,
-    updateGameMode: UpdateGameModeAction,
-    updateListed: UpdateListedAction,
-    updateLatency: UpdateLatencyAction,
-    updateDisplayName: UpdateDisplayNameAction,
+    displayName: new DataOptional(new DataNBT()), // TODO: Text Component
 }
 
 const PlayerActionsMask: Record<keyof typeof PlayerActions, number> = {
     addPlayer: 0x01,
-    initializeChat: 0x02,
-    updateGameMode: 0x04,
-    updateListed: 0x08,
-    updateLatency: 0x10,
-    updateDisplayName: 0x20,
+    signature: 0x02,
+    gameMode: 0x04,
+    listed: 0x08,
+    ping: 0x10,
+    displayName: 0x20,
 }
 
 const _PlayerInfoUpdate = new ClientBoundPacketCreator(

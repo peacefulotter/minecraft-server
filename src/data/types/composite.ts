@@ -77,10 +77,9 @@ export class DataPosition implements Type<Vec3> {
 
     async read(buffer: PacketBuffer) {
         const long = await this.composite.read(buffer)
-        const val = long.toNumber()
-        const x = val >> 38
-        const y = (val << 52) >> 52
-        const z = (val << 26) >> 38
+        let x = long.shiftRight(38).toNumber()
+        let y = long.shiftLeft(52).shiftRight(52).toNumber()
+        let z = long.shiftLeft(26).shiftRight(38).toNumber()
         return v(x, y, z)
     }
 

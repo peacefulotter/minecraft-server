@@ -1,3 +1,4 @@
+import * as NBT from 'nbtify'
 import {
     AcknowledgeMessage,
     ChatCommand,
@@ -22,7 +23,9 @@ import {
 } from '~/net/packets/server'
 import { Handler } from '.'
 import {
+    BlockUpdate,
     CloseContainer as ClientCloseContainer,
+    PlayerInfoUpdate,
     SetHeadRotation,
     SpawnEntity,
     UpdateEntityPosition,
@@ -31,28 +34,44 @@ import {
 } from '~/net/packets/client'
 import { deltaPosition } from '~/position'
 import v from 'vec3'
+import type { Client } from '~/net/client'
+import { DataPosition } from '~/data/types'
 
 export const PlayHandler = Handler.init('Play')
 
     .register(ConfirmTeleportation, async ({ server, client }) => {
-        await server.broadcast(
-            client,
-            await SpawnEntity.serialize({
-                entityId: client.entityId,
-                entityUUID: client.entityUUID,
-                type: client.info.typeId,
-                x: client.x,
-                y: client.y,
-                z: client.z,
-                yaw: client.yaw,
-                pitch: client.pitch,
-                headYaw: client.headYaw,
-                data: client.data,
-                velocityX: client.velocityX,
-                velocityY: client.velocityY,
-                velocityZ: client.velocityZ,
-            })
+        client.spawned = true
+
+        const spawnEntity = await SpawnEntity.serialize(client)
+
+        const players = server.entities.getPlayers()
+        const playerInfoUpdate = await PlayerInfoUpdate(
+            players.map((p) => ({
+                uuid: p.entityUUID,
+                playerActions: {
+                    addPlayer: {
+                        name: p.username || 'player',
+                        properties: [],
+                    },
+                    signature: undefined,
+                    gameMode: p.gameMode,
+                    listed: true,
+                    ping: (p as Client).ping,
+                    displayName: new NBT.NBTData(
+                        NBT.parse(
+                            JSON.stringify({
+                                color: 'light_purple',
+                                text: p.username || 'player',
+                                bold: true,
+                            })
+                        ),
+                        { rootName: null }
+                    ),
+                },
+            }))
         )
+
+        await server.broadcast(client, [playerInfoUpdate, spawnEntity])
     })
 
     .register(AcknowledgeMessage, async ({ packet }) => {
@@ -122,7 +141,7 @@ export const PlayHandler = Handler.init('Play')
                 }),
                 await SetHeadRotation.serialize({
                     entityId: client.entityId,
-                    headYaw: client.yaw, // TODO: headYaw
+                    headYaw: client.headYaw,
                 }),
             ])
         }
@@ -136,13 +155,13 @@ export const PlayHandler = Handler.init('Play')
         await server.broadcast(client, [
             await UpdateEntityRotation.serialize({
                 entityId: client.entityId,
-                yaw: rotation.yaw,
+                yaw: client.yaw,
                 pitch: rotation.pitch,
                 onGround: onGround,
             }),
             await SetHeadRotation.serialize({
                 entityId: client.entityId,
-                headYaw: client.yaw, // TODO: headYaw
+                headYaw: client.headYaw,
             }),
         ])
     })
@@ -164,7 +183,7 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(SetHeldItem, async ({ client, packet }) => {
-        console.log('TODO: SETTING HELD ITEM')
+        client.inventory.heldSlotIdx = packet.slot
     })
 
     .register(SetCreativeModeSlot, async ({ client, packet }) => {
@@ -185,6 +204,17 @@ export const PlayHandler = Handler.init('Play')
     .register(UseItemOn, async ({ client, packet }) => {
         console.log('TODO: USE ITEM ON')
         // if ok: AcknowledgeBlockChange
+
+        const slot = client.inventory.getHeldItem()
+
+        console.log(slot)
+
+        if (!slot) return
+
+        return await BlockUpdate.serialize({
+            location: packet.location,
+            blockId: slot.itemId,
+        })
     })
 
     .register(UseItem, async ({ client, packet }) => {

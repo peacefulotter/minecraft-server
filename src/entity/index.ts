@@ -76,16 +76,6 @@ export abstract class Entity<
     rotation: Rotation
     velocity: Vec3
 
-    a = [
-        26, 2, 40, 202, 243, 53, 155, 150, 65, 216, 150, 248, 113, 245, 113,
-        198, 141, 234, 7, 103, 101, 110, 106, 105, 95, 95, 0,
-    ]
-
-    b = [
-        26, 2, 133, 195, 34, 228, 120, 94, 75, 112, 182, 107, 207, 16, 150, 200,
-        167, 178, 7, 103, 101, 110, 106, 105, 95, 95, 0,
-    ]
-
     constructor(
         metadata: Schema,
         public name: Name,
@@ -93,7 +83,6 @@ export abstract class Entity<
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
         public onGround: boolean = DEFAULT_ON_GROUND,
-        public headYaw: number = DEFAULT_HEAD_YAW,
         public data: number = DEFAULT_DATA,
         public gameMode: GameMode = GameMode.SURVIVAL
     ) {
@@ -142,6 +131,12 @@ export abstract class Entity<
     }
     get uuid() {
         return this.entityUUID
+    }
+    get type() {
+        return this.info.typeId
+    }
+    get headYaw() {
+        return (this.yaw * 256) / 360
     }
 
     public [Bun.inspect.custom]() {

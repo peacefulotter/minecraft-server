@@ -34,6 +34,8 @@ import { PacketBuffer } from './PacketBuffer'
 export class Server {
     // TODO: will see later if we need to use a worker
     // private worker: ServerWorker = new ServerWorker()
+
+    // TODO: this.clients duplicate as this.entities.players, do we want this?
     private clients: Record<SocketId, Client> = {}
     private handler = new MainHandler()
     private loop = new GameLoop(this.clients)
@@ -79,7 +81,6 @@ export class Server {
     open = async (socket: SocketWithId) => {
         const client = new Client(socket)
         console.log(client)
-        this.entities.addPlayer(client)
         this.clients[client.entityId] = client
         socket.id = client.entityId
         log('Socket connected', socket.id)
@@ -88,13 +89,19 @@ export class Server {
     close = async (socket: SocketWithId) => {
         log('Socket disconnected', socket.id)
         const client = this.clients[socket.id]
-        this.entities.removePlayer(client)
-        await this.broadcast(
-            client,
-            await PlayerInfoRemove.serialize({
-                players: [client.entityUUID],
-            })
-        )
+
+        // Remove player from entities
+        const removed = this.entities.removePlayer(client)
+        if (removed) {
+            // Broadcast player remove message
+            await this.broadcast(
+                client,
+                await PlayerInfoRemove.serialize({
+                    players: [client.entityUUID],
+                })
+            )
+        }
+        // finally, remove client from clients list
         delete this.clients[socket.id]
     }
 

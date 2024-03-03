@@ -42,29 +42,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
     .register(FinishConfiguration, async ({ server, client }) => {
         client.state = ClientState.PLAY
 
-        const chunks: ClientBoundPacket[] = []
-        const size = 3
-        for (let i = -size; i <= size; i++) {
-            for (let j = -size; j <= size; j++) {
-                chunks.push(
-                    await ChunkDataAndUpdateLight.serialize({
-                        chunkX: i,
-                        chunkZ: j,
-                        heightMaps: new NBT.NBTData({}, { rootName: null }),
-                        data: Buffer.from(chunk), // (terrainMap.get('0.0') as any).terrain,
-                        blockEntity: [],
-                        skyLightMask: new BitSet(0),
-                        blockLightMask: new BitSet(0),
-                        emptySkyLightMask: new BitSet(0),
-                        emptyBlockLightMask: new BitSet(0),
-                        skyLightArray: [],
-                        blockLightArray: [],
-                    })
-                )
-            }
-        }
-
-        const packets = [
+        const packets: any[] = [
             await PlayLogin.serialize({
                 entityId: entities.player.typeId, // see data-types/entities.ts
                 isHardcore: false,
@@ -100,16 +78,41 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     value: 0,
                 },
             }),
-            ...chunks,
+        ]
+
+        const size = 3
+        for (let i = -size; i <= size; i++) {
+            for (let j = -size; j <= size; j++) {
+                packets.push(
+                    await ChunkDataAndUpdateLight.serialize({
+                        chunkX: i,
+                        chunkZ: j,
+                        heightMaps: new NBT.NBTData({}, { rootName: null }),
+                        data: Buffer.from(chunk), // (terrainMap.get('0.0') as any).terrain,
+                        blockEntity: [],
+                        skyLightMask: new BitSet(0),
+                        blockLightMask: new BitSet(0),
+                        emptySkyLightMask: new BitSet(0),
+                        emptyBlockLightMask: new BitSet(0),
+                        skyLightArray: [],
+                        blockLightArray: [],
+                    })
+                )
+            }
+        }
+
+        packets.push(
             await SynchronizePlayerPosition.serialize({
                 ...SPAWN_POSITION,
                 yaw: client.yaw,
                 pitch: client.pitch,
                 flags: PlayerPositionFlag.NONE,
                 teleportId: 0,
-            }),
-        ]
+            })
+        )
 
+        // Add the player to list of entities since it has finished config, it will spawn soon
+        server.entities.addPlayer(client)
         const players = server.entities.getPlayers()
 
         if (players.length > 0) {
@@ -121,33 +124,20 @@ export const ConfigurationHandler = Handler.init('Configuration')
                             name: p.username || 'player',
                             properties: [],
                         },
-                        initializeChat: {
-                            signatureData: undefined,
-                        },
-                        updateGameMode: {
-                            gameMode: p.gameMode,
-                        },
-                        updateListed: {
-                            listed: true,
-                        },
-                        updateLatency: {
-                            ping: (p as Client).ping,
-                        },
-                        updateDisplayName: {
-                            displayName: new NBT.NBTData(
-                                NBT.parse(
-                                    JSON.stringify({
-                                        color: 'light_purple',
-                                        text: p.username || 'player',
-                                        bold: true,
-                                    })
-                                ),
-                                { rootName: null }
-                            ), //p.username,
-                            // displayName: new NBT.NBTData(p.username, {
-                            //     rootName: null,
-                            // }),
-                        },
+                        signature: undefined,
+                        gameMode: p.gameMode,
+                        listed: true,
+                        ping: (p as Client).ping,
+                        displayName: new NBT.NBTData(
+                            NBT.parse(
+                                JSON.stringify({
+                                    color: 'light_purple',
+                                    text: p.username || 'player',
+                                    bold: true,
+                                })
+                            ),
+                            { rootName: null }
+                        ),
                     },
                 }))
             )
@@ -156,23 +146,9 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
         packets.push(
             ...(await Promise.all(
-                server.entities.getAll().map((entity) =>
-                    SpawnEntity.serialize({
-                        entityId: entity.entityId,
-                        entityUUID: entity.entityUUID,
-                        type: entity.info.typeId,
-                        x: entity.position.x,
-                        y: entity.position.y,
-                        z: entity.position.z,
-                        yaw: entity.rotation.yaw,
-                        pitch: entity.rotation.pitch,
-                        headYaw: entity.headYaw,
-                        data: entity.data,
-                        velocityX: entity.velocity.x,
-                        velocityY: entity.velocity.y,
-                        velocityZ: entity.velocity.z,
-                    })
-                )
+                server.entities
+                    .getAll()
+                    .map((entity) => SpawnEntity.serialize(entity))
             ))
         )
 

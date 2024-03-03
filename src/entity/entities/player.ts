@@ -46,7 +46,6 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
         onGround: boolean = true,
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
-        headYaw: number = DEFAULT_HEAD_YAW,
         data: number = DEFAULT_DATA,
         gameMode: GameMode = GameMode.SURVIVAL
     ) {
@@ -57,7 +56,6 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
             rotation,
             velocity,
             onGround,
-            headYaw,
             data,
             gameMode
         )

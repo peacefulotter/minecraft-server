@@ -1,10 +1,20 @@
 # mc-server
 
-To install dependencies:
+## Installation
+
+Install dependencies:
 
 ```bash
 bun install
 ```
+
+Then, create the required json arrays
+
+```bash
+bun run ./static/mapper.ts
+```
+
+## Run
 
 To run:
 

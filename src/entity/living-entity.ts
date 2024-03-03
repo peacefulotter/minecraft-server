@@ -43,7 +43,6 @@ export abstract class LivingEntity<
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,
         onGround: boolean = DEFAULT_ON_GROUND,
-        headYaw: number = DEFAULT_HEAD_YAW,
         data: number = DEFAULT_DATA,
         gameMode: GameMode = GameMode.SURVIVAL
     ) {
@@ -54,7 +53,6 @@ export abstract class LivingEntity<
             rotation,
             velocity,
             onGround,
-            headYaw,
             data,
             gameMode
         )

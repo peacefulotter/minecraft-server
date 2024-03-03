@@ -28,6 +28,7 @@ export const KICK_TIMEOUT = 30000 // ms
 export class Client extends Player {
     state: ClientState = ClientState.HANDSHAKING
     encrypted: boolean = false
+    spawned = false
 
     refreshIn: number = REFRESH_INTERVAL
 

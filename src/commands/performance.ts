@@ -17,25 +17,7 @@ export const perf: Command<[]> = {
         })
 
         await client.write(
-            await Promise.all(
-                stands.map(async (as, i) => {
-                    return await SpawnEntity.serialize({
-                        entityId: as.entityId,
-                        entityUUID: as.entityUUID,
-                        type: as.info.typeId,
-                        x: as.position.x,
-                        y: as.position.y,
-                        z: as.position.z,
-                        yaw: as.rotation.yaw,
-                        pitch: as.rotation.pitch,
-                        headYaw: as.headYaw,
-                        data: as.data,
-                        velocityX: as.velocity.x,
-                        velocityY: as.velocity.y,
-                        velocityZ: as.velocity.z,
-                    })
-                })
-            )
+            await Promise.all(stands.map((as) => SpawnEntity.serialize(as)))
         )
 
         let i = 0
