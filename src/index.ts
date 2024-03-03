@@ -3,6 +3,12 @@ import path from 'path'
 import chalk from 'chalk'
 import { log } from './logger'
 import { Server } from './net/server'
+import Long from 'long'
+
+// Long toString override
+;(Long.prototype as any)[Bun.inspect.custom] = function () {
+    return `Long { ${this.toString()} }`
+}
 
 const runSocket = () => {
     const socket = Bun.listen({

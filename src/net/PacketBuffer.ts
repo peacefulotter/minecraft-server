@@ -194,15 +194,11 @@ export class PacketBuffer {
         this.writeOffset += LONG_SIZE
     }
 
-    // toString() {
-    //     return `${this.buffer}`
-    // }
-
-    // public [Symbol.toPrimitive](): string {
-    //     return this.toString()
-    // }
-
-    // public [Symbol.for('nodejs.util.inspect.custom')](): string {
-    //     return this.toString()
-    // }
+    [Bun.inspect.custom]() {
+        return {
+            buffer: this.buffer,
+            readOffset: this.readOffset,
+            writeOffset: this.writeOffset,
+        }
+    }
 }

@@ -40,16 +40,23 @@ export const perf: Command<[]> = {
 
         let i = 0
         let date = performance.now()
+
+        const iterations = 2500
+        let intervalTime = 0
+        let packetWriteTime = 0
         const interval = setInterval(async () => {
-            if (i > 10000) {
+            if (i > iterations) {
                 console.log('===============================')
                 console.log('======== REACHED END ==========')
                 console.log('===============================')
-
+                console.log('Interval time:', intervalTime / iterations, 'ms')
+                console.log('Packet time:', packetWriteTime / iterations, 'ms')
                 clearInterval(interval)
                 return
             }
-            console.log('Interval time:', performance.now() - date, 'ms')
+
+            intervalTime += performance.now() - date
+
             date = performance.now()
             await client.write(
                 await Promise.all(
@@ -66,8 +73,10 @@ export const perf: Command<[]> = {
                 ),
                 false
             )
-            console.log('Packet time:', performance.now() - date, 'ms')
+
+            packetWriteTime += performance.now() - date
             date = performance.now()
+
             i += 1
         }, 1)
     },

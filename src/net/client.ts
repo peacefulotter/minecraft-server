@@ -3,7 +3,6 @@ import * as NBT from 'nbtify'
 import { logClientBoundPacket } from '../logger'
 import type { ClientBoundPacket } from './packets/create'
 import type { SocketWithId } from '../socket'
-import Long from 'long'
 import {
     ConfigurationClientBoundKeepAlive,
     PlayClientBoundKeepAlive,
@@ -12,6 +11,7 @@ import {
 import { Player } from '~/entity/player'
 import { formatPacket } from './packets/format'
 import type { ClientInfo } from './packets/server/configuration'
+import Long from 'long'
 
 export enum ClientState {
     HANDSHAKING = 'handshake',

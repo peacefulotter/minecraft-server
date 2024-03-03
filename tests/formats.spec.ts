@@ -1,6 +1,6 @@
 import path from 'path'
 import * as NBT from 'nbtify'
-import { generateV4, parseUUID } from '@minecraft-js/uuid'
+import { parseUUID } from '@minecraft-js/uuid'
 import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'

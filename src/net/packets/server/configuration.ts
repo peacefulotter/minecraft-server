@@ -44,7 +44,7 @@ export const PluginMessage = ServerBoundPacketCreator(
     'PluginMessage' as const,
     {
         channel: new DataString() as Type<PluginChannel>,
-        data: new DataByteArray(),
+        data: new DataString(), // TODO support DataByteArray https://wiki.vg/Plugin_channels
     }
 )
 

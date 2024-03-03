@@ -70,7 +70,9 @@ export class VarLong implements Type<Long> {
         while (true) {
             const byte = await composite.read(buffer)
 
-            value = value.or(new Long(byte & SEGMENT_BITS).shiftLeft(position))
+            value = value.or(
+                new Long(byte & SEGMENT_BITS).shiftLeft(position)
+            ) as Long
 
             if ((byte & CONTINUE_BIT) == 0) break
 
