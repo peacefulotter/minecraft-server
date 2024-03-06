@@ -33,9 +33,20 @@ import {
     UpdateEntityRotation,
 } from '~/net/packets/client'
 import { deltaPosition } from '~/position'
-import v from 'vec3'
+import v, { Vec3 } from 'vec3'
 import type { Client } from '~/net/client'
-import { DataPosition } from '~/data/types'
+import { Face } from '~/data/enum'
+
+const getWorldPosition = (location: Vec3, face: number) => {
+    const { x, y, z } = location
+    const [dx, dy, dz] = [
+        face === Face.WEST ? -1 : face === Face.EAST ? 1 : 0,
+        face === Face.BOTTOM ? -1 : face === Face.TOP ? 1 : 0,
+        face === Face.SOUTH ? -1 : face === Face.NORTH ? 1 : 0,
+    ]
+    console.log('getWorldPosition', { x, y, z }, { dx, dy, dz })
+    return v(x + dx, y + dy, z + dz)
+}
 
 export const PlayHandler = Handler.init('Play')
 
@@ -201,19 +212,46 @@ export const PlayHandler = Handler.init('Play')
         console.log('TODO: TELEPORT TO ENTITY')
     })
 
-    .register(UseItemOn, async ({ client, packet }) => {
+    .register(UseItemOn, async ({ server, client, packet }) => {
         console.log('TODO: USE ITEM ON')
         // if ok: AcknowledgeBlockChange
 
-        const slot = client.inventory.getHeldItem()
+        // 1. Check if interacting with a block
+        console.log(server.blocks)
+        console.log('getBlock', server.blocks.getBlock(packet.location))
+        console.log(
+            'getBlockEntity',
+            server.blocks.getBlockEntity(packet.location)
+        )
 
+        // TODO: Check if block is an entity
+
+        // 2. Check if holding an item
+        const slot = client.inventory.getHeldItem()
         console.log(slot)
 
-        if (!slot) return
+        if (!slot) {
+            console.log('No item in hand')
+            return
+        }
+
+        // 3. Check if the item held is a block
+        const block = client.inventory.heldBlock()
+        console.log(block)
+
+        if (!block) {
+            console.log('No block in hand')
+            return
+        }
+
+        // 4. Place the block and register it
+        const worldPos = getWorldPosition(packet.location, packet.face)
+        console.log('Placing block at', worldPos)
+        server.blocks.setBlock(worldPos, block)
 
         return await BlockUpdate.serialize({
             location: packet.location,
-            blockId: slot.itemId,
+            blockId: block.numeric_id,
         })
     })
 

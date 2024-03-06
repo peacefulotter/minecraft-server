@@ -9,6 +9,7 @@ import { PlayerInfoRemove } from './packets/client'
 import { CommandHandler } from '~/commands/handler'
 import { unwrap } from './packets/server/unwrap'
 import { PacketBuffer } from './PacketBuffer'
+import { BlockHandler } from '~/blocks/handler'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -40,7 +41,9 @@ export class Server {
     private handler = new MainHandler()
     private loop = new GameLoop(this.clients)
     cmd = new CommandHandler()
+
     entities: EntityHandler = new EntityHandler()
+    blocks: BlockHandler = new BlockHandler()
 
     async handlePacket(client: Client, buffer: PacketBuffer, packetId: number) {
         const res = await this.handler.handle({

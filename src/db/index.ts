@@ -17,5 +17,5 @@ console.log(c)
 const f = c.all()
 console.log(f)
 
-// const query = db.query(`select $message;`);
-// query.get({ $message: "Hello world" });
+const query = db.query(`select $message;`)
+query.get({ $message: 'Hello world' })

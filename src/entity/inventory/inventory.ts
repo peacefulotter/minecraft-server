@@ -1,5 +1,6 @@
 import * as NBT from 'nbtify'
-import items_id_to_name from '~/data/db/items_id_to_name.json'
+import items_id_to_name from '~/db/items_id_to_name.json'
+import blocks from '~/db/blocks.json'
 
 type Slot = {
     itemId: number
@@ -56,9 +57,11 @@ export class Inventory<SectionNames extends string> {
     itemToBlock(section: SectionNames, index: number) {
         const item = this.inventory[section][index]
         if (item) {
-            return items_id_to_name[
-                item.itemId.toString() as keyof typeof items_id_to_name
-            ]
+            const name =
+                items_id_to_name[
+                    item.itemId.toString() as keyof typeof items_id_to_name
+                ]
+            return blocks[name as keyof typeof blocks]
         }
         return undefined
     }
@@ -91,5 +94,9 @@ export class PlayerInventory extends Inventory<
             this.heldSlotIdx >= this.inventory.hotbar.length
             ? undefined
             : this.inventory.hotbar[this.heldSlotIdx]
+    }
+
+    heldBlock() {
+        return this.itemToBlock('hotbar', this.heldSlotIdx)
     }
 }

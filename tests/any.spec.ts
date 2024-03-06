@@ -1,7 +1,9 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
+import type { Vec3 } from 'vec3'
+import v from 'vec3'
 
-describe('Buffer', () => {
+describe('any', () => {
     test('test', async () => {
         const buffer = Buffer.allocUnsafe(5)
         console.log(buffer)
@@ -25,5 +27,14 @@ describe('Buffer', () => {
         }
         const long = Long.fromNumber(0xdeadbeef, true)
         console.log(long)
+    })
+
+    test('test 4', async () => {
+        const m = new Map<Vec3, number>()
+        const vec = v(0, 1, 2)
+        m.set(vec, 42)
+        console.log(m)
+        console.log(m.get(v(0, 1, 2)))
+        console.log(m.get(vec))
     })
 })
