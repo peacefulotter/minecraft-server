@@ -1,6 +1,7 @@
 import * as NBT from 'nbtify'
 import item_id_to_name from '~/db/item_id_to_name.json'
 import blocks from '~/db/blocks.json'
+import type { Block } from '~/blocks/handler'
 
 type Slot = {
     itemId: number
@@ -56,14 +57,14 @@ export class Inventory<SectionNames extends string> {
 
     itemToBlock(section: SectionNames, index: number) {
         const item = this.inventory[section][index]
-        if (item) {
-            const name =
-                item_id_to_name[
-                    item.itemId.toString() as keyof typeof item_id_to_name
-                ]
-            return blocks[name as keyof typeof blocks]
-        }
-        return undefined
+        if (!item) return undefined
+
+        const name =
+            item_id_to_name[
+                item.itemId.toString() as keyof typeof item_id_to_name
+            ]
+        const block = blocks[name as keyof typeof blocks] as Block
+        return { name, block }
     }
 
     public [Bun.inspect.custom]() {

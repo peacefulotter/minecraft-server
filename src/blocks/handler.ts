@@ -1,52 +1,29 @@
 import type { Vec3 } from 'vec3'
-import type { BlockEntityNameMap } from '../../Region-Types/src/java'
+import blockNameToMenu from '~/db/block_name_to_menu.json'
 
-import type blocks from '~/db/blocks.json'
+export type BlockEntityName = keyof typeof blockNameToMenu
 
-type Block = (typeof blocks)[keyof typeof blocks]
+type BlockProperties = {
+    [key: string]: string[]
+}
 
-const isBlockEntity = (text_id: string): text_id is keyof BlockEntityNameMap =>
-    [
-        'banner',
-        'barrel',
-        'beacon',
-        'beehive',
-        'blast_furnace',
-        'brewing_stand',
-        'brushable_block',
-        'calibrated_sculk_sensor',
-        'campfire',
-        'chest',
-        'chiseled_bookshelf',
-        'comparator',
-        'command_block',
-        'conduit',
-        'dispenser',
-        'dropper',
-        'enchanting_table',
-        'end_gateway',
-        'furnace',
-        'hanging_sign',
-        'hopper',
-        'jigsaw',
-        'jukebox',
-        'lectern',
-        'mob_spawner',
-        'piston',
-        'sculk_catalyst',
-        'sculk_sensor',
-        'sculk_shrieker',
-        'shulker_box',
-        'sign',
-        'skull',
-        'smoker',
-        'soul_campfire',
-        'structure_block',
-        'trapped_chest',
-    ].includes(text_id)
+type BlockState<P extends BlockProperties> = {
+    id: number
+    properties: {
+        [K in keyof P]: P[K][number]
+    }
+}
+
+export type Block<P extends BlockProperties = BlockProperties> = {
+    properties: P
+    states: BlockState<P>[]
+}
+
+const isBlockEntity = (name: string): name is BlockEntityName =>
+    Object.keys(blockNameToMenu).includes(name)
 
 class BlockEntity {
-    constructor(public pos: Vec3, public text_id: keyof BlockEntityNameMap) {}
+    constructor(public pos: Vec3, public name: BlockEntityName) {}
 }
 
 type EncodedVec = `${number},${number},${number}`
@@ -61,11 +38,13 @@ export class BlockHandler {
         return this.blocks.get(encoded)
     }
 
-    public setBlock(pos: Vec3, block: Block): void {
+    public setBlock(pos: Vec3, name: string, block: Block): void {
         const encoded = encodeVec3(pos)
         this.blocks.set(encoded, block)
-        if (isBlockEntity(block.text_id)) {
-            this.entities.set(encoded, new BlockEntity(pos, block.text_id))
+        console.log(isBlockEntity(name), Object.keys(blockNameToMenu))
+
+        if (isBlockEntity(name)) {
+            this.entities.set(encoded, new BlockEntity(pos, name))
         }
     }
 

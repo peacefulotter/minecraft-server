@@ -304,6 +304,12 @@ export const UpdateEntityRotation = new ClientBoundPacketCreator(
     }
 )
 
+export const OpenScreen = new ClientBoundPacketCreator(0x30, 'OpenScreen', {
+    windowId: new VarInt(),
+    windowType: new VarInt(),
+    windowTitle: new DataNBT(), // TODO: Text Component
+})
+
 export const PlayerInfoRemove = new ClientBoundPacketCreator(
     0x3b,
     'PlayerInfoRemove',

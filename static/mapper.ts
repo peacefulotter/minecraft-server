@@ -4,36 +4,38 @@ import blocks from './blocks.json'
 
 const folder = path.join(import.meta.dir, '..', 'src', 'db')
 
+const groupById = (data: any) =>
+    Object.entries(data).reduce((acc, [key, value]: [any, any]) => {
+        acc[value['protocol_id']] = key
+        return acc
+    }, {} as Record<string, string>)
+
 const write = (filename: string, data: any) => {
     const file = path.join(folder, `${filename}.json`)
     console.log('Writing:', file)
     Bun.write(file, JSON.stringify(data, null, 4))
 }
 
-console.log(registries)
 console.log(Object.keys(registries))
 
 //  ============ ITEMS ID -> NAME ============
 const itemEntries = registries['minecraft:item']['entries']
-const item_id_to_name = Object.entries(itemEntries).reduce(
-    (acc, [key, value]) => {
-        acc[value['protocol_id']] = key
-        return acc
-    },
-    {} as Record<string, string>
-)
-write('item_id_to_name', item_id_to_name)
+write('item_id_to_name', groupById(itemEntries))
 
 //  ========== BLOCKS ID -> NAME ===========
 const blockEntries = registries['minecraft:block']['entries']
-const block_id_to_name = Object.entries(blockEntries).reduce(
-    (acc, [key, value]) => {
-        acc[value['protocol_id']] = key
-        return acc
-    },
-    {} as Record<string, string>
-)
-write('block_id_to_name', block_id_to_name)
+write('block_id_to_name', groupById(blockEntries))
 
 // ============ BLOCK NAME -> BLOCK DATA ============
 write('blocks', blocks)
+
+// ============ BLOCK NAME -> MENU ID ============
+const menuEntries = registries['minecraft:menu']['entries']
+const blockNameToMenu = Object.entries(menuEntries).reduce(
+    (acc, [blockName, menu]) => {
+        acc[blockName] = menu.protocol_id
+        return acc
+    },
+    {} as Record<string, number>
+)
+write('block_name_to_menu', blockNameToMenu)

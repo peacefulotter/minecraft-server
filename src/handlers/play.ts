@@ -25,6 +25,7 @@ import { Handler } from '.'
 import {
     BlockUpdate,
     CloseContainer as ClientCloseContainer,
+    OpenScreen,
     PlayerInfoUpdate,
     SetHeadRotation,
     SpawnEntity,
@@ -36,8 +37,7 @@ import { deltaPosition } from '~/position'
 import v, { Vec3 } from 'vec3'
 import type { Client } from '~/net/client'
 import { Face } from '~/data/enum'
-import { DataObject, DataPosition, VarInt } from '~/data/types'
-import { log } from '~/logger'
+import blockNameToMenu from '~/db/block_name_to_menu.json'
 
 const getWorldPosition = (location: Vec3, face: number) => {
     return location
@@ -220,14 +220,26 @@ export const PlayHandler = Handler.init('Play')
         // if ok: AcknowledgeBlockChange
 
         // 1. Check if interacting with a block
-        console.log(server.blocks)
-        console.log('getBlock', server.blocks.getBlock(packet.location))
-        console.log(
-            'getBlockEntity',
-            server.blocks.getBlockEntity(packet.location)
-        )
+        const entity = server.blocks.getBlockEntity(packet.location)
+        console.log('getBlockEntity', entity)
+        if (entity) {
+            console.log('Interacting with block entity')
 
-        // TODO: Check if block is an entity
+            return await OpenScreen.serialize({
+                windowId: 1,
+                windowType: blockNameToMenu[entity.name],
+                windowTitle: new NBT.NBTData(
+                    NBT.parse(
+                        JSON.stringify({
+                            color: 'light_purple',
+                            text: 'TEST SCREEN',
+                            bold: true,
+                        })
+                    ),
+                    { rootName: null }
+                ),
+            })
+        }
 
         // 2. Check if holding an item
         const slot = client.inventory.getHeldItem()
@@ -239,20 +251,22 @@ export const PlayHandler = Handler.init('Play')
         }
 
         // 3. Check if the item held is a block
-        const block = client.inventory.heldBlock()
-        console.log(block)
+        const held = client.inventory.heldBlock()
+        console.log(held)
 
-        if (!block) {
+        if (!held) {
             console.log('No block in hand')
             return
         }
 
+        const { block, name } = held
+
         // 4. Place the block and register it
         const worldPos = getWorldPosition(packet.location, packet.face)
-        console.log('Placing block at', worldPos)
-        // TODO: simplify before storing, keep only name, state id, and ...??
-        // server.blocks.setBlock(worldPos, block)
+        console.log('Placing block', name, 'at', worldPos)
+        server.blocks.setBlock(worldPos, name, block)
 
+        // TODO: better
         const state = (block as any).states.filter((s: any) => s.default)[0]
         console.log(state)
 
