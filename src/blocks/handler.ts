@@ -53,20 +53,19 @@ type EncodedVec = `${number},${number},${number}`
 const encodeVec3 = (pos: Vec3): EncodedVec => `${pos.x},${pos.y},${pos.z}`
 
 export class BlockHandler {
-    private blocks: Map<Vec3, Block> = new Map()
+    private blocks: Map<EncodedVec, Block> = new Map()
     private entities: Map<EncodedVec, BlockEntity> = new Map()
 
     public getBlock(pos: Vec3): Block | undefined {
-        return this.blocks.get(pos)
+        const encoded = encodeVec3(pos)
+        return this.blocks.get(encoded)
     }
 
     public setBlock(pos: Vec3, block: Block): void {
-        this.blocks.set(pos, block)
+        const encoded = encodeVec3(pos)
+        this.blocks.set(encoded, block)
         if (isBlockEntity(block.text_id)) {
-            this.entities.set(
-                encodeVec3(pos),
-                new BlockEntity(pos, block.text_id)
-            )
+            this.entities.set(encoded, new BlockEntity(pos, block.text_id))
         }
     }
 

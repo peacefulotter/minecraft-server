@@ -84,11 +84,10 @@ export class DataPosition implements Type<Vec3> {
     }
 
     async write(t: Vec3) {
-        const val =
-            ((t.x & 0x3ffffff) << 38) |
-            ((t.z & 0x3ffffff) << 12) |
-            (t.y & 0xfff)
-        const long = Long.fromNumber(val)
+        const long = new Long(
+            ((t.z & 0xfffff) << 12) | (t.y & 0xfff),
+            ((t.x & 0x3ffffff) << 6) | (t.z & 0x3f00000)
+        )
         return await this.composite.write(long)
     }
 }

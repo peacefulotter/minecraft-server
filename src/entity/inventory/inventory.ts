@@ -1,5 +1,5 @@
 import * as NBT from 'nbtify'
-import items_id_to_name from '~/db/items_id_to_name.json'
+import item_id_to_name from '~/db/item_id_to_name.json'
 import blocks from '~/db/blocks.json'
 
 type Slot = {
@@ -58,8 +58,8 @@ export class Inventory<SectionNames extends string> {
         const item = this.inventory[section][index]
         if (item) {
             const name =
-                items_id_to_name[
-                    item.itemId.toString() as keyof typeof items_id_to_name
+                item_id_to_name[
+                    item.itemId.toString() as keyof typeof item_id_to_name
                 ]
             return blocks[name as keyof typeof blocks]
         }

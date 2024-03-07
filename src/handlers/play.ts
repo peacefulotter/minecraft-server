@@ -36,16 +36,19 @@ import { deltaPosition } from '~/position'
 import v, { Vec3 } from 'vec3'
 import type { Client } from '~/net/client'
 import { Face } from '~/data/enum'
+import { DataObject, DataPosition, VarInt } from '~/data/types'
+import { log } from '~/logger'
 
 const getWorldPosition = (location: Vec3, face: number) => {
-    const { x, y, z } = location
-    const [dx, dy, dz] = [
-        face === Face.WEST ? -1 : face === Face.EAST ? 1 : 0,
-        face === Face.BOTTOM ? -1 : face === Face.TOP ? 1 : 0,
-        face === Face.SOUTH ? -1 : face === Face.NORTH ? 1 : 0,
-    ]
-    console.log('getWorldPosition', { x, y, z }, { dx, dy, dz })
-    return v(x + dx, y + dy, z + dz)
+    return location
+        .floor()
+        .add(
+            v(
+                face === Face.WEST ? -1 : face === Face.EAST ? 1 : 0,
+                face === Face.BOTTOM ? -1 : face === Face.TOP ? 1 : 0,
+                face === Face.NORTH ? -1 : face === Face.SOUTH ? 1 : 0
+            )
+        )
 }
 
 export const PlayHandler = Handler.init('Play')
@@ -247,12 +250,22 @@ export const PlayHandler = Handler.init('Play')
         // 4. Place the block and register it
         const worldPos = getWorldPosition(packet.location, packet.face)
         console.log('Placing block at', worldPos)
-        server.blocks.setBlock(worldPos, block)
+        // TODO: simplify before storing, keep only name, state id, and ...??
+        // server.blocks.setBlock(worldPos, block)
 
-        return await BlockUpdate.serialize({
-            location: packet.location,
-            blockId: block.numeric_id,
-        })
+        const state = (block as any).states.filter((s: any) => s.default)[0]
+        console.log(state)
+
+        return [
+            await BlockUpdate.serialize({
+                location: worldPos,
+                blockId: state.id,
+            }),
+            await BlockUpdate.serialize({
+                location: worldPos.add(v(0, 2, 0)),
+                blockId: 4277, // crafting table
+            }),
+        ]
     })
 
     .register(UseItem, async ({ client, packet }) => {

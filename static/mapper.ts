@@ -1,5 +1,6 @@
 import path from 'path'
-import { data } from './1.20.4'
+import registries from './registries.json'
+import blocks from './blocks.json'
 
 const folder = path.join(import.meta.dir, '..', 'src', 'db')
 
@@ -9,22 +10,30 @@ const write = (filename: string, data: any) => {
     Bun.write(file, JSON.stringify(data, null, 4))
 }
 
-// ============ ITEMS ID -> NAME ============
-const items_id_to_name = Object.fromEntries(
-    Object.entries(data.items.item).map(([key, value]) => {
-        return [value.numeric_id, key]
-    })
-)
-write('items_id_to_name', items_id_to_name)
+console.log(registries)
+console.log(Object.keys(registries))
 
-// ========== BLOCKS ID -> NAME ===========
-const blocks_id_to_name = Object.fromEntries(
-    Object.entries(data.blocks.block).map(([key, value]) => {
-        return [value.numeric_id, key]
-    })
+//  ============ ITEMS ID -> NAME ============
+const itemEntries = registries['minecraft:item']['entries']
+const item_id_to_name = Object.entries(itemEntries).reduce(
+    (acc, [key, value]) => {
+        acc[value['protocol_id']] = key
+        return acc
+    },
+    {} as Record<string, string>
 )
-write('blocks_id_to_name', blocks_id_to_name)
+write('item_id_to_name', item_id_to_name)
 
-// ========== BLOCKS LIST ===========
-const blocks = data.blocks.block
+//  ========== BLOCKS ID -> NAME ===========
+const blockEntries = registries['minecraft:block']['entries']
+const block_id_to_name = Object.entries(blockEntries).reduce(
+    (acc, [key, value]) => {
+        acc[value['protocol_id']] = key
+        return acc
+    },
+    {} as Record<string, string>
+)
+write('block_id_to_name', block_id_to_name)
+
+// ============ BLOCK NAME -> BLOCK DATA ============
 write('blocks', blocks)
