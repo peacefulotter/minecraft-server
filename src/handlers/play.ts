@@ -227,7 +227,7 @@ export const PlayHandler = Handler.init('Play')
 
             return await OpenScreen.serialize({
                 windowId: 1,
-                windowType: blockNameToMenu[entity.name],
+                windowType: blockNameToMenu[entity.menuName],
                 windowTitle: new NBT.NBTData(
                     NBT.parse(
                         JSON.stringify({
