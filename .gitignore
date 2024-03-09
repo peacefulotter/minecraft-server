@@ -1,5 +1,6 @@
-src/db/**/*.json
 static/**/*.json
+src/db/**/*.ts
+!src/db/index.ts
 
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 

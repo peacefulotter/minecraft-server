@@ -63,12 +63,15 @@ export class Client extends Player {
         this.write(
             await PlayDisconnect.serialize({
                 // TODO: fix Chat type
-                reason: NBT.parse(
-                    JSON.stringify({
-                        color: 'light_purple',
-                        text: 'You have been kicked from the server',
-                        bold: true,
-                    })
+                reason: new NBT.NBTData(
+                    NBT.parse(
+                        JSON.stringify({
+                            color: 'light_purple',
+                            text: 'You have been kicked from the server',
+                            bold: true,
+                        })
+                    ),
+                    { rootName: null }
                 ),
             })
         )

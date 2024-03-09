@@ -1,7 +1,6 @@
 import * as NBT from 'nbtify'
-import item_id_to_name from '~/db/item_id_to_name.json'
-import blocks from '~/db/blocks.json'
 import type { Block } from '~/blocks/handler'
+import { DB } from '~/db'
 
 type Slot = {
     itemId: number
@@ -10,9 +9,11 @@ type Slot = {
 }
 
 type Range = Readonly<[number, number]>
-type Ranges<K extends string = string> = {
-    readonly [k in K]: Range
+
+export type Ranges = {
+    readonly [k in string]: Range
 }
+
 type Slots<K extends string = string> = { [k in K]: (Slot | undefined)[] }
 
 type Section = {
@@ -21,13 +22,15 @@ type Section = {
     content: (Slot | undefined)[]
 }
 
-export class Inventory<SectionNames extends string> {
-    protected inventory: Slots<SectionNames>
+type Keys<R extends Ranges> = keyof R extends string ? keyof R : never
 
-    constructor(protected readonly ranges: Ranges<SectionNames>) {
+export class Inventory<R extends Ranges, S extends string = Keys<R>> {
+    protected inventory: Slots<S>
+
+    constructor(readonly ranges: R) {
         this.inventory = Object.fromEntries(
             Object.keys(ranges).map((k) => [k, [] as Slot[]])
-        ) as Slots<SectionNames>
+        ) as Slots<S>
     }
 
     getSectionFromSlot(slot: number): Section | undefined {
@@ -37,7 +40,7 @@ export class Inventory<SectionNames extends string> {
                 return {
                     name,
                     range: [min, max],
-                    content: this.inventory[name as SectionNames],
+                    content: this.inventory[name as S],
                 }
             }
         }
@@ -47,23 +50,30 @@ export class Inventory<SectionNames extends string> {
     setItemFromSlot(slot: number, item: Slot | undefined) {
         const section = this.getSectionFromSlot(slot)
         if (section) {
-            section.content[slot - section.range[0]] = item
+            const { content, range } = section
+            const idx = slot - range[0]
+            if (idx < 0 || idx > range[1]) {
+                throw new Error(
+                    `Invalid slot index ${idx} for section ${section} with range ${range}`
+                )
+            }
+            content[idx] = item
         }
     }
 
-    setItem(section: SectionNames, index: number, item: Slot) {
+    setItem(section: S, index: number, item: Slot) {
         this.inventory[section][index] = item
     }
 
-    itemToBlock(section: SectionNames, index: number) {
+    itemToBlock(section: S, index: number) {
         const item = this.inventory[section][index]
         if (!item) return undefined
 
         const name =
-            item_id_to_name[
-                item.itemId.toString() as keyof typeof item_id_to_name
+            DB.item_id_to_name[
+                item.itemId.toString() as keyof typeof DB.item_id_to_name
             ]
-        const block = blocks[name as keyof typeof blocks] as Block
+        const block = DB.blocks[name as keyof typeof DB.blocks] as Block
         return { name, block }
     }
 
@@ -72,9 +82,7 @@ export class Inventory<SectionNames extends string> {
     }
 }
 
-export class PlayerInventory extends Inventory<
-    keyof typeof PlayerInventory.ranges
-> {
+export class PlayerInventory extends Inventory<typeof PlayerInventory.ranges> {
     static ranges = {
         crafting_output: [0, 0],
         crafting_input: [1, 4],

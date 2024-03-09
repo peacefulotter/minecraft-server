@@ -117,19 +117,52 @@ export const PlayClientInformation = new ServerBoundPacketCreator(
     }
 )
 
+type ClickContainerAction<
+    Mode extends number,
+    Button extends number,
+    Slot extends number
+> = {
+    slot: Type<Slot>
+    button: Type<Button>
+    mode: Type<Mode>
+}
+
+type Enumerate<
+    N extends number,
+    Acc extends number[] = []
+> = Acc['length'] extends N
+    ? Acc[number]
+    : Enumerate<N, [...Acc, Acc['length']]>
+
+type IntRange<F extends number, T extends number> = Exclude<
+    Enumerate<T>,
+    Enumerate<F>
+>
+
+type ClickContainerActions =
+    | ClickContainerAction<0, 0 | 1, -999 | number>
+    | ClickContainerAction<1, 0 | 1, number>
+    | ClickContainerAction<2, IntRange<0, 40>, number>
+    | ClickContainerAction<3, 2, number>
+    | ClickContainerAction<4, 0 | 1, number>
+    | ClickContainerAction<5, Exclude<IntRange<0, 10>, 3 | 7>, -999 | number>
+    | ClickContainerAction<6, 0 | 1, number>
+
 export const ClickContainer = new ServerBoundPacketCreator(
     0x0d,
     'ClickContainer',
     {
         windowId: new DataUnsignedByte(),
         stateId: new VarInt(),
-        slot: new DataShort(),
-        button: new DataByte(),
-        actionNumber: new VarInt(), // TODO ENUM
+        action: new DataObject({
+            slot: new DataShort(),
+            button: new DataByte(),
+            mode: new VarInt(),
+        } as ClickContainerActions),
         changedSlots: new DataArray(
             new DataObject({
-                slotNumber: new DataShort(),
-                slot: new DataSlot(),
+                slot: new DataShort(),
+                item: new DataSlot(),
             })
         ),
         carriedItem: new DataSlot(),
@@ -149,7 +182,7 @@ export const ChangeContainerSlotState = new ServerBoundPacketCreator(
     'ChangeContainerSlotState',
     {
         slotId: new VarInt(),
-        windowId: new DataUnsignedByte(),
+        windowId: new VarInt(),
         state: new DataBoolean(),
     }
 )

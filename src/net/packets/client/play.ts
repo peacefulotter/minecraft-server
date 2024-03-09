@@ -19,8 +19,9 @@ import {
     DataUUID,
     DataNBT,
     DataSlot,
+    DataUnsignedByte,
 } from '~/data/types'
-import { GameMode } from '~/data/enum'
+import { EntityAnimations, GameMode } from '~/data/enum'
 import type { DimensionResource } from 'region-types'
 import { ClientBoundPacketCreator, type ClientBoundPacketData } from '../create'
 import type { ValueOf } from 'type-fest'
@@ -50,6 +51,27 @@ export const SpawnEntity = new ClientBoundPacketCreator(0x01, 'SpawnEntity', {
     velocityY: new DataShort(),
     velocityZ: new DataShort(),
 })
+
+export const SpawnExperienceOrb = new ClientBoundPacketCreator(
+    0x02,
+    'SpawnExperienceOrb',
+    {
+        entityId: new VarInt(),
+        x: new DataDouble(),
+        y: new DataDouble(),
+        z: new DataDouble(),
+        count: new DataShort(),
+    }
+)
+
+export const EntityAnimation = new ClientBoundPacketCreator(
+    0x03,
+    'EntityAnimation',
+    {
+        entityId: new VarInt(),
+        animation: new DataUnsignedByte() as Type<EntityAnimations>,
+    }
+)
 
 export const AcknowledgeBlockChange = new ClientBoundPacketCreator(
     0x05,
@@ -276,7 +298,8 @@ export const UpdateEntityPosition = new ClientBoundPacketCreator(
         deltaY: new DataShort(), // (currentY * 32 - prevY * 32) * 128
         deltaZ: new DataShort(), // (currentZ * 32 - prevZ * 32) * 128
         onGround: new DataBoolean(),
-    }
+    },
+    false
 )
 
 export const UpdateEntityPositionAndRotation = new ClientBoundPacketCreator(
@@ -290,7 +313,8 @@ export const UpdateEntityPositionAndRotation = new ClientBoundPacketCreator(
         yaw: new DataByte(),
         pitch: new DataByte(),
         onGround: new DataBoolean(),
-    }
+    },
+    false
 )
 
 export const UpdateEntityRotation = new ClientBoundPacketCreator(
@@ -301,7 +325,8 @@ export const UpdateEntityRotation = new ClientBoundPacketCreator(
         yaw: new DataByte(),
         pitch: new DataByte(),
         onGround: new DataBoolean(),
-    }
+    },
+    false
 )
 
 export const OpenScreen = new ClientBoundPacketCreator(0x31, 'OpenScreen', {

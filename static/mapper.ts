@@ -11,9 +11,14 @@ const groupById = (data: any) =>
     }, {} as Record<string, string>)
 
 const write = (filename: string, data: any) => {
-    const file = path.join(folder, `${filename}.json`)
+    const file = path.join(folder, `${filename}.ts`)
     console.log('Writing:', file)
-    Bun.write(file, JSON.stringify(data, null, 4))
+    const content = `export const ${filename} = ${JSON.stringify(
+        data,
+        null,
+        4
+    )}`
+    Bun.write(file, content)
 }
 
 console.log(Object.keys(registries))

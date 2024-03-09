@@ -151,3 +151,11 @@ export enum PlayerCommandAction {
     OPEN_VEHICLE_INVENTORY,
     START_FLYING_WITH_ELYTRA,
 }
+
+export enum EntityAnimations {
+    SWING_MAIN_ARM = 0,
+    LEAVE_BED,
+    SWING_OFFHAND,
+    CRITICAL_EFFECT,
+    MAGIC_CRITICAL_EFFECT,
+}

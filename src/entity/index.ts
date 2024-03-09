@@ -1,5 +1,8 @@
 import * as NBT from 'nbtify'
 import { generateV4, type UUID } from '@minecraft-js/uuid'
+import type { Vec3 } from 'vec3'
+import v from 'vec3'
+
 import { entities, type EntityMap, type EntityName } from '~/data/entities'
 import type { Position, Rotation } from '~/position'
 import { GameMode } from '~/data/enum'
@@ -9,16 +12,12 @@ import {
     type MetadataArgs,
     type MetadataSchema,
 } from './metadata'
-import type { Client } from '~/net/client'
 import { SetEntityMetadata } from '~/net/packets/client'
-import type { Vec3 } from 'vec3'
-import v from 'vec3'
 
 export const DEFAULT_POSITION: Position = v(0, 0, 0)
 export const DEFAULT_ON_GROUND = true
 export const DEFAULT_ROTATION: Rotation = { pitch: 0, yaw: 0 }
 export const DEFAULT_VELOCITY: Vec3 = v(0, 0, 0)
-export const DEFAULT_HEAD_YAW = 0
 export const DEFAULT_DATA = 0
 
 export type EntityId = number
@@ -44,12 +43,15 @@ const EntityMetadataSchema = {
     2: MD(
         'customName',
         16,
-        NBT.parse(
-            JSON.stringify({
-                color: 'light_purple',
-                text: 'CUSTOM NAME',
-                bold: true,
-            })
+        new NBT.NBTData(
+            NBT.parse(
+                JSON.stringify({
+                    color: 'light_purple',
+                    text: 'CUSTOM NAME',
+                    bold: true,
+                })
+            ),
+            { rootName: null }
         )
     ),
     3: MD('isCustomNameVisible', 8, true),

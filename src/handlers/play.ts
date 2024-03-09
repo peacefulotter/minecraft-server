@@ -20,11 +20,14 @@ import {
     TeleportToEntity,
     UseItemOn,
     UseItem,
+    ClickContainer,
+    ChangeContainerSlotState,
 } from '~/net/packets/server'
 import { Handler } from '.'
 import {
     BlockUpdate,
     CloseContainer as ClientCloseContainer,
+    EntityAnimation,
     OpenScreen,
     PlayerInfoUpdate,
     SetHeadRotation,
@@ -36,8 +39,7 @@ import {
 import { deltaPosition } from '~/position'
 import v, { Vec3 } from 'vec3'
 import type { Client } from '~/net/client'
-import { Face } from '~/data/enum'
-import blockNameToMenu from '~/db/block_name_to_menu.json'
+import { EntityAnimations, Face } from '~/data/enum'
 
 const getWorldPosition = (location: Vec3, face: number) => {
     return location
@@ -100,11 +102,42 @@ export const PlayHandler = Handler.init('Play')
         console.log('TODO: CHAT MESSAGE')
     })
 
+    .register(ClickContainer, async ({ client, packet }) => {
+        console.log('TODO: CLICK CONTAINER')
+        const { action, changedSlots, carriedItem } = packet
+
+        // Pick up item
+        if (carriedItem) {
+            // client.inventory.setCarriedItem(carriedItem, changedSlots)
+        } else {
+            const container = client.container
+            console.log('container', container)
+
+            // Client hasn't opened a container - should be impossible
+            if (!container) return
+
+            container.insert(changedSlots)
+            console.log(container.inventory)
+            // client.inventory.setCarriedItem(undefined, [])
+        }
+    })
+
     .register(ServerCloseContainer, async ({ server, client, packet }) => {
+        if (packet.windowId === 0) {
+            // Sent when the player closes the inventory, thus do nothing
+            return
+        }
+
+        client.windowId++
+
         const res = await ClientCloseContainer.serialize({
             windowId: packet.windowId,
         })
         await server.broadcast(client, res)
+    })
+
+    .register(ChangeContainerSlotState, async ({ client, packet }) => {
+        console.log('TODO: ChangeContainerSlotState')
     })
 
     .register(Interact, async ({ client, packet }) => {
@@ -206,9 +239,15 @@ export const PlayHandler = Handler.init('Play')
         console.log(client.inventory)
     })
 
-    .register(SwingHand, async ({ client, packet }) => {
-        // TODO: handle swing hand
+    .register(SwingHand, async ({ server, client, packet }) => {
         console.log('TODO: SWINGING HAND')
+        server.broadcast(
+            client,
+            await EntityAnimation.serialize({
+                entityId: client.entityId,
+                animation: EntityAnimations.SWING_MAIN_ARM,
+            })
+        )
     })
 
     .register(TeleportToEntity, async ({ client, packet }) => {
@@ -216,29 +255,18 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(UseItemOn, async ({ server, client, packet }) => {
-        console.log('TODO: USE ITEM ON')
-        // if ok: AcknowledgeBlockChange
+        console.log(
+            'TODO: USE ITEM ON: AcknowledgeBlockChange + shift click on interactable places a block'
+        )
 
         // 1. Check if interacting with a block
-        const entity = server.blocks.getBlockEntity(packet.location)
-        console.log('getBlockEntity', entity)
-        if (entity) {
-            console.log('Interacting with block entity')
+        const interactable = server.blocks.getInteractable(packet.location)
+        console.log('interactable', interactable)
 
-            return await OpenScreen.serialize({
-                windowId: 1,
-                windowType: blockNameToMenu[entity.menuName],
-                windowTitle: new NBT.NBTData(
-                    NBT.parse(
-                        JSON.stringify({
-                            color: 'light_purple',
-                            text: 'TEST SCREEN',
-                            bold: true,
-                        })
-                    ),
-                    { rootName: null }
-                ),
-            })
+        // 1.2 if block is an interactable container
+        if (interactable) {
+            console.log('Interacting with block entity')
+            return interactable.interact(server, client, packet)
         }
 
         // 2. Check if holding an item
