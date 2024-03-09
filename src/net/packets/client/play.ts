@@ -1,3 +1,6 @@
+import type { UUID } from '@minecraft-js/uuid'
+import type { DimensionResource } from 'region-types'
+
 import {
     DataBoolean,
     DataByte,
@@ -21,11 +24,8 @@ import {
     DataSlot,
     DataUnsignedByte,
 } from '~/data/types'
-import { EntityAnimations, GameMode } from '~/data/enum'
-import type { DimensionResource } from 'region-types'
+import { EntityAnimations, GameMode, type GameEvents } from '~/data/enum'
 import { ClientBoundPacketCreator, type ClientBoundPacketData } from '../create'
-import type { ValueOf } from 'type-fest'
-import type { UUID } from '@minecraft-js/uuid'
 import type { EntityId } from '~/entity'
 import type { EntityTypeId } from '~/data/entities'
 import { DataEntityMetadata, type MetadataSchema } from '~/entity/metadata'
@@ -100,70 +100,10 @@ export const SetContainerContent = new ClientBoundPacketCreator(
     {
         windowId: new DataByte(), // 0 for player inventory
         stateId: new VarInt(),
-        count: new VarInt(),
-        carriedItems: new DataArray(new DataSlot()), // Item being dragged with the mouse
+        carriedItems: new DataArray(new DataSlot()),
+        carriedItem: new DataSlot(), // Item being dragged with the mouse
     }
 )
-
-// TODO: move this
-// https://wiki.vg/Protocol#Set_Container_Property
-enum FurnaceProperties {
-    FIRE_ICON = 0,
-    MAX_FUEL_BURN_TIME,
-    PROGRESS_ARROW,
-    MAXIMUM_PROGRESS,
-}
-
-enum EnchantingTableProperties {
-    LEVEL_SLOT_TOP = 0,
-    LEVEL_SLOT_MIDDLE,
-    LEVEL_SLOT_BOTTOM,
-    ENCHANTMENT_SEED,
-    ENCHANTMENT_ID_TOP,
-    ENCHANTMENT_ID_MIDDLE,
-    ENCHANTMENT_ID_BOTTOM,
-    ENCHANTMENT_LEVEL_TOP,
-    ENCHANTMENT_LEVEL_MIDDLE,
-    ENCHANTMENT_LEVEL_BOTTOM,
-}
-
-enum BeaconProperties {
-    POWER_LEVEL = 0,
-    FIRST_POTION_EFFECT,
-    SECOND_POTION_EFFECT,
-}
-
-enum AnvilProperties {
-    REPAIR_COST = 0,
-}
-
-enum BrewingStandProperties {
-    BREW_TIME = 0,
-    FUEL_TIME,
-}
-
-enum StonecutterProperties {
-    SELECTED_RECIPE = 0,
-}
-
-enum LoomProperties {
-    SELECTED_PATTERN = 0,
-}
-
-enum LecternProperties {
-    PAGE = 0,
-}
-
-export type ContainerProperties = {
-    furnace: FurnaceProperties
-    enchanting_table: EnchantingTableProperties
-    beacon: BeaconProperties
-    anvil: AnvilProperties
-    brewing_stand: BrewingStandProperties
-    stonecutter: StonecutterProperties
-    loom: LoomProperties
-    lectern: LecternProperties
-}
 
 export const SetContainerPropery = new ClientBoundPacketCreator(
     0x14,
@@ -193,32 +133,6 @@ export const PlayDisconnect = new ClientBoundPacketCreator(
         reason: new DataNBT(),
     }
 )
-
-type GameEffect<N extends string, E extends number, V extends number> = {
-    name: N
-    effect: E
-    value: V
-}
-
-type GameEventEffect =
-    | GameEffect<'NO_RESPAWN_BLOCK_AVAILABLE', 0, number>
-    | GameEffect<'END_RAINING', 1, number>
-    | GameEffect<'BEGIN_RAINING', 2, number>
-    | GameEffect<'CHANGE_GAME_MODE', 3, GameMode>
-    | GameEffect<'WIN_GAME', 4, 0 | 1>
-    | GameEffect<'DEMO_EVENT', 5, 0 | 101 | 102 | 103 | 104>
-    | GameEffect<'ARROW_HIT_PLAYER', 6, number>
-    | GameEffect<'RAIN_LEVEL_CHANGE', 7, number> // [0, 1]
-    | GameEffect<'THUNDER_LEVEL_CHANGE', 8, number> // [0, 1]
-    | GameEffect<'PUFFER_FISH_STING', 9, number>
-    | GameEffect<'GUARDIAN_ELDER_APPEARANCE', 10, number>
-    | GameEffect<'ENABLE_RESPAWN_SCREEN', 11, 0 | 1>
-    | GameEffect<'LIMITED_CRAFTING', 12, 0 | 1>
-    | GameEffect<'START_WAITING_CHUNKS', 13, number>
-
-type GameEvents = ValueOf<{
-    [K in GameEventEffect as K['name']]: Omit<K, 'name'>
-}>
 
 export const GameEvent = new ClientBoundPacketCreator(0x20, 'GameEvent', {
     event: new DataObject({

@@ -23,12 +23,14 @@ import {
 import { ServerBoundPacketCreator } from '../create'
 import type {
     ActionStatus,
+    ClickContainerButtons,
     Difficulty,
     Face,
     MainHand,
     PlayerCommandAction,
 } from '~/data/enum'
 import type { EntityId } from '~/entity'
+import type { IntRange } from 'type-fest'
 
 export const ConfirmTeleportation = new ServerBoundPacketCreator(
     0x00,
@@ -117,6 +119,15 @@ export const PlayClientInformation = new ServerBoundPacketCreator(
     }
 )
 
+export const ClickContainerButton = new ServerBoundPacketCreator(
+    0x0c,
+    'ClickContainerButton',
+    {
+        windowId: new DataUnsignedByte(),
+        buttonId: new DataUnsignedByte(),
+    }
+)
+
 type ClickContainerAction<
     Mode extends number,
     Button extends number,
@@ -126,18 +137,6 @@ type ClickContainerAction<
     button: Type<Button>
     mode: Type<Mode>
 }
-
-type Enumerate<
-    N extends number,
-    Acc extends number[] = []
-> = Acc['length'] extends N
-    ? Acc[number]
-    : Enumerate<N, [...Acc, Acc['length']]>
-
-type IntRange<F extends number, T extends number> = Exclude<
-    Enumerate<T>,
-    Enumerate<F>
->
 
 type ClickContainerActions =
     | ClickContainerAction<0, 0 | 1, -999 | number>

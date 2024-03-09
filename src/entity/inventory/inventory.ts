@@ -5,68 +5,33 @@ import { DB } from '~/db'
 type Slot = {
     itemId: number
     itemCount: number
-    nbt?: NBT.NBTData | undefined
+    nbt: NBT.NBTData | undefined
 }
 
-type Range = Readonly<[number, number]>
+export class Inventory {
+    protected inventory = new Map<number, Slot>()
 
-export type Ranges = {
-    readonly [k in string]: Range
-}
+    constructor(private readonly length: number) {}
 
-type Slots<K extends string = string> = { [k in K]: (Slot | undefined)[] }
-
-type Section = {
-    name: string
-    range: Range
-    content: (Slot | undefined)[]
-}
-
-type Keys<R extends Ranges> = keyof R extends string ? keyof R : never
-
-export class Inventory<R extends Ranges, S extends string = Keys<R>> {
-    protected inventory: Slots<S>
-
-    constructor(readonly ranges: R) {
-        this.inventory = Object.fromEntries(
-            Object.keys(ranges).map((k) => [k, [] as Slot[]])
-        ) as Slots<S>
+    getItem(slot: number) {
+        return this.inventory.get(slot)
     }
 
-    getSectionFromSlot(slot: number): Section | undefined {
-        for (const [name, range] of Object.entries(this.ranges)) {
-            const [min, max] = range as [number, number]
-            if (slot >= min && slot <= max) {
-                return {
-                    name,
-                    range: [min, max],
-                    content: this.inventory[name as S],
-                }
-            }
+    setItem(slot: number, item: Slot | undefined) {
+        if (slot < 0 || slot >= this.length) {
+            throw new Error(
+                `Invalid slot index: ${slot}, length: ${this.length}`
+            )
         }
-        return undefined
-    }
-
-    setItemFromSlot(slot: number, item: Slot | undefined) {
-        const section = this.getSectionFromSlot(slot)
-        if (section) {
-            const { content, range } = section
-            const idx = slot - range[0]
-            if (idx < 0 || idx > range[1]) {
-                throw new Error(
-                    `Invalid slot index ${idx} for section ${section} with range ${range}`
-                )
-            }
-            content[idx] = item
+        if (item) {
+            this.inventory.set(slot, item)
+        } else {
+            this.inventory.delete(slot)
         }
     }
 
-    setItem(section: S, index: number, item: Slot) {
-        this.inventory[section][index] = item
-    }
-
-    itemToBlock(section: S, index: number) {
-        const item = this.inventory[section][index]
+    itemToBlock(slot: number) {
+        const item = this.getItem(slot)
         if (!item) return undefined
 
         const name =
@@ -77,35 +42,49 @@ export class Inventory<R extends Ranges, S extends string = Keys<R>> {
         return { name, block }
     }
 
+    getAllItems() {
+        return new Array(this.length).map((_, i) => this.inventory.get(i))
+    }
+
     public [Bun.inspect.custom]() {
         return this.inventory
     }
 }
 
-export class PlayerInventory extends Inventory<typeof PlayerInventory.ranges> {
-    static ranges = {
-        crafting_output: [0, 0],
-        crafting_input: [1, 4],
-        armor: [5, 8],
-        main: [9, 35],
-        hotbar: [36, 44],
-        offhand: [45, 45],
-    } as const
+export type InventorySections = { [name: string]: number }
 
-    heldSlotIdx: number = 0
-
-    constructor() {
-        super(PlayerInventory.ranges)
+export class MergedInventory<S extends InventorySections> extends Inventory {
+    constructor(private readonly sections: S) {
+        super(Object.values(sections).reduce((acc, len) => acc + len))
     }
 
-    getHeldItem() {
-        return this.heldSlotIdx < 0 ||
-            this.heldSlotIdx >= this.inventory.hotbar.length
-            ? undefined
-            : this.inventory.hotbar[this.heldSlotIdx]
+    private getIndex(name: keyof S, slot: number) {
+        let lengthUntilName = 0
+        for (const [n, len] of Object.entries(this.sections)) {
+            if (n === name) break
+            lengthUntilName += len
+        }
+        return lengthUntilName + slot
     }
 
-    heldBlock() {
-        return this.itemToBlock('hotbar', this.heldSlotIdx)
+    from = <T>(cb: (idx: number) => T, name: keyof S, slot: number) => {
+        if (slot < 0 || slot >= this.sections[name]) {
+            return undefined
+        }
+        const idx = this.getIndex(name, slot)
+        return cb(idx)
+    }
+
+    // slot = relative index
+    getItemFrom(name: keyof S, slot: number) {
+        return this.from(this.getItem, name, slot)
+    }
+
+    setItemFrom(name: keyof S, slot: number, item: Slot | undefined) {
+        this.from((i) => this.setItem(i, item), name, slot)
+    }
+
+    itemToBlockFrom(name: keyof S, slot: number) {
+        return this.from(this.itemToBlock, name, slot)
     }
 }

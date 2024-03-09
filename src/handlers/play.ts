@@ -22,6 +22,7 @@ import {
     UseItem,
     ClickContainer,
     ChangeContainerSlotState,
+    ClickContainerButton,
 } from '~/net/packets/server'
 import { Handler } from '.'
 import {
@@ -102,24 +103,47 @@ export const PlayHandler = Handler.init('Play')
         console.log('TODO: CHAT MESSAGE')
     })
 
+    .register(ClickContainerButton, async ({ client, packet }) => {
+        console.log('TODO: CLICK CONTAINER BUTTON')
+        // use ClickContainerButtons
+    })
+
     .register(ClickContainer, async ({ client, packet }) => {
         console.log('TODO: CLICK CONTAINER')
         const { action, changedSlots, carriedItem } = packet
+        const { mode, button, slot } = action
 
-        // Pick up item
-        if (carriedItem) {
-            // client.inventory.setCarriedItem(carriedItem, changedSlots)
-        } else {
-            const container = client.container
-            console.log('container', container)
+        const container = client.container
+        if (!container) return // Client hasn't opened a container - should be impossible
 
-            // Client hasn't opened a container - should be impossible
-            if (!container) return
-
-            container.insert(changedSlots)
-            console.log(container.inventory)
-            // client.inventory.setCarriedItem(undefined, [])
+        if (mode === 0) {
+            // Click outside inventory
+            if (slot === -999) {
+                // Drop item
+                // client.inventory.dropItem(changedSlots)
+            } else {
+                // Left mouse click
+                if (button === 0) {
+                    // Placing items
+                    if (!carriedItem) {
+                        console.log('PLACING ITEM', changedSlots)
+                        container.insert(changedSlots)
+                    }
+                    // Taking items
+                    else {
+                        const { slot: takenSlot, item } = changedSlots[0]
+                        console.log('TAKING ITEM', takenSlot, item)
+                        client.inventory.setItem(takenSlot, item)
+                    }
+                }
+                // Right mouse click
+                else {
+                    console.log('TODO: RIGHT CLICK')
+                }
+            }
         }
+
+        console.log(container.inventory)
     })
 
     .register(ServerCloseContainer, async ({ server, client, packet }) => {
@@ -235,7 +259,7 @@ export const PlayHandler = Handler.init('Play')
 
     .register(SetCreativeModeSlot, async ({ client, packet }) => {
         const { slot, item } = packet
-        client.inventory.setItemFromSlot(slot, item)
+        client.inventory.setItem(slot, item)
         console.log(client.inventory)
     })
 

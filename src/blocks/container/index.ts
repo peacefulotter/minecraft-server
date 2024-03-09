@@ -26,6 +26,8 @@ type ChangedSlots = ServerBoundPacketData<
     (typeof ClickContainer)['types']
 >['changedSlots']
 
+export type BlockMenuName = keyof typeof DB.block_name_to_menu
+
 export abstract class Container<Inv extends SupportedInventories>
     implements Interactable
 {

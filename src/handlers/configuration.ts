@@ -18,6 +18,7 @@ import {
     PlayerInfoUpdate,
     PlayerPositionFlag,
     SetCenterChunk,
+    SetContainerContent,
     SetDefaultSpawnPosition,
     SpawnEntity,
     SynchronizePlayerPosition,
@@ -150,6 +151,17 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     .getAll()
                     .map((entity) => SpawnEntity.serialize(entity))
             ))
+        )
+
+        console.log(client.inventory.getAllItems())
+
+        packets.push(
+            await SetContainerContent.serialize({
+                windowId: 0,
+                stateId: 0,
+                carriedItems: client.inventory.getAllItems(),
+                carriedItem: undefined,
+            })
         )
 
         return packets

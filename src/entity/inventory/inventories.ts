@@ -1,22 +1,20 @@
-import { Inventory, type Ranges } from './inventory'
+import { MergedInventory, type InventorySections } from './inventory'
 
 const createInventory =
-    <R extends Ranges>(ranges: R) =>
+    <T extends InventorySections>(sections: T) =>
     () =>
-        new Inventory(ranges)
+        new MergedInventory(sections)
 
 export const inventories = {
     'minecraft:crafter_3x3': createInventory({
-        output: [0, 0],
-        crafting: [1, 9],
-        main: [10, 36],
-        hotbar: [37, 45],
+        output: 1,
+        crafting: 9,
+        player: 36,
     } as const),
     'minecraft:enchantment': createInventory({
-        item: [0, 0],
-        lapis: [1, 1],
-        main: [2, 28],
-        hotbar: [29, 37],
+        item: 1,
+        lapis: 1,
+        player: 36,
     } as const),
 } as const
 
