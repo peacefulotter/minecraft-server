@@ -74,46 +74,93 @@ const coords = regions.map((region) => {
     const [x, z] = region.slice(2, -4).split('.')
     return { x: parseInt(x), z: parseInt(z) }
 })
-console.log(coords)
-
-const formatCoords = (x: number, z: number) => `${x}.${z}`
 
 const loadTerrain = async (filename: string) => {
-    const file = Bun.file(path.join(import.meta.dir, 'region', filename))
-    const buffer = await file.arrayBuffer()
-    const parser = new AnvilParser(buffer)
-    const chunks = parser.getLocationEntries()
-    const nonEmptyChunks = chunks.filter((x) => x.offset > 0)
-    const data = nonEmptyChunks.reduce((acc, cur) => {
-        const b = parser.getChunkData(cur.offset)
-        if (b === undefined) return acc
-        return Buffer.concat([acc, Buffer.from(b)])
-    }, Buffer.from([]))
-    const tag = new NBTParser(data.buffer as ArrayBuffer).getTag()
-    console.log(tag)
-    return data
+    const p = path.join(import.meta.dir, 'region', filename)
+    const buffer = await Bun.file(p).arrayBuffer()
+    // const regions = readRegion(new Uint8Array(buffer))
+    // console.log(regions)
+    // const r = regions[0]
+    // const a = await readChunks(regions)
+    // console.log(a)
+    console.log(buffer)
+
+    // const parser = new AnvilParser(buffer)
+
+    // const chunks = parser.getLocationEntries()
+    // const firstNonEmptyChunk = chunks.filter((x) => x.offset > 0)[0].offset
+    // const data = parser.getChunkData(firstNonEmptyChunk) // receives NBT data of the first chunk
+    // const nbtParser = new NBTParser(data)
+    // const tag = nbtParser.getTag()
+    // console.log(tag)
+    // let a = undefined
+    // for (const elt of tag['data'] as any[]) {
+    //     if (elt.name === 'sections') {
+    //         a = elt.data
+    //     }
+    // }
+    // console.log(a)
+    // const sec = a.data[a.data.length - 1]
+    // console.log(sec)
+    // console.log(sec[0])
+
+    // console.log(getNbts(buffer))
 }
 
-const terrain = (await Promise.all(
-    coords.map(async ({ x, z }, i) => {
-        return [
-            formatCoords(x, z),
-            {
-                chunkX: x,
-                chunkZ: z,
-                region: regions[i],
-                terrain: await loadTerrain(regions[i]),
-            },
-        ]
-    })
-)) as [
-    string,
-    { chunkX: number; chunkZ: number; region: string; terrain: Buffer }
-][]
+// const parsers = await Promise.all(regions.map(loadTerrain))
+const chunk = await loadTerrain(regions[2])
 
-export const terrainMap = new Map(terrain)
-console.log(terrainMap)
-console.log(terrainMap.get(formatCoords(0, 1)))
+export const getChunk = async (x: number, z: number) => {
+    return chunk
+    // console.log(x, z)
+    // const chunk = parsers.find((p) => p.getChunkAtChunkCoordinates(x, z))
+    // console.log(chunk, chunk?.getChunkData())
+    // const buf = chunk?.buffer()
+    // console.log(buf)
+    // if (!buf) return Buffer.from([])
+    // console.log(buf)
+    // return Buffer.from(buf)
+}
+
+// const formatCoords = (x: number, z: number) => `${x}.${z}`
+
+// const loadTerrain = async (filename: string) => {
+//     const file = Bun.file(path.join(import.meta.dir, 'region', filename))
+//     const buffer = await file.arrayBuffer()
+//     const parser = new AnvilParser(buffer)
+//     const chunks = parser.getLocationEntries()
+//     const nonEmptyChunks = chunks.filter((x) => x.offset > 0)
+//     const data = nonEmptyChunks.reduce((acc, cur) => {
+//         const b = parser.getChunkData(cur.offset)
+
+//         if (b !== undefined) acc.push(Buffer.from(b))
+//         return acc
+//     }, [] as Buffer[])
+//     return Buffer.concat(data)
+// }
+
+// type Chunk = { chunkX: number; chunkZ: number; region: string; terrain: Buffer }
+
+// const terrain = [] as Chunk[]
+// const coordsMap: { [key: string]: number } = {}
+
+// for (let i = 0; i < regions.length; i++) {
+//     const { x, z } = coords[i]
+//     coordsMap[formatCoords(x, z)] = i
+//     terrain.push({
+//         chunkX: x,
+//         chunkZ: z,
+//         region: regions[i],
+//         terrain: await loadTerrain(regions[i]),
+//     })
+// }
+
+// export const getChunk = (x: number, z: number) => {
+//     const key = formatCoords(x, z)
+//     const idx = coordsMap[key]
+//     const chunk = terrain[idx]
+//     return chunk.terrain
+// }
 
 // type ChunkTagObj = {
 //     [K in ChunkData['name']]?: Extract<ChunkData, { name: K }>

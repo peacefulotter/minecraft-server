@@ -1,4 +1,5 @@
 import { PacketBuffer } from '../PacketBuffer'
+import { Client } from '../client'
 import { BundleDelimiter } from './client'
 import { wrap } from './client/wrap'
 import type { ClientBoundPacket } from './create'
@@ -32,7 +33,8 @@ const formatPacketGroup = async (packets: ClientBoundPacket[]) => {
             // data.map((d) => Buffer.concat([d.data, delimiterBuffer.data]))
             data.map((d) => d.data)
         ),
-    } as ClientBoundPacket
+        loggable: packets.find((p) => p.loggable) !== undefined,
+    }
 }
 
 const bundlePackets = async (packets: ClientBoundPacket[], join: boolean) => {

@@ -36,10 +36,16 @@ export class DataArray<T extends Type<any>>
 {
     boolean: Type<boolean> = new DataBoolean()
 
-    constructor(private type: T) {}
+    constructor(
+        private type: T,
+        private knownLength: number | undefined = undefined
+    ) {}
 
     async read(buffer: PacketBuffer) {
-        const size = await VarInt.read(buffer)
+        const size =
+            this.knownLength === undefined
+                ? await VarInt.read(buffer)
+                : this.knownLength
         const arr: InnerReadType<T>[] = new Array(size)
         for (let i = 0; i < size; i++) {
             arr[i] = await this.type.read(buffer)
@@ -48,7 +54,10 @@ export class DataArray<T extends Type<any>>
     }
 
     async write(ts: InnerWriteType<T>[]) {
-        const length = await VarInt.write(ts.length)
+        const length =
+            this.knownLength === undefined
+                ? await VarInt.write(ts.length)
+                : Buffer.from([])
         const arr = new Array(ts.length)
         for (let i = 0; i < ts.length; i++) {
             arr[i] = await this.type.write(ts[i])

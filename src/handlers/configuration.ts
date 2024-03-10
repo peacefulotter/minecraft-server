@@ -25,11 +25,12 @@ import {
 } from '~/net/packets/client'
 import { GameMode } from '~/data/enum'
 import { hashSeed } from '~/seed'
-import type { ClientBoundPacket } from '~/net/packets/create'
 import BitSet from 'bitset'
-import { chunk } from '~/world/chunk'
 import { SPAWN_POSITION, WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
+import { getChunk } from '~/world/parse'
+import { chunk } from '~/world/chunk'
+import { mca } from '~/world/mca'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
@@ -43,7 +44,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
     .register(FinishConfiguration, async ({ server, client }) => {
         client.state = ClientState.PLAY
 
-        const packets: any[] = [
+        await client.write([
             await PlayLogin.serialize({
                 entityId: entities.player.typeId, // see data-types/entities.ts
                 isHardcore: false,
@@ -79,17 +80,17 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     value: 0,
                 },
             }),
-        ]
+        ])
 
         const size = 3
         for (let i = -size; i <= size; i++) {
             for (let j = -size; j <= size; j++) {
-                packets.push(
+                await client.write(
                     await ChunkDataAndUpdateLight.serialize({
                         chunkX: i,
                         chunkZ: j,
                         heightMaps: new NBT.NBTData({}, { rootName: null }),
-                        data: Buffer.from(chunk), // (terrainMap.get('0.0') as any).terrain,
+                        data: mca, //
                         blockEntity: [],
                         skyLightMask: new BitSet(0),
                         blockLightMask: new BitSet(0),
@@ -101,6 +102,8 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 )
             }
         }
+
+        const packets = []
 
         packets.push(
             await SynchronizePlayerPosition.serialize({
@@ -152,8 +155,6 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     .map((entity) => SpawnEntity.serialize(entity))
             ))
         )
-
-        console.log(client.inventory.getAllItems())
 
         packets.push(
             await SetContainerContent.serialize({

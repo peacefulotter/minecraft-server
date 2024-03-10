@@ -4,6 +4,20 @@ import chalk from 'chalk'
 import { log } from './logger'
 import { Server } from './net/server'
 
+{
+    let serve = Bun.serve
+    Bun.serve = (x: any) =>
+        serve({
+            ...x,
+            websocket: x.websocket
+                ? {
+                      ...x.websocket,
+                      maxPayloadLength: 10_000_000_000,
+                  }
+                : undefined,
+        })
+}
+
 // ============================= toString overrides =============================
 import Long from 'long'
 ;(Long.prototype as any)[Bun.inspect.custom] = function () {

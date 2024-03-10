@@ -29,7 +29,6 @@ import {
     BlockUpdate,
     CloseContainer as ClientCloseContainer,
     EntityAnimation,
-    OpenScreen,
     PlayerInfoUpdate,
     SetHeadRotation,
     SpawnEntity,
@@ -131,9 +130,10 @@ export const PlayHandler = Handler.init('Play')
                     }
                     // Taking items
                     else {
-                        const { slot: takenSlot, item } = changedSlots[0]
-                        console.log('TAKING ITEM', takenSlot, item)
-                        client.inventory.setItem(takenSlot, item)
+                        for (const { slot: takenSlot, item } of changedSlots) {
+                            console.log('TAKING ITEM', takenSlot, item)
+                            client.inventory.setItem(takenSlot, item)
+                        }
                     }
                 }
                 // Right mouse click

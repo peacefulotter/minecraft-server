@@ -14,6 +14,8 @@ export class Inventory {
     constructor(private readonly length: number) {}
 
     getItem(slot: number) {
+        console.log(this)
+        console.log(this.inventory)
         return this.inventory.get(slot)
     }
 
@@ -38,16 +40,16 @@ export class Inventory {
             DB.item_id_to_name[
                 item.itemId.toString() as keyof typeof DB.item_id_to_name
             ]
-        const block = DB.blocks[name as keyof typeof DB.blocks] as Block
+        const block = DB.blocks[
+            name as keyof typeof DB.blocks
+        ] as unknown as Block
         return { name, block }
     }
 
     getAllItems() {
-        return new Array(this.length).map((_, i) => this.inventory.get(i))
-    }
-
-    public [Bun.inspect.custom]() {
-        return this.inventory
+        return new Array(this.length)
+            .fill(0)
+            .map((_, i) => this.inventory.get(i))
     }
 }
 
@@ -67,12 +69,12 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
         return lengthUntilName + slot
     }
 
-    from = <T>(cb: (idx: number) => T, name: keyof S, slot: number) => {
+    from<T>(cb: (idx: number) => T, name: keyof S, slot: number) {
         if (slot < 0 || slot >= this.sections[name]) {
             return undefined
         }
         const idx = this.getIndex(name, slot)
-        return cb(idx)
+        return cb.bind(this)(idx)
     }
 
     // slot = relative index

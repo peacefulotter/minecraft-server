@@ -35,7 +35,7 @@ export const PlayerMetadata = {
 }
 
 export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
-    inventory = new PlayerInventory()
+    readonly inventory = new PlayerInventory()
 
     username: string | undefined
     isFlying = false

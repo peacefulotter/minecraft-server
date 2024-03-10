@@ -21,6 +21,7 @@
     "bitset": "^5.1.1",
     "chalk": "^5.3.0",
     "drizzle-orm": "^0.29.5",
+    "javascript-binary-converter": "^1.0.2",
     "leb128": "^0.0.5",
     "long": "^5.2.3",
     "mc-anvil": "^2.0.15",
