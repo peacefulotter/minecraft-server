@@ -26,9 +26,8 @@ import {
 import { GameMode } from '~/data/enum'
 import { hashSeed } from '~/seed'
 import BitSet from 'bitset'
-import { SPAWN_POSITION, WORLD_SEED } from '~/constants'
+import { WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
-import { getChunk } from '~/world/mca'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
@@ -80,21 +79,28 @@ export const ConfigurationHandler = Handler.init('Configuration')
             }),
         ])
 
-        const size = 10
-        for (let i = -size; i <= size; i++) {
-            for (let j = -size; j <= size; j++) {
+        const size = 3
+        for (let x = -size; x <= size; x++) {
+            for (let z = -size; z <= size; z++) {
+                const chunk = server.world.getChunk(x, z)
+                const lights = server.world.getLights(x, z)
+                console.log('lights', lights.length)
+                console.log(BitSet.fromBinaryString('1'.repeat(lights.length)))
+
                 await client.write(
                     await ChunkDataAndUpdateLight.serialize({
-                        chunkX: i,
-                        chunkZ: j,
+                        chunkX: x,
+                        chunkZ: z,
                         heightMaps: new NBT.NBTData({}, { rootName: null }),
-                        data: getChunk(i + size, j + size), //
+                        data: chunk,
                         blockEntity: [],
-                        skyLightMask: new BitSet(0),
+                        skyLightMask: BitSet.fromBinaryString(
+                            '1'.repeat(lights.length)
+                        ),
                         blockLightMask: new BitSet(0),
                         emptySkyLightMask: new BitSet(0),
                         emptyBlockLightMask: new BitSet(0),
-                        skyLightArray: [],
+                        skyLightArray: lights,
                         blockLightArray: [],
                     })
                 )
@@ -105,7 +111,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
         packets.push(
             await SynchronizePlayerPosition.serialize({
-                ...SPAWN_POSITION,
+                ...client.position,
                 yaw: client.yaw,
                 pitch: client.pitch,
                 flags: PlayerPositionFlag.NONE,

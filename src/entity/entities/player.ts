@@ -35,7 +35,7 @@ export const PlayerMetadata = {
     20: MD('rightShoulderData', 16, new NBTData({})),
 }
 
-const DEFAULT_PLAYER_POSITION = v(0, 100, 0)
+const DEFAULT_PLAYER_POSITION = v(-5, 100, 12)
 
 export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
     readonly inventory = new PlayerInventory()

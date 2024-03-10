@@ -1,236 +1,157 @@
+import path from 'path'
+import Long from 'long'
 import * as NBT from 'nbtify'
+
+import {
+    BlockPalettedContainerFormat,
+    DataStructure,
+    type ChunkSection,
+} from './type'
 import { PacketBuffer } from '~/net/PacketBuffer'
 import type { Chunk, Section } from '../../Region-Types/src/java'
-import {
-    DataArray,
-    DataLong,
-    DataObject,
-    DataShort,
-    DataUnsignedByte,
-    VarInt,
-    type Type,
-    type InnerReadType,
-} from '~/data/types'
+import { EMPTY_CHUNK, biome } from './chunk'
+import { DB } from '~/db'
 import './fix-stream'
+import { log } from '~/logger'
 
-const CHUNK_DATA_LENGTH = 4096
-
-class DataEmpty implements Type<number> {
-    async read() {
-        return 0
-    }
-    async write(t: number) {
-        return PacketBuffer.from([])
-    }
-}
-
-const DirectPalette = new DataEmpty()
-const SingleValuedPalette = new VarInt()
-const IndirectPalette = new DataArray(new VarInt())
-
-const BlockPalettedContainerFormat = {
-    0: SingleValuedPalette,
-    4: IndirectPalette,
-    5: IndirectPalette,
-    6: IndirectPalette,
-    7: IndirectPalette,
-    8: IndirectPalette,
-    15: DirectPalette,
-} as const
-
-const BiomePalettedContainerFormat = {
-    0: SingleValuedPalette,
-    1: IndirectPalette,
-    2: IndirectPalette,
-    3: IndirectPalette,
-    6: DirectPalette,
-} as const
-
-type Palette<
-    Rec extends Record<number, Type<any>>,
-    Write extends boolean
-> = ValueOf<{
-    [key in keyof Rec]: {
-        bpe: key extends number ? key : never
-        palette: Rec[key] extends Type<infer R, infer W>
-            ? Write extends true
-                ? W
-                : R
-            : never
-        data: Long[]
-    }
-}>
-
-export class PalettedContainer<R extends Record<number, Type<any>>>
-    implements Type<Palette<R, false>, Palette<R, true>>
-{
-    static bpe = new DataUnsignedByte()
-    static data = new DataArray(new DataLong())
-
-    private constructor(
-        private readonly paletteFormat: Record<number, Type<any>>
-    ) {}
-
-    static from<R extends Record<number, Type<any>>>(paletteFormat: R) {
-        return new PalettedContainer<R>(paletteFormat)
-    }
-
-    async read(buffer: PacketBuffer) {
-        const bpe = await PalettedContainer.bpe.read(buffer)
-        const paletteType = this.paletteFormat[bpe]
-        const palette = await paletteType.read(buffer)
-        const data = await PalettedContainer.data.read(buffer)
-        return {
-            bpe,
-            palette,
-            data,
-        } as Palette<R, false>
-    }
-
-    async write(t: Palette<R, true>) {
-        const bpe = await PalettedContainer.bpe.write(t.bpe)
-        const paletteType = this.paletteFormat[t.bpe]
-        const palette = await paletteType.write(t.palette as never)
-        const data = await PalettedContainer.data.write(t.data)
-        return PacketBuffer.concat([bpe, palette, data])
-    }
-}
-
-const ChunkSection = new DataObject({
-    blockCount: new DataShort(),
-    blockStates: PalettedContainer.from(BlockPalettedContainerFormat),
-    biomes: PalettedContainer.from(BiomePalettedContainerFormat),
-})
-
-export class DataStructure extends DataArray<typeof ChunkSection> {
-    constructor() {
-        super(ChunkSection, 24)
-    }
-}
-
-const REGION_LENGTH = 1024
-
-/*
-block count: 1,
-block states: {
-  bits per entry: 0,
-  palette: 56,
-  data length: 0,
-  data: []
-}
-biomes: {
-    bits per entry: 0,
-    palette: 16,
-    data length: 0,
-    data: []
-}
-*/
-
-const getCorrectBpe = <R extends { [key: number]: any }>(
-    bpe: number,
-    ranges: R
-): keyof R => {
-    if (bpe < 0) return 0
-
-    const max = Math.max(...Object.keys(ranges).map(Number))
-    if (bpe > max) return max
-
-    while (!(bpe in ranges)) {
-        bpe++
-    }
-
-    return bpe
-}
-
-const getSection = async (section: Section) => {
-    const { palette, data } = section.block_states
-
-    const bpe = Math.ceil(Math.log2(palette.length))
-
-    // TODO: for proper state, use blocks and palette properties
-    const paletteIds = palette.map(
-        (p) =>
-            DB.block_name_to_default_state_id[
-                p.Name as keyof typeof DB.block_name_to_default_state_id
-            ]
-    )
-
-    // TODO: avoid unecessary conversion
-    const dataLongs = [...(data || [])].map((n) =>
-        Long.fromString(n.toString())
-    )
-
-    return await ChunkSection.write({
-        blockCount: 256,
-        blockStates: {
-            bpe: getCorrectBpe(bpe, BlockPalettedContainerFormat),
-            palette: paletteIds as any,
-            data: dataLongs,
-        },
-        biomes: {
-            bpe: 0,
-            palette: biome,
-            data: [],
-        },
-    })
-}
+const CHUNK_SECTIONS = 1024 as const
+const CHUNK_DATA_LENGTH = CHUNK_SECTIONS * 4
 
 type EncodedChunkPosition = `${number},${number}`
 type ChunkColumn = PacketBuffer
+type ChunkMap = Map<EncodedChunkPosition, ChunkColumn>
+type LightMap = Map<EncodedChunkPosition, PacketBuffer[]>
 
-const parse = async (buffer: Buffer) => {
-    const reader = new PacketBuffer(buffer)
-    const locations = new Array(REGION_LENGTH).fill(0).map((_, i) => {
-        const loc = reader.readInt()
-        return {
-            offset: (loc >> 8) * CHUNK_DATA_LENGTH,
-            sector: (loc & 0xff) * CHUNK_DATA_LENGTH,
-        }
-    })
+export class World {
+    private readonly chunks: ChunkMap = new Map()
+    private readonly skyLights: LightMap = new Map()
 
-    const timestamps = new Array(REGION_LENGTH)
-        .fill(0)
-        .map(() => reader.readInt())
+    private readonly chunkType = new DataStructure()
 
-    const chunks = new Map<EncodedChunkPosition, ChunkColumn>()
-
-    for (const { offset } of locations) {
-        if (offset === 0) continue
-
-        reader.readOffset = offset
-        const length = reader.readInt()
-        const compressionType = reader.readUnsignedByte()
-
-        const rest = reader.readSlice(length)
-        const nbt = await NBT.read<Chunk>(rest)
-        const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
-
-        const buffers: PacketBuffer[] = []
-        for (let i = 0; i < sections.length; i++) {
-            const sec = await getSection(sections[i])
-            buffers.push(sec)
-        }
-        const res = PacketBuffer.concat(buffers)
-        chunks.set(`${x as unknown as number},${z as unknown as number}`, res)
+    constructor(files: string[]) {
+        this.loadRegions(files)
     }
 
-    console.log(chunks.keys())
+    async loadRegions(files: string[]) {
+        const buffers = await Promise.all(
+            files.map(async (f) => {
+                const p = path.join(import.meta.dir, 'region', f)
+                return await Bun.file(p).arrayBuffer()
+            })
+        )
+        await Promise.all(buffers.map((b) => this.parseRegion(b)))
+        log('Loaded', this.chunks.size, 'chunks')
+    }
 
-    return chunks
-}
+    private getKey(x: number, z: number): EncodedChunkPosition {
+        return `${x},${z}`
+    }
 
-import path from 'path'
-import { EMPTY_CHUNK, biome } from './chunk'
-import Long from 'long'
-import { DB } from '~/db'
-import type { ValueOf } from 'type-fest'
+    getChunk(x: number, z: number) {
+        const chunk = this.chunks.get(this.getKey(x, z))
+        return chunk || PacketBuffer.from(EMPTY_CHUNK)
+    }
 
-const filename = 'r.0.0.mca'
-const p = path.join(import.meta.dir, 'region', filename)
-const buffer = await Bun.file(p).arrayBuffer()
-const chunks = await parse(Buffer.from(buffer))
+    getLights(x: number, z: number) {
+        const lights = this.skyLights.get(this.getKey(x, z))
+        return lights || []
+    }
 
-export const getChunk = (x: number, z: number) => {
-    const chunk = chunks.get(`${x},${z}`)
-    return chunk || PacketBuffer.from(EMPTY_CHUNK)
+    private getCorrectBpe<R extends { [key: number]: any }>(
+        bpe: number,
+        ranges: R
+    ): keyof R {
+        if (bpe < 0) return 0
+
+        const max = Math.max(...Object.keys(ranges).map(Number))
+        if (bpe > max) return max
+
+        while (!(bpe in ranges)) {
+            bpe++
+        }
+
+        return bpe
+    }
+
+    private async getSection(s: Section) {
+        const { palette, data } = s.block_states
+
+        const bpe = Math.ceil(Math.log2(palette.length))
+
+        // TODO: for proper state, use blocks and palette properties
+        const paletteIds = palette.map(
+            (p) =>
+                DB.block_name_to_default_state_id[
+                    p.Name as keyof typeof DB.block_name_to_default_state_id
+                ]
+        )
+
+        // TODO: avoid unecessary conversion
+        const dataLongs = [...(data || [])].map((n) =>
+            Long.fromString(n.toString())
+        )
+
+        const section: ChunkSection = {
+            blockCount: 256,
+            blockStates: {
+                bpe: this.getCorrectBpe(bpe, BlockPalettedContainerFormat),
+                palette: paletteIds as any,
+                data: dataLongs,
+            },
+            biomes: {
+                bpe: 0,
+                palette: biome,
+                data: [],
+            },
+        }
+
+        const skyLights = PacketBuffer.from(
+            s ? new Uint8Array(s.SkyLight) : ([] as number[])
+        )
+        return { section, skyLights }
+    }
+
+    private async parseRegion(buffer: ArrayBuffer) {
+        const reader = new PacketBuffer(Buffer.from(buffer))
+        const locations = new Array(CHUNK_SECTIONS).fill(0).map((_, i) => {
+            const loc = reader.readInt()
+            return {
+                offset: (loc >> 8) * CHUNK_DATA_LENGTH,
+                sector: (loc & 0xff) * CHUNK_DATA_LENGTH,
+            }
+        })
+
+        const timestamps = new Array(CHUNK_DATA_LENGTH)
+            .fill(0)
+            .map(() => reader.readInt())
+
+        for (const { offset } of locations) {
+            if (offset === 0) continue
+
+            reader.readOffset = offset
+            const length = reader.readInt()
+            const compressionType = reader.readUnsignedByte()
+
+            const rest = reader.readSlice(length)
+            const nbt = await NBT.read<Chunk>(rest)
+            const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
+
+            const chunk: ChunkSection[] = []
+            const lights: PacketBuffer[] = []
+            for (let i = 0; i < sections.length; i++) {
+                const { section, skyLights } = await this.getSection(
+                    sections[i]
+                )
+                chunk.push(section)
+                lights.push(skyLights)
+            }
+
+            const key = this.getKey(
+                x as unknown as number,
+                z as unknown as number
+            )
+            this.chunks.set(key, await this.chunkType.write(chunk))
+            this.skyLights.set(key, lights)
+        }
+    }
 }

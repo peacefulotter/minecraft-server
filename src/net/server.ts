@@ -10,6 +10,7 @@ import { CommandHandler } from '~/commands/handler'
 import { unwrap } from './packets/server/unwrap'
 import { PacketBuffer } from './PacketBuffer'
 import { BlockHandler } from '~/blocks/handler'
+import { World } from '~/world/mca'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -37,10 +38,16 @@ export class Server {
     // private worker: ServerWorker = new ServerWorker()
 
     // TODO: this.clients duplicate as this.entities.players, do we want this?
-    private clients: Record<SocketId, Client> = {}
-    private handler = new MainHandler()
-    private loop = new GameLoop(this.clients)
-    cmd = new CommandHandler()
+    private readonly clients: Record<SocketId, Client> = {}
+    private readonly handler = new MainHandler()
+    private readonly loop = new GameLoop(this.clients)
+    readonly cmd = new CommandHandler()
+    readonly world = new World([
+        'r.0.0.mca',
+        'r.0.-1.mca',
+        'r.-1.0.mca',
+        'r.-1.-1.mca',
+    ])
 
     entities: EntityHandler = new EntityHandler()
     blocks: BlockHandler = new BlockHandler()

@@ -57,7 +57,7 @@ export class DataArray<T extends Type<any>>
         const length =
             this.knownLength === undefined
                 ? await VarInt.write(ts.length)
-                : Buffer.from([])
+                : PacketBuffer.from([])
         const arr = new Array(ts.length)
         for (let i = 0; i < ts.length; i++) {
             arr[i] = await this.type.write(ts[i])
