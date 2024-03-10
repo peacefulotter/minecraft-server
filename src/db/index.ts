@@ -21,15 +21,15 @@
 // query.get({ $message: 'Hello world' })
 
 import { block_id_to_name } from './block_id_to_name'
-import { block_name_to_id } from './block_name_to_id'
 import { block_name_to_menu } from './block_name_to_menu'
+import { block_name_to_default_state_id } from './block_name_to_default_state_id'
 import { blocks } from './blocks'
 import { item_id_to_name } from './item_id_to_name'
 
 export const DB = {
     block_id_to_name,
-    block_name_to_id,
     block_name_to_menu,
+    block_name_to_default_state_id,
     blocks,
     item_id_to_name,
 }

@@ -148,6 +148,10 @@ export class PacketBuffer {
         return this.readSlice()
     }
 
+    get canRead() {
+        return this.readOffset < this.buffer.length
+    }
+
     // ========================== WRITE ==========================
 
     set(index: number, val: number) {

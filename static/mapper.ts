@@ -31,17 +31,17 @@ write('item_id_to_name', groupById(itemEntries))
 const blockEntries = registries['minecraft:block']['entries']
 write('block_id_to_name', groupById(blockEntries))
 
-//  ========== BLOCKS NAME -> ID ===========
+// ============ BLOCK NAME -> BLOCK DATA ============
+write('blocks', blocks)
+
+//  ========== BLOCKS NAME -> DEFAULT STATE ID ===========
 write(
-    'block_name_to_id',
-    Object.entries(blockEntries).reduce((acc, [key, value]: [any, any]) => {
-        acc[key] = value['protocol_id']
+    'block_name_to_default_state_id',
+    Object.entries(blocks).reduce((acc, [key, value]: [any, any]) => {
+        acc[key] = value.states.find((s: any) => s.default).id
         return acc
     }, {} as Record<string, string>)
 )
-
-// ============ BLOCK NAME -> BLOCK DATA ============
-write('blocks', blocks)
 
 // ============ BLOCK NAME -> MENU ID ============
 const menuEntries = registries['minecraft:menu']['entries']

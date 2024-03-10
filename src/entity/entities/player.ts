@@ -12,6 +12,7 @@ import { NBTData } from 'nbtify'
 import type { Vec3 } from 'vec3'
 import { PlayerInventory } from '../inventory/player'
 import type { Container } from '~/blocks/container'
+import v from 'vec3'
 
 enum SkinPartsMask {
     NOTHING = 0x00,
@@ -34,6 +35,8 @@ export const PlayerMetadata = {
     20: MD('rightShoulderData', 16, new NBTData({})),
 }
 
+const DEFAULT_PLAYER_POSITION = v(0, 100, 0)
+
 export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
     readonly inventory = new PlayerInventory()
 
@@ -44,7 +47,7 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
     container: Container<any> | undefined = undefined
 
     constructor(
-        position: Position = DEFAULT_POSITION,
+        position: Position = DEFAULT_PLAYER_POSITION,
         onGround: boolean = true,
         rotation: Rotation = DEFAULT_ROTATION,
         velocity: Vec3 = DEFAULT_VELOCITY,

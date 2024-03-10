@@ -28,9 +28,7 @@ import { hashSeed } from '~/seed'
 import BitSet from 'bitset'
 import { SPAWN_POSITION, WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
-import { getChunk } from '~/world/parse'
-import { chunk } from '~/world/chunk'
-import { mca } from '~/world/mca'
+import { getChunk } from '~/world/mca'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
@@ -70,7 +68,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 portalCooldown: 0,
             }),
             await SetDefaultSpawnPosition.serialize({
-                location: SPAWN_POSITION,
+                location: client.position,
                 angle: 0,
             }),
             await SetCenterChunk.serialize({ chunkX: 0, chunkZ: 0 }),
@@ -82,7 +80,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
             }),
         ])
 
-        const size = 3
+        const size = 10
         for (let i = -size; i <= size; i++) {
             for (let j = -size; j <= size; j++) {
                 await client.write(
@@ -90,7 +88,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
                         chunkX: i,
                         chunkZ: j,
                         heightMaps: new NBT.NBTData({}, { rootName: null }),
-                        data: mca, //
+                        data: getChunk(i + size, j + size), //
                         blockEntity: [],
                         skyLightMask: new BitSet(0),
                         blockLightMask: new BitSet(0),

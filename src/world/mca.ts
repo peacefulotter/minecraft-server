@@ -1,7 +1,6 @@
 import * as NBT from 'nbtify'
 import { PacketBuffer } from '~/net/PacketBuffer'
-import converter, { NumberConverter } from 'javascript-binary-converter'
-import type { Chunk } from '../../Region-Types/src/java'
+import type { Chunk, Section } from '../../Region-Types/src/java'
 import {
     DataArray,
     DataLong,
@@ -11,15 +10,10 @@ import {
     VarInt,
     type Type,
     type InnerReadType,
-    type InnerWriteType,
 } from '~/data/types'
 import './fix-stream'
 
-type F<B extends number, P extends Type<any>> = {
-    bpe: B
-    palette: InnerReadType<P>
-    data: Long[]
-}
+const CHUNK_DATA_LENGTH = 4096
 
 class DataEmpty implements Type<number> {
     async read() {
@@ -67,8 +61,6 @@ type Palette<
     }
 }>
 
-type PaletteType = Palette<typeof BlockPalettedContainerFormat, false>
-
 export class PalettedContainer<R extends Record<number, Type<any>>>
     implements Type<Palette<R, false>, Palette<R, true>>
 {
@@ -110,8 +102,6 @@ const ChunkSection = new DataObject({
     biomes: PalettedContainer.from(BiomePalettedContainerFormat),
 })
 
-type T = InnerWriteType<typeof ChunkSection>
-
 export class DataStructure extends DataArray<typeof ChunkSection> {
     constructor() {
         super(ChunkSection, 24)
@@ -136,69 +126,46 @@ biomes: {
 }
 */
 
-const parse = async (buffer: Buffer) => {
-    const reader = new PacketBuffer(buffer)
-    const locations = new Array(REGION_LENGTH).fill(0).map((_, i) => {
-        const loc = reader.readInt()
-        return {
-            offset: loc >> 8,
-            sector: loc & 0xff,
-        }
-    })
-    console.log(locations)
+const getCorrectBpe = <R extends { [key: number]: any }>(
+    bpe: number,
+    ranges: R
+): keyof R => {
+    if (bpe < 0) return 0
 
-    const timestamps = new Array(REGION_LENGTH)
-        .fill(0)
-        .map(() => reader.readInt())
-    console.log(timestamps)
+    const max = Math.max(...Object.keys(ranges).map(Number))
+    if (bpe > max) return max
 
-    const length = reader.readInt()
-    const compressionType = reader.readUnsignedByte()
-    console.log(length, compressionType)
+    while (!(bpe in ranges)) {
+        bpe++
+    }
 
-    const rest = reader.readSlice(length)
-    const nbt = await NBT.read<Chunk>(rest)
-    const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
-    console.log({ x, y, z })
-    console.log(sections)
-    console.log('===============================================')
+    return bpe
+}
 
-    const sec = sections[5]
-    console.log(sec)
-    console.log(sec.block_states)
+const getSection = async (section: Section) => {
+    const { palette, data } = section.block_states
 
-    const bpe = Math.ceil(Math.log2(sec.block_states.palette.length))
-    const palette = sec.block_states.palette.map(
-        (p) => DB.block_name_to_id[p.Name as keyof typeof DB.block_name_to_id]
+    const bpe = Math.ceil(Math.log2(palette.length))
+
+    // TODO: for proper state, use blocks and palette properties
+    const paletteIds = palette.map(
+        (p) =>
+            DB.block_name_to_default_state_id[
+                p.Name as keyof typeof DB.block_name_to_default_state_id
+            ]
     )
 
-    console.log(bpe, palette)
-
-    const data = (sec.block_states.data as unknown as bigint[]).map((n) =>
+    // TODO: avoid unecessary conversion
+    const dataLongs = [...(data || [])].map((n) =>
         Long.fromString(n.toString())
     )
 
-    console.log('data', data)
-
-    // const n = sec.block_states.data?.[0] as bigint
-    // console.log(n)
-    // const l = Long.fromString(n.toString())
-    // console.log(l.toString())
-    // const bin = l
-    //     .toBytesBE()
-    //     .map((b) => (converter(b) as unknown as NumberConverter).toBinary())
-    // console.log('bin', bin)
-
-    // console.log(Buffer.from(l.toBytesBE()).toString())
-    // console.log(Buffer.from(l.toBytesBE()).toString('binary'))
-    // console.log(sec.biomes)
-
-    const section = await ChunkSection.write({
-        blockCount: 64,
+    return await ChunkSection.write({
+        blockCount: 256,
         blockStates: {
-            bpe: bpe as any,
-            palette: palette,
-            data: data,
+            bpe: getCorrectBpe(bpe, BlockPalettedContainerFormat),
+            palette: paletteIds as any,
+            data: dataLongs,
         },
         biomes: {
             bpe: 0,
@@ -206,15 +173,50 @@ const parse = async (buffer: Buffer) => {
             data: [],
         },
     })
-    console.log(section.buffer)
+}
 
-    return Buffer.concat(
-        new Array(24)
-            .fill(0)
-            .map((_, i) =>
-                i === 2 ? section.buffer : Buffer.from(EMPTY_CHUNK)
-            )
-    )
+type EncodedChunkPosition = `${number},${number}`
+type ChunkColumn = PacketBuffer
+
+const parse = async (buffer: Buffer) => {
+    const reader = new PacketBuffer(buffer)
+    const locations = new Array(REGION_LENGTH).fill(0).map((_, i) => {
+        const loc = reader.readInt()
+        return {
+            offset: (loc >> 8) * CHUNK_DATA_LENGTH,
+            sector: (loc & 0xff) * CHUNK_DATA_LENGTH,
+        }
+    })
+
+    const timestamps = new Array(REGION_LENGTH)
+        .fill(0)
+        .map(() => reader.readInt())
+
+    const chunks = new Map<EncodedChunkPosition, ChunkColumn>()
+
+    for (const { offset } of locations) {
+        if (offset === 0) continue
+
+        reader.readOffset = offset
+        const length = reader.readInt()
+        const compressionType = reader.readUnsignedByte()
+
+        const rest = reader.readSlice(length)
+        const nbt = await NBT.read<Chunk>(rest)
+        const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
+
+        const buffers: PacketBuffer[] = []
+        for (let i = 0; i < sections.length; i++) {
+            const sec = await getSection(sections[i])
+            buffers.push(sec)
+        }
+        const res = PacketBuffer.concat(buffers)
+        chunks.set(`${x as unknown as number},${z as unknown as number}`, res)
+    }
+
+    console.log(chunks.keys())
+
+    return chunks
 }
 
 import path from 'path'
@@ -226,4 +228,9 @@ import type { ValueOf } from 'type-fest'
 const filename = 'r.0.0.mca'
 const p = path.join(import.meta.dir, 'region', filename)
 const buffer = await Bun.file(p).arrayBuffer()
-export const mca = await parse(Buffer.from(buffer))
+const chunks = await parse(Buffer.from(buffer))
+
+export const getChunk = (x: number, z: number) => {
+    const chunk = chunks.get(`${x},${z}`)
+    return chunk || PacketBuffer.from(EMPTY_CHUNK)
+}
