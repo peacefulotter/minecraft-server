@@ -90,7 +90,6 @@ export class Server {
 
     open = async (socket: SocketWithId) => {
         const client = new Client(socket)
-        console.log(client)
         this.clients[client.entityId] = client
         socket.id = client.entityId
         log('Socket connected', socket.id)

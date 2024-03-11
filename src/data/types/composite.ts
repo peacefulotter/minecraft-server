@@ -112,7 +112,7 @@ export class DataVec3 implements Type<Vec3> {
 }
 
 export class DataPackedXZ implements Type<{ x: number; z: number }> {
-    private composite = new DataByte()
+    private composite = new DataUnsignedByte()
 
     async read(buffer: PacketBuffer) {
         const encoded = await this.composite.read(buffer)
@@ -127,10 +127,10 @@ export class DataPackedXZ implements Type<{ x: number; z: number }> {
     }
 }
 
-const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer) => {
+const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer, offset: number) => {
     const arr = t.toArray()
     for (const bit of arr) {
-        const idx = bit >> 3
+        const idx = (bit >> 3) + offset
         buffer.set(idx, buffer.get(idx, false) | (1 << (bit & 7)))
     }
 }
@@ -152,8 +152,10 @@ export class DataBitSet implements Type<BitSet> {
         const length = Math.ceil((t.msb() + 1) / 8)
         if (length === 0 || t.toArray().length === 0)
             return PacketBuffer.from([0])
-        const buffer = PacketBuffer.allocUnsafe(length)
-        setBitSetBuffer(t, buffer)
+        // Encoded as longs so need to fill the empty space with 0
+        const longLengthDelta = LONG_SIZE - (length % LONG_SIZE)
+        const buffer = PacketBuffer.alloc(length + longLengthDelta)
+        setBitSetBuffer(t, buffer, longLengthDelta)
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
         const size = await VarInt.write(nbLongs)
         return PacketBuffer.concat([size.buffer, buffer.buffer])
@@ -161,19 +163,17 @@ export class DataBitSet implements Type<BitSet> {
 }
 
 export class DataFixedBitSet implements Type<BitSet> {
-    private composite = new DataByteArray()
+    private readonly composite = new DataByteArray()
     constructor(private length: number) {}
 
     async read(buffer: PacketBuffer) {
-        const numBytes = Math.ceil(this.length / 8)
-        const arr = await this.composite.readWithLength(buffer, numBytes)
+        const arr = await this.composite.readWithLength(buffer, this.length)
         return new BitSet(arr)
     }
 
     async write(t: BitSet) {
-        const numBytes = Math.ceil(this.length / 8)
-        const buffer = PacketBuffer.alloc(numBytes)
-        setBitSetBuffer(t, buffer)
+        const buffer = PacketBuffer.alloc(this.length)
+        setBitSetBuffer(t, buffer, 0)
         return buffer
     }
 }

@@ -28,6 +28,7 @@ import { hashSeed } from '~/seed'
 import BitSet from 'bitset'
 import { WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
+import { DataBitSet } from '~/data/types'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
@@ -83,9 +84,10 @@ export const ConfigurationHandler = Handler.init('Configuration')
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
                 const chunk = server.world.getChunk(x, z)
-                const lights = server.world.getLights(x, z)
-                console.log('lights', lights.length)
-                console.log(BitSet.fromBinaryString('1'.repeat(lights.length)))
+                const { skyLightMask, emptySkyLightMask, skyLights } =
+                    server.world.getLights(x, z)
+                console.log('chunk', chunk.length)
+                console.log('lights', skyLightMask, emptySkyLightMask)
 
                 await client.write(
                     await ChunkDataAndUpdateLight.serialize({
@@ -94,13 +96,11 @@ export const ConfigurationHandler = Handler.init('Configuration')
                         heightMaps: new NBT.NBTData({}, { rootName: null }),
                         data: chunk,
                         blockEntity: [],
-                        skyLightMask: BitSet.fromBinaryString(
-                            '1'.repeat(lights.length)
-                        ),
+                        skyLightMask: skyLightMask,
                         blockLightMask: new BitSet(0),
-                        emptySkyLightMask: new BitSet(0),
+                        emptySkyLightMask: emptySkyLightMask,
                         emptyBlockLightMask: new BitSet(0),
-                        skyLightArray: lights,
+                        skyLightArray: skyLights,
                         blockLightArray: [],
                     })
                 )

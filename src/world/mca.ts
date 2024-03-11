@@ -1,5 +1,6 @@
 import path from 'path'
 import Long from 'long'
+import BitSet from 'bitset'
 import * as NBT from 'nbtify'
 
 import {
@@ -10,17 +11,25 @@ import {
 import { PacketBuffer } from '~/net/PacketBuffer'
 import type { Chunk, Section } from '../../Region-Types/src/java'
 import { EMPTY_CHUNK, biome } from './chunk'
+import { log } from '~/logger'
 import { DB } from '~/db'
 import './fix-stream'
-import { log } from '~/logger'
 
 const CHUNK_SECTIONS = 1024 as const
 const CHUNK_DATA_LENGTH = CHUNK_SECTIONS * 4
 
 type EncodedChunkPosition = `${number},${number}`
+
 type ChunkColumn = PacketBuffer
 type ChunkMap = Map<EncodedChunkPosition, ChunkColumn>
-type LightMap = Map<EncodedChunkPosition, PacketBuffer[]>
+
+type Light = Buffer | { full: true } | { empty: true }
+type LightColumn = {
+    skyLightMask: BitSet
+    emptySkyLightMask: BitSet
+    skyLights: PacketBuffer[]
+}
+type LightMap = Map<EncodedChunkPosition, LightColumn>
 
 export class World {
     private readonly chunks: ChunkMap = new Map()
@@ -54,7 +63,13 @@ export class World {
 
     getLights(x: number, z: number) {
         const lights = this.skyLights.get(this.getKey(x, z))
-        return lights || []
+        return (
+            lights || {
+                skyLightMask: new BitSet(0),
+                emptySkyLightMask: new BitSet(0),
+                skyLights: [],
+            }
+        )
     }
 
     private getCorrectBpe<R extends { [key: number]: any }>(
@@ -105,10 +120,36 @@ export class World {
             },
         }
 
-        const skyLights = PacketBuffer.from(
-            s ? new Uint8Array(s.SkyLight) : ([] as number[])
-        )
+        const skyLights: Light =
+            s.SkyLight === undefined || s.SkyLight.length === 0
+                ? { empty: true }
+                : s.SkyLight.every((n) => n === 0xff)
+                ? { full: true }
+                : Buffer.from(new Uint8Array(s.SkyLight))
+
         return { section, skyLights }
+    }
+
+    private formatLights(lights: Light[]) {
+        const skyLightMask = new BitSet(0)
+        const emptySkyLightMask = new BitSet(0)
+        const skyLights: PacketBuffer[] = []
+
+        for (let i = 0; i < lights.length; i++) {
+            const light = lights[i]
+            if ('full' in light) {
+                skyLightMask.set(i, 1)
+                skyLights.push(PacketBuffer.from(new Uint8Array(2048)))
+            } else if ('empty' in light) {
+                emptySkyLightMask.set(i, 1)
+                skyLights.push(PacketBuffer.from(new Uint8Array(2048)))
+            } else {
+                const skyLight = PacketBuffer.from(light)
+                skyLights.push(skyLight)
+            }
+        }
+
+        return { skyLightMask, emptySkyLightMask, skyLights }
     }
 
     private async parseRegion(buffer: ArrayBuffer) {
@@ -137,7 +178,7 @@ export class World {
             const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
 
             const chunk: ChunkSection[] = []
-            const lights: PacketBuffer[] = []
+            const lights: Light[] = []
             for (let i = 0; i < sections.length; i++) {
                 const { section, skyLights } = await this.getSection(
                     sections[i]
@@ -151,7 +192,7 @@ export class World {
                 z as unknown as number
             )
             this.chunks.set(key, await this.chunkType.write(chunk))
-            this.skyLights.set(key, lights)
+            this.skyLights.set(key, this.formatLights(lights))
         }
     }
 }

@@ -157,7 +157,7 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
         chunkX: new DataInt(),
         chunkZ: new DataInt(),
         heightMaps: new DataNBT(),
-        data: new VarIntPrefixedByteArray(), // TODO: long array?
+        data: new VarIntPrefixedByteArray(),
         blockEntity: new DataArray(
             new DataObject({
                 packedXZ: new DataPackedXZ(),
@@ -174,6 +174,38 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
         blockLightArray: new DataArray(new VarIntPrefixedByteArray()),
     }
 )
+
+export const WorldEvent = new ClientBoundPacketCreator(0x26, 'WorldEvent', {
+    event: new DataInt(), // TODO: as Type<WorldEventType>
+    location: new DataPosition(),
+    data: new DataInt(),
+    disableRelativeVolume: new DataBoolean(),
+})
+
+export const Particle = new ClientBoundPacketCreator(0x27, 'Particle', {
+    particleId: new VarInt(), // TODO: as Type<ParticleType>
+    longDistance: new DataBoolean(),
+    x: new DataDouble(),
+    y: new DataDouble(),
+    z: new DataDouble(),
+    offsetX: new DataFloat(),
+    offsetY: new DataFloat(),
+    offsetZ: new DataFloat(),
+    maxSpeed: new DataFloat(),
+    count: new DataInt(),
+    data: new VarInt(), // TODO: varies
+})
+
+export const UpdateLight = new ClientBoundPacketCreator(0x28, 'UpdateLight', {
+    chunkX: new VarInt(),
+    chunkZ: new VarInt(),
+    skyLightMask: new DataBitSet(),
+    blockLightMask: new DataBitSet(),
+    emptySkyLightMask: new DataBitSet(),
+    emptyBlockLightMask: new DataBitSet(),
+    skyLightArray: new DataArray(new VarIntPrefixedByteArray()),
+    blockLightArray: new DataArray(new VarIntPrefixedByteArray()),
+})
 
 export const PlayLogin = new ClientBoundPacketCreator(0x29, 'PlayLogin', {
     entityId: new DataInt(),

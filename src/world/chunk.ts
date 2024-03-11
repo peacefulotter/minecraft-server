@@ -11,8 +11,6 @@ export const chunk = new Array(24)
     )
     .flat()
 
-console.log(chunk)
-
 // export const chunk = [
 //     0,
 //     0,

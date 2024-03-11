@@ -14,8 +14,6 @@ export class Inventory {
     constructor(private readonly length: number) {}
 
     getItem(slot: number) {
-        console.log(this)
-        console.log(this.inventory)
         return this.inventory.get(slot)
     }
 

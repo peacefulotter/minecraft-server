@@ -145,7 +145,6 @@ export class DataNBT
         if (typeof t === 'string') {
             const buf = new PacketBuffer(Buffer.from(t, 'utf-8'))
             const len = await new DataShort().write(buf.length)
-            console.log(len, buf)
             return PacketBuffer.concat([len, buf])
         }
         const buf = await this.getBuffer(t)
