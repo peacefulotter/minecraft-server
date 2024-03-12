@@ -29,6 +29,8 @@ import BitSet from 'bitset'
 import { WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
 import { DataBitSet } from '~/data/types'
+import { PacketBuffer } from '~/net/PacketBuffer'
+import { EMPTY_CHUNK, GRASS_CHUNK } from '~/world/chunk'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 
@@ -80,14 +82,43 @@ export const ConfigurationHandler = Handler.init('Configuration')
             }),
         ])
 
-        const size = 3
+        const getChunk = async (x: number, z: number) => {
+            const chunk = server.world.getChunk(x, z)
+            const {
+                lightMask: skyLightMask,
+                emptyLightMask: emptySkyLightMask,
+                fullLightMask: fullSkyLightMask,
+                lights: skyLights,
+            } = server.world.getLights(x, z)
+            console.log('chunk', chunk.length)
+            console.log(
+                'lights',
+                skyLightMask.toString(),
+                emptySkyLightMask.toString(),
+                fullSkyLightMask.toString()
+            )
+
+            // Fill the "full" sky light array with a buffer of 255
+            for (const idx of fullSkyLightMask.toArray()) {
+                skyLights[idx] = PacketBuffer.from(
+                    new Uint8Array(2048).fill(0xff)
+                )
+            }
+            return { chunk, skyLightMask, emptySkyLightMask, skyLights }
+        }
+
+        const size = 4
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
-                const chunk = server.world.getChunk(x, z)
-                const { skyLightMask, emptySkyLightMask, skyLights } =
-                    server.world.getLights(x, z)
-                console.log('chunk', chunk.length)
-                console.log('lights', skyLightMask, emptySkyLightMask)
+                const { chunk, skyLightMask, emptySkyLightMask, skyLights } =
+                    Math.abs(x) === size || Math.abs(z) === size
+                        ? {
+                              chunk: GRASS_CHUNK,
+                              skyLightMask: new BitSet(0),
+                              emptySkyLightMask: new BitSet(0),
+                              skyLights: [],
+                          }
+                        : await getChunk(x, z)
 
                 await client.write(
                     await ChunkDataAndUpdateLight.serialize({

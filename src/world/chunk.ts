@@ -4,12 +4,14 @@ export const biome = 32
 
 export const EMPTY_CHUNK = [0, 0, 0, 0, 0, 0, biome, 0]
 
-export const chunk = new Array(24)
-    .fill(0)
-    .map((_, i) =>
-        i === 2 ? [test, 0, 0, block_state_id, 0, 0, biome, 0] : EMPTY_CHUNK
-    )
-    .flat()
+export const GRASS_CHUNK = Buffer.from(
+    new Array(24)
+        .fill(0)
+        .map((_, i) =>
+            i === 2 ? [test, 0, 0, block_state_id, 0, 0, biome, 0] : EMPTY_CHUNK
+        )
+        .flat()
+)
 
 // export const chunk = [
 //     0,

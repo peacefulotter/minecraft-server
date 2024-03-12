@@ -25,9 +25,10 @@ type ChunkMap = Map<EncodedChunkPosition, ChunkColumn>
 
 type Light = Buffer | { full: true } | { empty: true }
 type LightColumn = {
-    skyLightMask: BitSet
-    emptySkyLightMask: BitSet
-    skyLights: PacketBuffer[]
+    lightMask: BitSet
+    emptyLightMask: BitSet
+    fullLightMask: BitSet
+    lights: PacketBuffer[]
 }
 type LightMap = Map<EncodedChunkPosition, LightColumn>
 
@@ -65,9 +66,10 @@ export class World {
         const lights = this.skyLights.get(this.getKey(x, z))
         return (
             lights || {
-                skyLightMask: new BitSet(0),
-                emptySkyLightMask: new BitSet(0),
-                skyLights: [],
+                lightMask: new BitSet(0),
+                emptyLightMask: new BitSet(0),
+                fullLightMask: new BitSet(0),
+                lights: [],
             }
         )
     }
@@ -131,25 +133,34 @@ export class World {
     }
 
     private formatLights(lights: Light[]) {
-        const skyLightMask = new BitSet(0)
-        const emptySkyLightMask = new BitSet(0)
-        const skyLights: PacketBuffer[] = []
+        const lightMask = new BitSet(0)
+        const fullLightMask = new BitSet(0)
+        const emptyLightMask = new BitSet(0)
+        const lightsBuffer: PacketBuffer[] = []
 
         for (let i = 0; i < lights.length; i++) {
             const light = lights[i]
             if ('full' in light) {
-                skyLightMask.set(i, 1)
-                skyLights.push(PacketBuffer.from(new Uint8Array(2048)))
+                fullLightMask.set(i, 1)
+                // Register full light but store it as empty,
+                // it will be replaced by a buffer full of ones once the corresponding chunk is requested
+                lightMask.set(i, 1)
+                lightsBuffer.push(PacketBuffer.from([]))
             } else if ('empty' in light) {
-                emptySkyLightMask.set(i, 1)
-                skyLights.push(PacketBuffer.from(new Uint8Array(2048)))
+                emptyLightMask.set(i, 1)
             } else {
-                const skyLight = PacketBuffer.from(light)
-                skyLights.push(skyLight)
+                lightMask.set(i, 1)
+                const buffer = PacketBuffer.from(light)
+                lightsBuffer.push(buffer)
             }
         }
 
-        return { skyLightMask, emptySkyLightMask, skyLights }
+        return {
+            lightMask,
+            emptyLightMask,
+            fullLightMask,
+            lights: lightsBuffer,
+        }
     }
 
     private async parseRegion(buffer: ArrayBuffer) {
