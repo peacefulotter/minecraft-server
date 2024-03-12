@@ -127,10 +127,10 @@ export class DataPackedXZ implements Type<{ x: number; z: number }> {
     }
 }
 
-const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer, offset: number) => {
+const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer) => {
     const arr = t.toArray()
     for (const bit of arr) {
-        const idx = (bit >> 3) + offset
+        const idx = bit >> 3
         buffer.set(idx, buffer.get(idx, false) | (1 << (bit & 7)))
     }
 }
@@ -155,7 +155,7 @@ export class DataBitSet implements Type<BitSet> {
         // Encoded as longs so need to fill the empty space with 0
         const longLengthDelta = LONG_SIZE - (length % LONG_SIZE)
         const buffer = PacketBuffer.alloc(length + longLengthDelta)
-        setBitSetBuffer(t, buffer, longLengthDelta)
+        setBitSetBuffer(t, buffer)
         const nbLongs = Math.ceil(buffer.length / LONG_SIZE)
         const size = await VarInt.write(nbLongs)
         return PacketBuffer.concat([size.buffer, buffer.buffer])
@@ -173,7 +173,7 @@ export class DataFixedBitSet implements Type<BitSet> {
 
     async write(t: BitSet) {
         const buffer = PacketBuffer.alloc(this.length)
-        setBitSetBuffer(t, buffer, 0)
+        setBitSetBuffer(t, buffer)
         return buffer
     }
 }

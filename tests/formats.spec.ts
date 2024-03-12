@@ -35,9 +35,9 @@ const packetTester = async <T extends PacketFormat, U>(
     processArg?: (data: ClientBoundPacketData<T>) => U | Promise<U>,
     processRes?: (data: ServerBoundPacketData<T>) => U | Promise<U>
 ) => {
-    const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
-    const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
-    const buffer = await writePacket(packet)
+    const writePacket = new ClientBoundPacketCreator(0x00, 'test', format)
+    const readPacket = new ServerBoundPacketCreator(0x00, 'test', format)
+    const buffer = await writePacket.serialize(packet)
     const res = await readPacket.deserialize(buffer.data, false)
     // console.log('Expected', packet)
     // console.log('Obtained', res.data)
@@ -57,12 +57,12 @@ const performanceTester = async <T extends PacketFormat>(
     packet: ClientBoundPacketData<T>,
     iterations: number = 10000
 ) => {
-    const writePacket = ClientBoundPacketCreator(0x00, 'test', format)
-    const readPacket = ServerBoundPacketCreator(0x00, 'test', format)
+    const writePacket = new ClientBoundPacketCreator(0x00, 'test', format)
+    const readPacket = new ServerBoundPacketCreator(0x00, 'test', format)
 
     const now = performance.now()
     for (let i = 0; i < iterations; i++) {
-        const buffer = await writePacket(packet)
+        const buffer = await writePacket.serialize(packet)
         await readPacket.deserialize(buffer.data, false)
     }
     console.log('perf:', (performance.now() - now) / iterations, 'ms')
@@ -178,8 +178,8 @@ describe('formats', () => {
         await test(bin)
 
         let bin2 = ''
-        for (let i = 0; i < 24; i++) {
-            bin2 += Math.random() > 0.5 ? '1' : '0'
+        for (let i = 0; i < 256; i++) {
+            bin2 = (Math.random() > 0.5 ? '1' : '0') + bin2
             await test(bin2)
         }
     })

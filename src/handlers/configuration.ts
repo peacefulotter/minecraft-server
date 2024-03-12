@@ -92,9 +92,11 @@ export const ConfigurationHandler = Handler.init('Configuration')
             } = server.world.getLights(x, z)
             console.log('chunk', chunk.length)
             console.log(
-                'lights',
+                'skyLightMask',
                 skyLightMask.toString(),
+                'emptySkyLightMask',
                 emptySkyLightMask.toString(),
+                'fullSkyLightMask',
                 fullSkyLightMask.toString()
             )
 
@@ -104,10 +106,24 @@ export const ConfigurationHandler = Handler.init('Configuration')
                     new Uint8Array(2048).fill(0xff)
                 )
             }
-            return { chunk, skyLightMask, emptySkyLightMask, skyLights }
+
+            // fill all skylights based on length
+
+            for (let i = 0; i < skyLights.length; i++) {
+                skyLights[i] = PacketBuffer.from(
+                    new Uint8Array(2048).fill(0xff)
+                )
+            }
+
+            return {
+                chunk,
+                skyLightMask: new BitSet('1'.repeat(skyLights.length)),
+                emptySkyLightMask: new BitSet(0),
+                skyLights,
+            }
         }
 
-        const size = 4
+        const size = 10
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
                 const { chunk, skyLightMask, emptySkyLightMask, skyLights } =
