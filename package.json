@@ -1,37 +1,37 @@
 {
-  "name": "mc-server",
-  "module": "src/index.ts",
-  "type": "module",
-  "scripts": {
-    "dev": "bun --bun --watch src/index.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/leb128": "^0.0.0",
-    "@types/node-rsa": "^1.1.4",
-    "@types/shortid": "^0.0.32",
-    "@types/uuid": "^9.0.8"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@jsdsl/bimap": "^0.1.1",
-    "@minecraft-js/uuid": "^1.0.3",
-    "bitset": "^5.1.1",
-    "chalk": "^5.3.0",
-    "drizzle-orm": "^0.29.5",
-    "javascript-binary-converter": "^1.0.2",
-    "leb128": "^0.0.5",
-    "long": "^5.2.3",
-    "mc-anvil": "^2.0.15",
-    "nbt": "^0.8.1",
-    "nbtify": "^1.90.1",
-    "node-rsa": "^1.1.1",
-    "region-types": "Offroaders123/Region-Types",
-    "type-fest": "^4.10.2",
-    "typescript-object-builder": "^0.3.0",
-    "uuid": "^9.0.1",
-    "vec3": "^0.1.10"
-  }
+    "name": "mc-server",
+    "module": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "dev": "bun --bun --hot src/index.ts"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/leb128": "^0.0.0",
+        "@types/node-rsa": "^1.1.4",
+        "@types/shortid": "^0.0.32",
+        "@types/uuid": "^9.0.8"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@jsdsl/bimap": "^0.1.1",
+        "@minecraft-js/uuid": "^1.0.3",
+        "bitset": "^5.1.1",
+        "chalk": "^5.3.0",
+        "drizzle-orm": "^0.29.5",
+        "javascript-binary-converter": "^1.0.2",
+        "leb128": "^0.0.5",
+        "long": "^5.2.3",
+        "mc-anvil": "^2.0.15",
+        "nbt": "^0.8.1",
+        "nbtify": "^1.90.1",
+        "node-rsa": "^1.1.1",
+        "region-types": "Offroaders123/Region-Types",
+        "type-fest": "^4.10.2",
+        "typescript-object-builder": "^0.3.0",
+        "uuid": "^9.0.1",
+        "vec3": "^0.1.10"
+    }
 }

@@ -102,39 +102,63 @@ export const ConfigurationHandler = Handler.init('Configuration')
 
             // Fill the "full" sky light array with a buffer of 255
             for (const idx of fullSkyLightMask.toArray()) {
-                skyLights[idx] = PacketBuffer.from(
-                    new Uint8Array(2048).fill(0xff)
-                )
+                skyLights[idx] = Buffer.from(new Uint8Array(2048).fill(0xff))
             }
 
             // fill all skylights based on length
-
             for (let i = 0; i < skyLights.length; i++) {
-                skyLights[i] = PacketBuffer.from(
-                    new Uint8Array(2048).fill(0xff)
-                )
+                skyLights[i] = Buffer.from(new Uint8Array(2048).fill(0xff))
             }
+
+            const blockLightMask = skyLightMask.clone()
+            const blockLights = skyLights.map((l) => Buffer.from(l))
+
+            console.log('skyLights', skyLights)
+            console.log('skyLights', skyLights.length)
 
             return {
                 chunk,
-                skyLightMask: new BitSet('1'.repeat(skyLights.length)),
+                skyLightMask: BitSet.fromBinaryString(
+                    '1'.repeat(skyLights.length)
+                ),
                 emptySkyLightMask: new BitSet(0),
-                skyLights,
+                skyLights: skyLights,
+                blockLightMask: blockLightMask,
+                blockLights: blockLights,
             }
         }
 
-        const size = 10
+        const size = 3
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
-                const { chunk, skyLightMask, emptySkyLightMask, skyLights } =
+                const {
+                    chunk,
+                    skyLightMask,
+                    emptySkyLightMask,
+                    skyLights,
+                    blockLightMask,
+                    blockLights,
+                } =
                     Math.abs(x) === size || Math.abs(z) === size
                         ? {
                               chunk: GRASS_CHUNK,
                               skyLightMask: new BitSet(0),
                               emptySkyLightMask: new BitSet(0),
                               skyLights: [],
+                              blockLightMask: new BitSet(0),
+                              blockLights: [],
                           }
                         : await getChunk(x, z)
+
+                console.log(skyLights.length)
+
+                // const blockLightMask =
+                //     skyLights.length === 0
+                //         ? new BitSet(0)
+                //         : BitSet.fromBinaryString('1'.repeat(skyLights.length))
+                // const blockLightArray = new Array(skyLights.length).fill(
+                //     PacketBuffer.from(new Uint8Array(2048).fill(0x15))
+                // )
 
                 await client.write(
                     await ChunkDataAndUpdateLight.serialize({
@@ -144,11 +168,11 @@ export const ConfigurationHandler = Handler.init('Configuration')
                         data: chunk,
                         blockEntity: [],
                         skyLightMask: skyLightMask,
-                        blockLightMask: new BitSet(0),
+                        blockLightMask: blockLightMask,
                         emptySkyLightMask: emptySkyLightMask,
                         emptyBlockLightMask: new BitSet(0),
                         skyLightArray: skyLights,
-                        blockLightArray: [],
+                        blockLightArray: blockLights,
                     })
                 )
             }

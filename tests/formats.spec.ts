@@ -159,7 +159,7 @@ describe('formats', () => {
         }
     })
 
-    test('bitset', async () => {
+    test.only('bitset', async () => {
         const test = async (s: string) => {
             const data = BitSet.fromBinaryString(s)
             await packetTester(
@@ -174,7 +174,7 @@ describe('formats', () => {
             )
         }
 
-        const bin = '011010101011101000'
+        const bin = '011010101011101000011010101011101000'
         await test(bin)
 
         let bin2 = ''

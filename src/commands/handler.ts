@@ -3,6 +3,7 @@ import { ntt } from './entities'
 import type { Args } from '~/handlers'
 import { ChatCommand } from '~/net/packets/server'
 import { perf } from './performance'
+import { light } from './chunk-light'
 
 export type CmdArgs = Args<typeof ChatCommand>
 type CmdParser<T> = (cmd: string) => T
@@ -22,7 +23,7 @@ export class CommandHandler {
     private readonly commands: Map<string, Command> = new Map()
 
     constructor() {
-        ;[ntt, perf].forEach(this.register.bind(this))
+        ;[ntt, perf, light].forEach(this.register.bind(this))
         logCmdHandler(this.commands)
     }
 

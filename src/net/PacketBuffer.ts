@@ -74,6 +74,10 @@ export class PacketBuffer {
         return this.buffer[index + offset]
     }
 
+    getExact(index: number) {
+        return this.buffer[index]
+    }
+
     // ========================== READ ==========================
 
     readDouble() {

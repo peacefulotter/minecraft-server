@@ -89,6 +89,8 @@ export class Server {
     }
 
     open = async (socket: SocketWithId) => {
+        console.log('azdazadazdzdazdazda')
+
         const client = new Client(socket)
         this.clients[client.entityId] = client
         socket.id = client.entityId

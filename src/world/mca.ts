@@ -28,7 +28,7 @@ type LightColumn = {
     lightMask: BitSet
     emptyLightMask: BitSet
     fullLightMask: BitSet
-    lights: PacketBuffer[]
+    lights: Buffer[]
 }
 type LightMap = Map<EncodedChunkPosition, LightColumn>
 
@@ -136,7 +136,7 @@ export class World {
         const lightMask = new BitSet(0)
         const fullLightMask = new BitSet(0)
         const emptyLightMask = new BitSet(0)
-        const lightsBuffer: PacketBuffer[] = []
+        const lightsBuffer: Buffer[] = []
 
         for (let i = 0; i < lights.length; i++) {
             const light = lights[i]
@@ -145,13 +145,12 @@ export class World {
                 // Register full light but store it as empty,
                 // it will be replaced by a buffer full of ones once the corresponding chunk is requested
                 lightMask.set(i, 1)
-                lightsBuffer.push(PacketBuffer.from([]))
+                lightsBuffer.push(Buffer.from([]))
             } else if ('empty' in light) {
                 emptyLightMask.set(i, 1)
             } else {
                 lightMask.set(i, 1)
-                const buffer = PacketBuffer.from(light)
-                lightsBuffer.push(buffer)
+                lightsBuffer.push(light)
             }
         }
 
@@ -187,6 +186,14 @@ export class World {
             const rest = reader.readSlice(length)
             const nbt = await NBT.read<Chunk>(rest)
             const { xPos: x, yPos: y, zPos: z, sections } = nbt.data
+
+            if (
+                Math.sqrt(
+                    (x as unknown as number) ** 2 +
+                        (z as unknown as number) ** 2
+                ) > 5
+            )
+                continue
 
             const chunk: ChunkSection[] = []
             const lights: Light[] = []

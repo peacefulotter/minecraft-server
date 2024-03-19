@@ -127,29 +127,40 @@ export class DataPackedXZ implements Type<{ x: number; z: number }> {
     }
 }
 
+const getBitSetBuffer = (buffer: PacketBuffer, length: number) => {
+    const arr = []
+    for (let i = 0; i < length; i++) {
+        const byte = buffer.get(i, true)
+        for (let j = 0; j < 8; j++) {
+            if (byte & (1 << j)) {
+                arr.push((length - i - 1) * 8 + j)
+            }
+        }
+    }
+    return arr
+}
+
 const setBitSetBuffer = (t: BitSet, buffer: PacketBuffer) => {
     const arr = t.toArray()
-    for (const bit of arr) {
-        const idx = bit >> 3
-        buffer.set(idx, buffer.get(idx, false) | (1 << (bit & 7)))
+    for (const i of arr) {
+        const idx = buffer.length - (i >> 3) - 1
+        buffer.set(idx, buffer.get(idx, false) | (1 << (i & 7)))
     }
 }
 
 export class DataBitSet implements Type<BitSet> {
-    private composite = new DataByteArray()
-
     async read(buffer: PacketBuffer) {
         const nbLong = await VarInt.read(buffer)
         if (nbLong === 0) {
             return new BitSet(0)
         }
         const restLen = Math.min(buffer.length, nbLong * LONG_SIZE)
-        const bits = await this.composite.readWithLength(buffer, restLen)
+        const bits = getBitSetBuffer(buffer, restLen)
         return new BitSet(bits)
     }
 
     async write(t: BitSet) {
-        const length = Math.ceil((t.msb() + 1) / 8)
+        const length = Math.ceil((t.msb() + 1) / LONG_SIZE)
         if (length === 0 || t.toArray().length === 0)
             return PacketBuffer.from([0])
         // Encoded as longs so need to fill the empty space with 0
