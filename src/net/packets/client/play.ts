@@ -100,7 +100,7 @@ export const SetContainerContent = new ClientBoundPacketCreator(
     {
         windowId: new DataByte(), // 0 for player inventory
         stateId: new VarInt(),
-        carriedItems: new DataArray(new DataSlot()),
+        slots: new DataArray(new DataSlot()),
         carriedItem: new DataSlot(), // Item being dragged with the mouse
     }
 )
@@ -172,7 +172,8 @@ export const ChunkDataAndUpdateLight = new ClientBoundPacketCreator(
         emptyBlockLightMask: new DataBitSet(),
         skyLightArray: new DataArray(new VarIntPrefixedByteArray()),
         blockLightArray: new DataArray(new VarIntPrefixedByteArray()),
-    }
+    },
+    false
 )
 
 export const WorldEvent = new ClientBoundPacketCreator(0x26, 'WorldEvent', {

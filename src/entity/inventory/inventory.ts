@@ -9,12 +9,13 @@ type Slot = {
 }
 
 export class Inventory {
-    protected inventory = new Map<number, Slot>()
+    // TODO: prod -> private
+    inv = new Map<number, Slot>()
 
     constructor(private readonly length: number) {}
 
     getItem(slot: number) {
-        return this.inventory.get(slot)
+        return this.inv.get(slot)
     }
 
     setItem(slot: number, item: Slot | undefined) {
@@ -24,9 +25,9 @@ export class Inventory {
             )
         }
         if (item) {
-            this.inventory.set(slot, item)
+            this.inv.set(slot, item)
         } else {
-            this.inventory.delete(slot)
+            return this.inv.delete(slot)
         }
     }
 
@@ -34,10 +35,9 @@ export class Inventory {
         const item = this.getItem(slot)
         if (!item) return undefined
 
-        const name =
-            DB.item_id_to_name[
-                item.itemId.toString() as keyof typeof DB.item_id_to_name
-            ]
+        const name = DB.item_id_to_name[
+            item.itemId.toString() as keyof typeof DB.item_id_to_name
+        ] as string
         const block = DB.blocks[
             name as keyof typeof DB.blocks
         ] as unknown as Block
@@ -45,9 +45,7 @@ export class Inventory {
     }
 
     getAllItems() {
-        return new Array(this.length)
-            .fill(0)
-            .map((_, i) => this.inventory.get(i))
+        return new Array(this.length).fill(0).map((_, i) => this.inv.get(i))
     }
 }
 
@@ -58,13 +56,18 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
         super(Object.values(sections).reduce((acc, len) => acc + len))
     }
 
-    private getIndex(name: keyof S, slot: number) {
-        let lengthUntilName = 0
+    getSectionOffset(name: keyof S) {
+        let offset = 0
         for (const [n, len] of Object.entries(this.sections)) {
             if (n === name) break
-            lengthUntilName += len
+            offset += len
         }
-        return lengthUntilName + slot
+        return offset
+    }
+
+    private getIndex(name: keyof S, slot: number) {
+        const offset = this.getSectionOffset(name)
+        return offset + slot
     }
 
     from<T>(cb: (idx: number) => T, name: keyof S, slot: number) {
@@ -86,5 +89,24 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
 
     itemToBlockFrom(name: keyof S, slot: number) {
         return this.from(this.itemToBlock, name, slot)
+    }
+
+    /**
+     * Inventory implementation is very straightforward which allows for easy read write when you know the slot index
+     * However, the drawback from this is when you want to get all slots from a section
+     * In this scenario, you first need to calculate the offset and then get the slots iteratively
+     */
+    getItemsFromSection(name: keyof S) {
+        const offset = this.getSectionOffset(name)
+        return new Array(this.sections[name]).fill(0).map((_, i) => {
+            return this.getItem(i + offset)
+        })
+    }
+
+    setItemsFromSection(name: keyof S, items: (Slot | undefined)[]) {
+        const offset = this.getSectionOffset(name)
+        items.forEach((item, i) => {
+            this.setItem(i + offset, item)
+        })
     }
 }

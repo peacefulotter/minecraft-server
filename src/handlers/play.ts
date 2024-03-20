@@ -121,35 +121,33 @@ export const PlayHandler = Handler.init('Play')
                 // Drop item
                 // client.inventory.dropItem(changedSlots)
             } else {
-                // Left mouse click
-                if (button === 0) {
-                    // Placing items
-                    if (!carriedItem) {
-                        console.log('PLACING ITEM', changedSlots)
-                        container.insert(changedSlots)
-                    }
-                    // Taking items
-                    else {
-                        for (const { slot: takenSlot, item } of changedSlots) {
-                            console.log('TAKING ITEM', takenSlot, item)
-                            client.inventory.setItem(takenSlot, item)
-                        }
-                    }
-                }
-                // Right mouse click
-                else {
-                    console.log('TODO: RIGHT CLICK')
-                }
+                console.log('SET SLOTS', changedSlots)
+                container.setSlots(changedSlots)
             }
         }
 
-        console.log(container.inventory)
+        console.log('player inv', client.inventory.inv)
+        console.log('container inv', container.inv)
     })
 
     .register(ServerCloseContainer, async ({ server, client, packet }) => {
         if (packet.windowId === 0) {
             // Sent when the player closes the inventory, thus do nothing
             return
+        }
+
+        // Synchronize player inventory with container inventory
+        const container = client.container
+        if (container) {
+            const playerSlots = container.getItemsFromSection('player')
+            const mainOffset = client.inventory.getSectionOffset('main')
+            console.log('BEFORE SYNC', client.inventory.inv)
+            console.log(playerSlots)
+            console.log(mainOffset)
+            for (let i = 0; i < playerSlots.length; i++) {
+                client.inventory.setItem(i + mainOffset, playerSlots[i])
+            }
+            console.log('AFTER SYNC', client.inventory.inv)
         }
 
         client.windowId++

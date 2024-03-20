@@ -1,5 +1,5 @@
 import type { IntRange, ValueOf } from 'type-fest'
-import type { BlockMenuName } from '~/blocks/container'
+import type { BlockMenuName } from '~/db'
 
 export const Colors = {
     BLACK: { code: 0x0, name: 'black', hex: '#000000' },

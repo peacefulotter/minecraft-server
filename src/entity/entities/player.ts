@@ -44,7 +44,7 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
     isFlying = false
 
     windowId: number = 1
-    container: Container<any> | undefined = undefined
+    container: Container | undefined = undefined
 
     constructor(
         position: Position = DEFAULT_PLAYER_POSITION,

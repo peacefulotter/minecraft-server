@@ -235,7 +235,7 @@ export const ConfigurationHandler = Handler.init('Configuration')
             await SetContainerContent.serialize({
                 windowId: 0,
                 stateId: 0,
-                carriedItems: client.inventory.getAllItems(),
+                slots: client.inventory.getAllItems(),
                 carriedItem: undefined,
             })
         )

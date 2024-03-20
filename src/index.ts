@@ -21,7 +21,7 @@ import { Server } from './net/server'
 // make TypeScript happy
 declare global {
     var server: Server
-    var socket: TCPSocketListener<undefined>
+    var socket: any
 }
 
 // ============================= toString overrides =============================
@@ -44,8 +44,12 @@ import type { TCPSocketListener } from 'bun'
 
 globalThis.server ??= new Server()
 globalThis.socket ??= Bun.listen({
-    hostname: 'localhost',
+    hostname: '127.0.0.1',
     port: 25565,
+    // async fetch(req, server) {
+    //     console.log(req)
+    //     server.upgrade(req)
+    // },
     socket: globalThis.server,
 })
 log(

@@ -13,37 +13,41 @@ import type {
 } from '~/net/packets/create'
 import type { Client } from '~/net/client'
 
-import { EntityAnimation, OpenScreen } from '~/net/packets/client'
+import {
+    EntityAnimation,
+    OpenScreen,
+    SetContainerContent,
+} from '~/net/packets/client'
 import { DB } from '~/db'
 import {
-    inventories,
+    CONTAINER_INVENTORIES,
     type SupportedInventories,
 } from '~/entity/inventory/inventories'
 import { EntityAnimations } from '~/data/enum'
 import type { Server } from '~/net/server'
+import { MergedInventory } from '~/entity/inventory/inventory'
 
 type ChangedSlots = ServerBoundPacketData<
     (typeof ClickContainer)['types']
 >['changedSlots']
 
-export type BlockMenuName = keyof typeof DB.block_name_to_menu
+type ContainerSections = (typeof CONTAINER_INVENTORIES)[SupportedInventories]
 
-export abstract class Container<Inv extends SupportedInventories>
+export abstract class Container
+    extends MergedInventory<ContainerSections>
     implements Interactable
 {
-    inventory: ReturnType<(typeof inventories)[Inv]>
-
     constructor(
         public pos: Vec3,
         public name: BlockName,
-        public menuName: Inv
+        public menuName: SupportedInventories
     ) {
-        this.inventory = inventories[menuName]() as typeof this.inventory
+        super(CONTAINER_INVENTORIES[menuName])
     }
 
-    insert(changedSlots: ChangedSlots) {
+    setSlots(changedSlots: ChangedSlots) {
         for (const { slot, item } of changedSlots) {
-            this.inventory.setItemFromSlot(slot, item)
+            this.setItem(slot, item)
         }
     }
 
@@ -54,6 +58,13 @@ export abstract class Container<Inv extends SupportedInventories>
     ): Promise<void | ClientBoundPacket | ClientBoundPacket[]> {
         // Save container in client
         client.container = this
+        // Copy client main + hotbar inventory into container for sync when container is closed
+        const clientItems = [
+            ...client.inventory.getItemsFromSection('main'),
+            ...client.inventory.getItemsFromSection('hotbar'),
+        ]
+        this.setItemsFromSection('player', clientItems)
+        console.log('open screen', this)
 
         // Send swing offhand animation
         server.broadcast(
@@ -65,19 +76,27 @@ export abstract class Container<Inv extends SupportedInventories>
         )
 
         // And open container screen
-        return await OpenScreen.serialize({
-            windowId: client.windowId,
-            windowType: DB.block_name_to_menu[this.menuName],
-            windowTitle: new NBT.NBTData(
-                NBT.parse(
-                    JSON.stringify({
-                        color: 'light_purple',
-                        text: 'TEST SCREEN',
-                        bold: true,
-                    })
+        return [
+            await OpenScreen.serialize({
+                windowId: client.windowId,
+                windowType: DB.block_name_to_menu[this.menuName],
+                windowTitle: new NBT.NBTData(
+                    NBT.parse(
+                        JSON.stringify({
+                            color: 'light_purple',
+                            text: 'TEST SCREEN',
+                            bold: true,
+                        })
+                    ),
+                    { rootName: null }
                 ),
-                { rootName: null }
-            ),
-        })
+            }),
+            await SetContainerContent.serialize({
+                windowId: client.windowId,
+                stateId: 0,
+                slots: this.getAllItems(),
+                carriedItem: undefined,
+            }),
+        ]
     }
 }

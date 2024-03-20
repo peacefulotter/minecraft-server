@@ -11,6 +11,7 @@ import { unwrap } from './packets/server/unwrap'
 import { PacketBuffer } from './PacketBuffer'
 import { BlockHandler } from '~/blocks/handler'
 import { World } from '~/world/mca'
+import type { ServerWebSocket, Socket, WebSocketHandler } from 'bun'
 
 // class ServerWorker {
 //     private worker: Worker
@@ -33,7 +34,10 @@ import { World } from '~/world/mca'
 //     }
 // }
 
+// ServerWebSocket<Buffer>
+
 export class Server {
+    // implements WebSocketHandler<Buffer>
     // TODO: will see later if we need to use a worker
     // private worker: ServerWorker = new ServerWorker()
 
@@ -89,8 +93,6 @@ export class Server {
     }
 
     open = async (socket: SocketWithId) => {
-        console.log('azdazadazdzdazdazda')
-
         const client = new Client(socket)
         this.clients[client.entityId] = client
         socket.id = client.entityId
