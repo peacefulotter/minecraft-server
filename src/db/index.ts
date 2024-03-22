@@ -26,7 +26,7 @@ import { block_name_to_default_state_id } from './block_name_to_default_state_id
 import { blocks } from './blocks'
 import { item_id_to_name } from './item_id_to_name'
 
-export type BlockMenuName = keyof typeof DB.block_name_to_menu
+export { type BlockMenuName } from './block_name_to_menu'
 
 export const DB = {
     block_id_to_name,

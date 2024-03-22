@@ -10,9 +10,10 @@ import { GameMode, MainHand } from '~/data/enum'
 import { LivingEntity } from '../living-entity'
 import { NBTData } from 'nbtify'
 import type { Vec3 } from 'vec3'
-import { PlayerInventory } from '../inventory/player'
+import { PlayerInventory } from '../../inventory/player'
 import type { Container } from '~/blocks/container'
 import v from 'vec3'
+import { DB } from '~/db'
 
 enum SkinPartsMask {
     NOTHING = 0x00,
@@ -64,26 +65,12 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
             data,
             gameMode
         )
-
-        this.inventory.setItemFrom('hotbar', 0, {
-            itemId: 299,
-            itemCount: 1,
-            nbt: undefined,
-        })
-        this.inventory.setItemFrom('hotbar', 1, {
-            itemId: 217,
-            itemCount: 64,
-            nbt: undefined,
-        })
-        this.inventory.setItemFrom('hotbar', 2, {
-            itemId: 206,
-            itemCount: 64,
-            nbt: undefined,
-        })
-        this.inventory.setItemFrom('hotbar', 3, {
-            itemId: 222,
-            itemCount: 64,
-            nbt: undefined,
+        ;[299, 301, 1195, 374, 298, 206, 222].forEach((id, i) => {
+            this.inventory.setItemFrom('hotbar', i, {
+                itemId: id,
+                itemCount: 64,
+                nbt: undefined,
+            })
         })
     }
 

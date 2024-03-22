@@ -4,6 +4,6 @@ import { Container } from '.'
 
 export class CraftingTable extends Container {
     constructor(pos: Vec3) {
-        super(pos, 'minecraft:crafting_table', 'minecraft:crafter_3x3')
+        super(pos, 'minecraft:crafting_table', 'minecraft:crafting')
     }
 }

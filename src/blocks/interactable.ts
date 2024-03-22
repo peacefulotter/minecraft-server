@@ -10,6 +10,9 @@ import { EnchantingTable } from './container/enchanting-table'
 import { CraftingTable } from './container/crafting-table'
 import type { DB } from '~/db'
 import type { Server } from '~/net/server'
+import { Furnace } from './container/furnace'
+import { Chest } from './container/chest'
+import { BlastFurnace } from './container/blast-furnace'
 
 export type BlockName = keyof typeof DB.blocks
 
@@ -27,8 +30,11 @@ export interface Interactable {
 }
 
 export const interactables = {
+    'minecraft:chest': Chest,
     'minecraft:enchanting_table': EnchantingTable,
     'minecraft:crafting_table': CraftingTable,
+    'minecraft:blast_furnace': BlastFurnace,
+    'minecraft:furnace': Furnace,
 } as const
 
 type SupportedInteractable = keyof typeof interactables

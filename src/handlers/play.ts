@@ -325,10 +325,6 @@ export const PlayHandler = Handler.init('Play')
                 location: worldPos,
                 blockId: state.id,
             }),
-            await BlockUpdate.serialize({
-                location: worldPos.add(v(0, 2, 0)),
-                blockId: 4277, // crafting table
-            }),
         ]
     })
 

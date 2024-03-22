@@ -12,7 +12,7 @@ export class Inventory {
     // TODO: prod -> private
     inv = new Map<number, Slot>()
 
-    constructor(private readonly length: number) {}
+    constructor(protected readonly length: number) {}
 
     getItem(slot: number) {
         return this.inv.get(slot)

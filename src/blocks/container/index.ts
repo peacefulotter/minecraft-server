@@ -19,19 +19,24 @@ import {
     SetContainerContent,
 } from '~/net/packets/client'
 import { DB } from '~/db'
-import {
-    CONTAINER_INVENTORIES,
-    type SupportedInventories,
-} from '~/entity/inventory/inventories'
+
 import { EntityAnimations } from '~/data/enum'
 import type { Server } from '~/net/server'
-import { MergedInventory } from '~/entity/inventory/inventory'
+import {
+    CONTAINER_INVENTORIES,
+    PLAYER_INV_SIZE,
+    type SupportedInventories,
+} from '~/inventory/container'
+import { MergedInventory } from '~/inventory/inventory'
 
 type ChangedSlots = ServerBoundPacketData<
     (typeof ClickContainer)['types']
 >['changedSlots']
 
-type ContainerSections = (typeof CONTAINER_INVENTORIES)[SupportedInventories]
+type ContainerSections =
+    (typeof CONTAINER_INVENTORIES)[SupportedInventories] & {
+        player: typeof PLAYER_INV_SIZE
+    }
 
 export abstract class Container
     extends MergedInventory<ContainerSections>
@@ -42,7 +47,7 @@ export abstract class Container
         public name: BlockName,
         public menuName: SupportedInventories
     ) {
-        super(CONTAINER_INVENTORIES[menuName])
+        super({ ...CONTAINER_INVENTORIES[menuName], player: PLAYER_INV_SIZE })
     }
 
     setSlots(changedSlots: ChangedSlots) {
@@ -64,7 +69,16 @@ export abstract class Container
             ...client.inventory.getItemsFromSection('hotbar'),
         ]
         this.setItemsFromSection('player', clientItems)
-        console.log('open screen', this)
+        console.log('opened screen', this)
+
+        for (let i = 0; i < this.length; i++) {
+            this.setItem(i, {
+                itemId: i + 1,
+                itemCount: i + 1,
+                nbt: undefined,
+            })
+        }
+        console.log('opened screen', this)
 
         // Send swing offhand animation
         server.broadcast(

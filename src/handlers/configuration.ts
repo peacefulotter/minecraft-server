@@ -90,26 +90,18 @@ export const ConfigurationHandler = Handler.init('Configuration')
                 fullLightMask: fullSkyLightMask,
                 lights: skyLights,
             } = server.world.getLights(x, z)
-            console.log('chunk', chunk.length)
-            console.log(
-                'skyLightMask',
-                skyLightMask.toString(),
-                'emptySkyLightMask',
-                emptySkyLightMask.toString(),
-                'fullSkyLightMask',
-                fullSkyLightMask.toString()
-            )
 
             // Fill the "full" sky light array with a buffer of 255
             for (const idx of fullSkyLightMask.toArray()) {
                 skyLights[idx] = Buffer.from(new Uint8Array(2048).fill(0xff))
             }
 
-            // fill all skylights based on length
+            // TEMP: fill all skylights based on length
             for (let i = 0; i < skyLights.length; i++) {
                 skyLights[i] = Buffer.from(new Uint8Array(2048).fill(0xff))
             }
 
+            // TEMP
             const blockLightMask = skyLightMask.clone()
             const blockLights = skyLights.map((l) => Buffer.from(l))
 
