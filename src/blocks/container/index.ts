@@ -25,7 +25,7 @@ import type { Server } from '~/net/server'
 import {
     CONTAINER_INVENTORIES,
     PLAYER_INV_SIZE,
-    type SupportedInventories,
+    type ContainerInventories,
 } from '~/inventory/container'
 import { MergedInventory } from '~/inventory/inventory'
 
@@ -33,21 +33,24 @@ type ChangedSlots = ServerBoundPacketData<
     (typeof ClickContainer)['types']
 >['changedSlots']
 
-type ContainerSections =
-    (typeof CONTAINER_INVENTORIES)[SupportedInventories] & {
-        player: typeof PLAYER_INV_SIZE
+type ContainerInventoriesWithPlayer = {
+    [K in keyof ContainerInventories]: ContainerInventories[K] & {
+        player: number
     }
+}
+type ContainerSections<K extends keyof ContainerInventoriesWithPlayer> =
+    Extract<ContainerInventoriesWithPlayer, { [key in K]: any }>[K]
+type V = ContainerSections<'minecraft:furnace'>
 
-export abstract class Container
-    extends MergedInventory<ContainerSections>
+export abstract class Container<K extends keyof ContainerInventoriesWithPlayer>
+    extends MergedInventory<ContainerSections<K>>
     implements Interactable
 {
-    constructor(
-        public pos: Vec3,
-        public name: BlockName,
-        public menuName: SupportedInventories
-    ) {
-        super({ ...CONTAINER_INVENTORIES[menuName], player: PLAYER_INV_SIZE })
+    constructor(public pos: Vec3, public name: BlockName, public menuName: K) {
+        super({
+            ...CONTAINER_INVENTORIES[menuName],
+            player: PLAYER_INV_SIZE,
+        } as ContainerSections<K>)
     }
 
     setSlots(changedSlots: ChangedSlots) {
@@ -71,14 +74,14 @@ export abstract class Container
         this.setItemsFromSection('player', clientItems)
         console.log('opened screen', this)
 
-        for (let i = 0; i < this.length; i++) {
-            this.setItem(i, {
-                itemId: i + 1,
-                itemCount: i + 1,
-                nbt: undefined,
-            })
-        }
-        console.log('opened screen', this)
+        // Fill container test
+        // for (let i = 0; i < this.length; i++) {
+        //     this.setItem(i, {
+        //         itemId: i + 1,
+        //         itemCount: i + 1,
+        //         nbt: undefined,
+        //     })
+        // }
 
         // Send swing offhand animation
         server.broadcast(

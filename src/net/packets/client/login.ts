@@ -5,7 +5,7 @@ import {
     DataUUID,
     DataOptional,
     VarIntPrefixedByteArray,
-} from '~/data/types'
+} from '~/net/types'
 import { ClientBoundPacketCreator } from '../create'
 
 export const EncryptionRequest = new ClientBoundPacketCreator(

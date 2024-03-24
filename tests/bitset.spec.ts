@@ -1,6 +1,6 @@
 import BitSet from 'bitset'
 import { describe, test, expect } from 'bun:test'
-import { DataBitSet } from '~/data/types'
+import { DataBitSet } from '~/net/types'
 import { PacketBuffer } from '~/net/PacketBuffer'
 
 const bitset = new DataBitSet()

@@ -5,7 +5,7 @@ import {
     DEFAULT_ROTATION,
     DEFAULT_VELOCITY,
 } from '..'
-import { MD } from '../metadata'
+import { MD } from '../../net/types/metadata'
 import { GameMode, MainHand } from '~/data/enum'
 import { LivingEntity } from '../living-entity'
 import { NBTData } from 'nbtify'
@@ -13,7 +13,7 @@ import type { Vec3 } from 'vec3'
 import { PlayerInventory } from '../../inventory/player'
 import type { Container } from '~/blocks/container'
 import v from 'vec3'
-import { DB } from '~/db'
+import type { InventoryItem } from '~/inventory/inventory'
 
 enum SkinPartsMask {
     NOTHING = 0x00,
@@ -45,7 +45,8 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
     isFlying = false
 
     windowId: number = 1
-    container: Container | undefined = undefined
+    container: Container<any> | undefined = undefined
+    carriedItem: { slot: number; item: InventoryItem } | undefined = undefined
 
     constructor(
         position: Position = DEFAULT_PLAYER_POSITION,

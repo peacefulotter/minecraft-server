@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { DataString } from '~/data/types'
+import { DataString } from '~/net/types'
 import { Client } from '~/net/client'
 import { ClientBoundPacketCreator } from '~/net/packets/create'
 import { Server } from '~/net/server'
@@ -23,20 +23,20 @@ const getClient = async () => {
     return new Client(socket)
 }
 
-const DummyPacket = ClientBoundPacketCreator(0x0, 'dummy', {
+const DummyPacket = new ClientBoundPacketCreator(0x0, 'dummy', {
     test: new DataString(),
 })
 
 const packet0 = [
-    await DummyPacket({ test: 'A' }),
-    await DummyPacket({ test: 'B' }),
-    await DummyPacket({ test: 'C' }),
+    await DummyPacket.serialize({ test: 'A' }),
+    await DummyPacket.serialize({ test: 'B' }),
+    await DummyPacket.serialize({ test: 'C' }),
 ]
 
 const packet1 = [
-    await DummyPacket({ test: 'D' }),
-    await DummyPacket({ test: 'E' }),
-    await DummyPacket({ test: 'F' }),
+    await DummyPacket.serialize({ test: 'D' }),
+    await DummyPacket.serialize({ test: 'E' }),
+    await DummyPacket.serialize({ test: 'F' }),
 ]
 
 describe('client', () => {

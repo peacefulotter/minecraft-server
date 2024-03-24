@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import Long from 'long'
-import { VarInt, VarLong } from '~/data/types'
+import { VarInt, VarLong } from '~/net/types'
 import { PacketBuffer } from '~/net/PacketBuffer'
 
 describe('vars work', () => {

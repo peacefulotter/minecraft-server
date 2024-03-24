@@ -28,9 +28,7 @@ import { hashSeed } from '~/seed'
 import BitSet from 'bitset'
 import { WORLD_SEED } from '~/constants'
 import { entities } from '~/data/entities'
-import { DataBitSet } from '~/data/types'
-import { PacketBuffer } from '~/net/PacketBuffer'
-import { EMPTY_CHUNK, GRASS_CHUNK } from '~/world/chunk'
+import { GRASS_CHUNK } from '~/world/chunk'
 
 export const ConfigurationHandler = Handler.init('Configuration')
 

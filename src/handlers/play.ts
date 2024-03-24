@@ -124,10 +124,34 @@ export const PlayHandler = Handler.init('Play')
                 console.log('SET SLOTS', changedSlots)
                 container.setSlots(changedSlots)
             }
+
+            if ((mode === 0 || mode === 1) && carriedItem) {
+                client.carriedItem = { slot, item: carriedItem }
+            }
+        } else if (mode === 5) {
+            // Right-click drag
+            // if (button === 5 && carriedItem) {
+            //     container.setItem(slot, {
+            //         itemId: carriedItem?.itemId,
+            //         itemCount: 1,
+            //         nbt: undefined,
+            //     })
+            //     client.inventory.getItem()
+            // }
+
+            // left click: button === 2, right click: button === 6
+            // end of drag: slot === -999
+            if ((button === 2 || button === 6) && slot === -999) {
+                container.setSlots(changedSlots)
+                client.inventory.setItem(
+                    client.carriedItem?.slot as number,
+                    carriedItem
+                )
+            }
         }
 
-        console.log('player inv', client.inventory.inv)
-        console.log('container inv', container.inv)
+        // console.log('player inv', client.inventory.inv)
+        // console.log('container inv', container.inv)
     })
 
     .register(ServerCloseContainer, async ({ server, client, packet }) => {

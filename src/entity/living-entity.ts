@@ -9,7 +9,7 @@ import {
     Entity,
 } from '.'
 import type { Position, Rotation } from '~/position'
-import { MD, type MetadataSchema } from './metadata'
+import { MD, type MetadataSchema } from '../net/types/metadata'
 import { GameMode } from '~/data/enum'
 import type { Vec3 } from 'vec3'
 

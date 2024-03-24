@@ -11,12 +11,15 @@ import {
     DataString,
     DataInt,
 } from '.'
-import { isIntegerDistribution, type _IntegerDistribution } from '../registry'
 import type {
     DimensionMonsterSpawnLightLevel,
     DimensionMonsterSpawnLightLevelRange,
 } from '../../../Region-Types/src/java'
 import { Int32 } from 'nbtify'
+import {
+    isIntegerDistribution,
+    type _IntegerDistribution,
+} from '~/data/registry'
 
 // https://wiki.vg/Slot_Data
 // Differs from the docs since the present field is taken care by DataOptional

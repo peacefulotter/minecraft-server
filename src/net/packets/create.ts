@@ -1,5 +1,5 @@
 import { decrypt } from '~/auth'
-import type { InnerReadType, InnerWriteType, Type } from '~/data/types'
+import type { InnerReadType, InnerWriteType, Type } from '~/net/types'
 import type { PacketId } from '.'
 import { PacketBuffer } from '../PacketBuffer'
 

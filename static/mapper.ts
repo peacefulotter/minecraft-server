@@ -1,6 +1,14 @@
+import { readdir } from 'node:fs/promises'
 import path from 'path'
 import registries from './registries.json'
 import blocks from './blocks.json'
+import type {
+    ItemName,
+    MCJSONRecipe,
+    MCJSONShapedRecipe,
+    MCRecipeType,
+} from './recipe'
+import { getItemNamesFromTag } from './tags'
 
 const folder = path.join(import.meta.dir, '..', 'src', 'db')
 
@@ -16,7 +24,7 @@ const write = (filename: string, data: any) => {
     const content = `export const ${filename} = ${JSON.stringify(
         data,
         null,
-        4
+        2
     )} as const`
     Bun.write(file, content)
 }
@@ -53,3 +61,82 @@ const blockNameToMenu = Object.entries(menuEntries).reduce(
     {} as Record<string, number>
 )
 write('block_name_to_menu', blockNameToMenu)
+
+// ============ RECIPES BUILDER ============
+
+type ShapedRecipe = {
+    pattern: string[]
+    ingredients: Record<string, number[]>
+    output: { id: number; count: number }
+}
+
+type Recipe = ShapedRecipe
+
+const recipes: Map<MCRecipeType, Recipe[]> = new Map()
+
+const getItemNames = (
+    item: { item?: ItemName; tag?: string } | { item: ItemName }[]
+) => {
+    if (Array.isArray(item)) {
+        return item.map((i) => i.item)
+    } else if ('item' in item) {
+        return [item.item]
+    } else if ('tag' in item) {
+        return getItemNamesFromTag(item.tag) as ItemName[]
+    }
+    console.error('Case not taken into account', item)
+    return undefined
+}
+
+const handleShapedRecipe = ({
+    type,
+    pattern,
+    key,
+    result,
+}: MCJSONShapedRecipe) => {
+    const ingredients: { [char: string]: number[] } = {}
+
+    const chars = pattern.map((row) => row.split('')).flat()
+
+    for (const char of chars) {
+        if (char === ' ') continue
+
+        const item = key[char as keyof typeof key]
+        const itemNames = getItemNames(item) as ItemName[]
+        const itemIds = itemNames.map(
+            (itemName) => itemEntries[itemName].protocol_id
+        )
+        ingredients[char] = itemIds
+    }
+
+    const outputItemName = typeof result === 'object' ? result.item : result
+    const outputCount = typeof result === 'object' ? result.count ?? 1 : 1
+    const output = {
+        id: itemEntries[outputItemName].protocol_id,
+        count: outputCount,
+    }
+
+    if (!recipes.has(type)) {
+        recipes.set(type, [])
+    }
+
+    recipes.get(type)?.push({
+        pattern,
+        ingredients,
+        output,
+    })
+}
+
+// Read directory recipes and load all json files
+const recipesDir = path.join(import.meta.dir, 'recipes')
+const files = await readdir(recipesDir)
+
+for (const p of files) {
+    const file = Bun.file(path.join(recipesDir, p))
+    const recipe = (await file.json()) as MCJSONRecipe
+    if (recipe.type === 'minecraft:crafting_shaped') {
+        handleShapedRecipe(recipe)
+    }
+}
+
+write('recipes', Object.fromEntries(recipes))

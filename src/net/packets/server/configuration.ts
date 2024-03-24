@@ -4,11 +4,10 @@ import {
     VarInt,
     type Type,
     DataBoolean,
-    DataByteArray,
     DataLong,
     DataInt,
     DataUUID,
-} from '~/data/types'
+} from '~/net/types'
 import type {
     ChatMode,
     MainHand,

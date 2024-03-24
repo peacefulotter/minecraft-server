@@ -9,7 +9,7 @@ import {
     DataArray,
     type Type,
     DataNBT,
-} from '~/data/types'
+} from '~/net/types'
 import type { FeatureFlags } from '~/data/enum'
 import { ClientBoundPacketCreator } from '../create'
 

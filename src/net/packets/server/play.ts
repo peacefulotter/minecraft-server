@@ -19,11 +19,10 @@ import {
     DataUnsignedByte,
     DataSlot,
     DataInteract,
-} from '~/data/types'
+} from '~/net/types'
 import { ServerBoundPacketCreator } from '../create'
 import type {
     ActionStatus,
-    ClickContainerButtons,
     Difficulty,
     Face,
     MainHand,

@@ -1,11 +1,4 @@
-import {
-    DataByte,
-    DataInt,
-    DataShort,
-    DataString,
-    VarInt,
-    type Type,
-} from '~/data/types'
+import { DataByte, DataInt, DataShort, DataString, VarInt } from '~/net/types'
 import { ServerBoundPacketCreator } from '../create'
 
 export const Handshake = new ServerBoundPacketCreator(0x00, 'Handshake', {

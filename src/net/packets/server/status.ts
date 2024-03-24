@@ -1,4 +1,4 @@
-import { DataLong } from '~/data/types'
+import { DataLong } from '~/net/types'
 import { ServerBoundPacketCreator } from '../create'
 
 export const StatusRequest = new ServerBoundPacketCreator(

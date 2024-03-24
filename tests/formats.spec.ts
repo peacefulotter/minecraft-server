@@ -20,7 +20,7 @@ import {
     VarInt,
     VarIntPrefixedByteArray,
     VarLong,
-} from '~/data/types'
+} from '~/net/types'
 import {
     ClientBoundPacketCreator,
     ServerBoundPacketCreator,

@@ -2,7 +2,7 @@ import * as NBT from 'nbtify'
 import type { Block } from '~/blocks/handler'
 import { DB } from '~/db'
 
-type Slot = {
+export type InventoryItem = {
     itemId: number
     itemCount: number
     nbt: NBT.NBTData | undefined
@@ -10,7 +10,7 @@ type Slot = {
 
 export class Inventory {
     // TODO: prod -> private
-    inv = new Map<number, Slot>()
+    inv = new Map<number, InventoryItem>()
 
     constructor(protected readonly length: number) {}
 
@@ -18,14 +18,14 @@ export class Inventory {
         return this.inv.get(slot)
     }
 
-    setItem(slot: number, item: Slot | undefined) {
+    setItem(slot: number, item: InventoryItem | undefined) {
         if (slot < 0 || slot >= this.length) {
-            throw new Error(
-                `Invalid slot index: ${slot}, length: ${this.length}`
-            )
+            console.error(`Invalid slot index: ${slot}, length: ${this.length}`)
+            return false
         }
         if (item) {
             this.inv.set(slot, item)
+            return true
         } else {
             return this.inv.delete(slot)
         }
@@ -49,11 +49,37 @@ export class Inventory {
     }
 }
 
-export type InventorySections = { [name: string]: number }
+type Listener<S extends InventorySections> = (
+    item: InventoryItem | undefined,
+    slot: number,
+    name: keyof S
+) => void
+
+export interface InventorySections {
+    [name: string]: number
+}
 
 export class MergedInventory<S extends InventorySections> extends Inventory {
+    listeners = new Map<keyof S, Listener<S>[]>()
+    slotToSection = new Map<number, keyof S>()
+
     constructor(private readonly sections: S) {
         super(Object.values(sections).reduce((acc, len) => acc + len))
+
+        let offset = 0
+        for (const [name, len] of Object.entries(sections)) {
+            for (let i = 0; i < len; i++) {
+                this.slotToSection.set(offset + i, name as keyof S)
+            }
+            offset += len
+        }
+    }
+
+    addListener(name: keyof S, listener: Listener<S>) {
+        if (!this.listeners.has(name)) {
+            this.listeners.set(name, [])
+        }
+        this.listeners.get(name)?.push(listener)
     }
 
     getSectionOffset(name: keyof S) {
@@ -78,13 +104,38 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
         return cb.bind(this)(idx)
     }
 
+    // Override setItem to call listeners in setItemWithName
+    setItem(slot: number, item: InventoryItem | undefined) {
+        if (slot < 0 || slot >= this.length) {
+            console.error(`Invalid slot index: ${slot}, length: ${this.length}`)
+            return false
+        }
+        const name = this.slotToSection.get(slot) as keyof S
+        return this.setItemWithName(slot, name, item)
+    }
+
+    // Inner setItem method that also triggers listeners
+    private setItemWithName(
+        idx: number,
+        name: keyof S,
+        item: InventoryItem | undefined
+    ) {
+        const changed = super.setItem(idx, item)
+        if (changed) {
+            this.listeners
+                .get(name)
+                ?.forEach((listener) => listener(item, idx, name))
+        }
+        return changed
+    }
+
     // slot = relative index
     getItemFrom(name: keyof S, slot: number) {
         return this.from(this.getItem, name, slot)
     }
 
-    setItemFrom(name: keyof S, slot: number, item: Slot | undefined) {
-        this.from((i) => this.setItem(i, item), name, slot)
+    setItemFrom(name: keyof S, slot: number, item: InventoryItem | undefined) {
+        this.from((i) => this.setItemWithName(i, name, item), name, slot)
     }
 
     itemToBlockFrom(name: keyof S, slot: number) {
@@ -103,10 +154,10 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
         })
     }
 
-    setItemsFromSection(name: keyof S, items: (Slot | undefined)[]) {
+    setItemsFromSection(name: keyof S, items: (InventoryItem | undefined)[]) {
         const offset = this.getSectionOffset(name)
         items.forEach((item, i) => {
-            this.setItem(i + offset, item)
+            this.setItemWithName(i + offset, name, item)
         })
     }
 }

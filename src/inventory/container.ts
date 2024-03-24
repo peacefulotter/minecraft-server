@@ -3,13 +3,6 @@ import type { InventorySections } from './inventory'
 
 export const PLAYER_INV_SIZE = 36 as const
 
-function createContainerInventories<
-    T extends Record<BlockMenuName, V>,
-    V extends InventorySections
->(o: T) {
-    return o
-}
-
 const BI_ITEMS_MAP_SECTIONS = {
     first_item: 1,
     second_item: 1,
@@ -20,7 +13,7 @@ const GENERIC_SECTIONS = <T extends number>(t: T) => ({
     content: t,
 })
 
-export const CONTAINER_INVENTORIES = createContainerInventories({
+export const CONTAINER_INVENTORIES = {
     'minecraft:anvil': {
         ...BI_ITEMS_MAP_SECTIONS,
     },
@@ -113,19 +106,6 @@ export const CONTAINER_INVENTORIES = createContainerInventories({
         input: 1,
         result: 1,
     },
-})
+} as const satisfies Record<BlockMenuName, InventorySections>
 
-export type SupportedInventories = keyof typeof CONTAINER_INVENTORIES
-
-const a = {
-    b: {
-        c: 0,
-        d: 1,
-    },
-}
-
-const e = <const T extends keyof typeof a>(t: T) => {
-    return a[t]
-}
-
-const f = e('b')
+export type ContainerInventories = typeof CONTAINER_INVENTORIES

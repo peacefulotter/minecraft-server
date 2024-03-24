@@ -7,7 +7,7 @@ import {
     BlockPalettedContainerFormat,
     DataStructure,
     type ChunkSection,
-} from './type'
+} from '../net/types/world'
 import { PacketBuffer } from '~/net/PacketBuffer'
 import type { Chunk, Section } from '../../Region-Types/src/java'
 import { EMPTY_CHUNK, biome } from './chunk'

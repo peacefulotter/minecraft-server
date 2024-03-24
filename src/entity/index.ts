@@ -11,7 +11,7 @@ import {
     MD,
     type MetadataArgs,
     type MetadataSchema,
-} from './metadata'
+} from '../net/types/metadata'
 import { SetEntityMetadata } from '~/net/packets/client'
 
 export const DEFAULT_POSITION: Position = v(0, 0, 0)

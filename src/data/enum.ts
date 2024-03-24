@@ -1,6 +1,8 @@
 import type { IntRange, ValueOf } from 'type-fest'
 import type { BlockMenuName } from '~/db'
 
+export type MCPrefixed<T extends string> = `minecraft:${T}`
+
 export const Colors = {
     BLACK: { code: 0x0, name: 'black', hex: '#000000' },
     DARK_BLUE: { code: 0x1, name: 'dark_blue', hex: '#0000AA' },
@@ -75,7 +77,6 @@ export enum GameMode {
 // ====================== CHANNELS ======================
 type ReservedChannel = MCPrefixed<'register' | 'unregister'>
 
-type MCPrefixed<T extends string> = `minecraft:${T}`
 type DebugPrefixed<T extends string> = `debug/${T}`
 
 type MCInternalChannel =

@@ -1,4 +1,4 @@
-import { DataLong, DataString } from '~/data/types'
+import { DataLong, DataString } from '~/net/types'
 import { ClientBoundPacketCreator } from '../create'
 
 export const PingResponse = new ClientBoundPacketCreator(0x01, 'PingResponse', {

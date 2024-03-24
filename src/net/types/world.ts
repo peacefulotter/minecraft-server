@@ -9,7 +9,7 @@ import {
     DataObject,
     DataShort,
     type InnerWriteType,
-} from '~/data/types'
+} from '~/net/types'
 import { PacketBuffer } from '~/net/PacketBuffer'
 
 class DataEmpty implements Type<number> {

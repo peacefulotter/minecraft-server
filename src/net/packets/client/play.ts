@@ -23,12 +23,12 @@ import {
     DataNBT,
     DataSlot,
     DataUnsignedByte,
-} from '~/data/types'
+} from '~/net/types'
 import { EntityAnimations, GameMode, type GameEvents } from '~/data/enum'
 import { ClientBoundPacketCreator, type ClientBoundPacketData } from '../create'
 import type { EntityId } from '~/entity'
 import type { EntityTypeId } from '~/data/entities'
-import { DataEntityMetadata, type MetadataSchema } from '~/entity/metadata'
+import { DataEntityMetadata, type MetadataSchema } from '~/net/types/metadata'
 
 export const BundleDelimiter = new ClientBoundPacketCreator(
     0x00,

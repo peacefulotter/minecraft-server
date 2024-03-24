@@ -1,4 +1,4 @@
-import { DataByteArray, VarInt } from '~/data/types'
+import { DataByteArray, VarInt } from '~/net/types'
 import { ClientBoundPacketCreator, type ClientBoundPacket } from '../create'
 
 const ResponseFormat = {

@@ -1,20 +1,20 @@
 import {
-    DataByte,
+    DataNBT,
+    DataObject,
+    DataVec3,
     VarInt,
-    DataOptional,
-    DataBoolean,
     type Type,
     VarLong,
     DataFloat,
+    DataByte,
     DataString,
-    DataObject,
-    DataUUID,
-    DataVec3,
+    DataOptional,
+    DataBoolean,
     DataPosition,
-    DataNBT,
+    DataUUID,
     type InnerWriteType,
-} from '~/data/types'
-import type { DimensionID, VillagerLevel } from '../../Region-Types/src/java'
+} from '.'
+import type { DimensionID, VillagerLevel } from '../../../Region-Types/src/java'
 import { PacketBuffer } from '~/net/PacketBuffer'
 
 const TextComponent = DataNBT

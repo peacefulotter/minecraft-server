@@ -1,4 +1,3 @@
-import { read } from 'nbtify'
 import {
     BYTE_SIZE,
     DOUBLE_SIZE,
@@ -6,7 +5,7 @@ import {
     INT_SIZE,
     LONG_SIZE,
     SHORT_SIZE,
-} from '~/data/types/constants'
+} from '~/net/types/constants'
 
 export class PacketBuffer {
     readOffset = 0
