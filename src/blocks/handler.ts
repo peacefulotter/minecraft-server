@@ -4,6 +4,7 @@ import {
     isInteractable,
     interactables,
 } from './interactable'
+import type { Client } from '~/net/client'
 
 type BlockProperties = {
     [key: string]: string[]
@@ -33,12 +34,17 @@ export class BlockHandler {
         return this.blocks.get(encoded)
     }
 
-    public setBlock(pos: Vec3, name: string, block: Block): void {
+    public setBlock(
+        client: Client,
+        pos: Vec3,
+        name: string,
+        block: Block
+    ): void {
         const encoded = encodeVec3(pos)
         this.blocks.set(encoded, block)
         if (isInteractable(name)) {
             const Builder = interactables[name]
-            this.interactables.set(encoded, new Builder(pos))
+            this.interactables.set(encoded, new Builder(server, pos, client))
         }
     }
 

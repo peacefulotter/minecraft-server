@@ -9,10 +9,9 @@ export type InventoryItem = {
 }
 
 export class Inventory {
-    // TODO: prod -> private
     inv = new Map<number, InventoryItem>()
 
-    constructor(protected readonly length: number) {}
+    constructor(readonly length: number) {}
 
     getItem(slot: number) {
         return this.inv.get(slot)
@@ -60,10 +59,14 @@ export interface InventorySections {
 }
 
 export class MergedInventory<S extends InventorySections> extends Inventory {
-    listeners = new Map<keyof S, Listener<S>[]>()
+    // Listeners on specific section
+    sectionListeners = new Map<keyof S, Listener<S>[]>()
+    // Listeners on all sections
+    listeners: Listener<S>[] = []
+    // Map slot index to section name
     slotToSection = new Map<number, keyof S>()
 
-    constructor(private readonly sections: S) {
+    constructor(protected readonly sections: S) {
         super(Object.values(sections).reduce((acc, len) => acc + len))
 
         let offset = 0
@@ -75,11 +78,20 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
         }
     }
 
-    addListener(name: keyof S, listener: Listener<S>) {
-        if (!this.listeners.has(name)) {
-            this.listeners.set(name, [])
+    addListener(listener: Listener<S>): void
+    addListener(name: keyof S, listener: Listener<S>): void
+    addListener(name: keyof S | Listener<S>, listener?: Listener<S>) {
+        if (typeof name === 'function') {
+            this.listeners.push(name)
+            return
         }
-        this.listeners.get(name)?.push(listener)
+        if (!listener) {
+            return
+        }
+        if (!this.sectionListeners.has(name)) {
+            this.sectionListeners.set(name, [])
+        }
+        this.sectionListeners.get(name)?.push(listener)
     }
 
     getSectionOffset(name: keyof S) {
@@ -122,7 +134,9 @@ export class MergedInventory<S extends InventorySections> extends Inventory {
     ) {
         const changed = super.setItem(idx, item)
         if (changed) {
-            this.listeners
+            // fire up listeners
+            this.listeners.forEach((listener) => listener(item, idx, name))
+            this.sectionListeners
                 .get(name)
                 ?.forEach((listener) => listener(item, idx, name))
         }

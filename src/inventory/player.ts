@@ -1,6 +1,6 @@
 import { MergedInventory } from './inventory'
 
-const sections = {
+export const sections = {
     crafting_output: 1,
     crafting_input: 4,
     armor: 4,

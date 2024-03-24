@@ -19,14 +19,14 @@ const groupById = (data: any) =>
         return acc
     }, {} as Record<string, string>)
 
-const write = (filename: string, data: any) => {
+const write = (filename: string, data: any, asConst: boolean = true) => {
     const file = path.join(folder, `${filename}.ts`)
     console.log('Writing:', file)
     const content = `export const ${filename} = ${JSON.stringify(
         data,
         null,
         2
-    )} as const`
+    )}${asConst ? ' as const' : ''}`
     Bun.write(file, content)
 }
 
@@ -133,4 +133,4 @@ for (const p of files) {
     }
 }
 
-write('recipes', recipes)
+write('recipes', recipes, false)

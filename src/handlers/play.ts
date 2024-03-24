@@ -108,7 +108,6 @@ export const PlayHandler = Handler.init('Play')
     })
 
     .register(ClickContainer, async ({ client, packet }) => {
-        console.log('TODO: CLICK CONTAINER')
         const { action, changedSlots, carriedItem } = packet
         const { mode, button, slot } = action
 
@@ -121,12 +120,11 @@ export const PlayHandler = Handler.init('Play')
                 // Drop item
                 // client.inventory.dropItem(changedSlots)
             } else {
-                console.log('SET SLOTS', changedSlots)
-                container.setSlots(changedSlots)
+                container.setChangedItems(client, changedSlots)
             }
 
-            if ((mode === 0 || mode === 1) && carriedItem) {
-                client.carriedItem = { slot, item: carriedItem }
+            if ((button === 0 || button === 1) && carriedItem) {
+                container.carryItem(client, slot, carriedItem)
             }
         } else if (mode === 5) {
             // Right-click drag
@@ -142,7 +140,7 @@ export const PlayHandler = Handler.init('Play')
             // left click: button === 2, right click: button === 6
             // end of drag: slot === -999
             if ((button === 2 || button === 6) && slot === -999) {
-                container.setSlots(changedSlots)
+                container.setChangedItems(client, changedSlots)
                 client.inventory.setItem(
                     client.carriedItem?.slot as number,
                     carriedItem
@@ -163,22 +161,16 @@ export const PlayHandler = Handler.init('Play')
         // Synchronize player inventory with container inventory
         const container = client.container
         if (container) {
-            const playerSlots = container.getItemsFromSection('player')
-            const mainOffset = client.inventory.getSectionOffset('main')
-            console.log('BEFORE SYNC', client.inventory.inv)
-            console.log(playerSlots)
-            console.log(mainOffset)
-            for (let i = 0; i < playerSlots.length; i++) {
-                client.inventory.setItem(i + mainOffset, playerSlots[i])
-            }
-            console.log('AFTER SYNC', client.inventory.inv)
+            container.removeClient(client)
         }
 
+        client.carriedItem = undefined
         client.windowId++
 
         const res = await ClientCloseContainer.serialize({
             windowId: packet.windowId,
         })
+        // TODO: Why broadcast? Probably to have block animations such as chest closing => need to test
         await server.broadcast(client, res)
     })
 
@@ -312,7 +304,7 @@ export const PlayHandler = Handler.init('Play')
         // 1.2 if block is an interactable container
         if (interactable) {
             console.log('Interacting with block entity')
-            return interactable.interact(server, client, packet)
+            return interactable.interact(client, packet)
         }
 
         // 2. Check if holding an item
@@ -338,7 +330,7 @@ export const PlayHandler = Handler.init('Play')
         // 4. Place the block and register it
         const worldPos = getWorldPosition(packet.location, packet.face)
         console.log('Placing block', name, 'at', worldPos)
-        server.blocks.setBlock(worldPos, name, block)
+        server.blocks.setBlock(client, worldPos, name, block)
 
         // TODO: better
         const state = (block as any).states.filter((s: any) => s.default)[0]

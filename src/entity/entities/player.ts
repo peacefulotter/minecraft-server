@@ -73,6 +73,13 @@ export class Player extends LivingEntity<typeof PlayerMetadata, 'player'> {
                 nbt: undefined,
             })
         })
+        ;[36, 844, 62, 81, 799, 800, 1].forEach((id, i) => {
+            this.inventory.setItemFrom('main', i, {
+                itemId: id,
+                itemCount: 64,
+                nbt: undefined,
+            })
+        })
     }
 
     public [Bun.inspect.custom]() {

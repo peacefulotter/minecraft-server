@@ -228,4 +228,10 @@ export class World {
             this.skyLights.set(key, this.formatLights(lights))
         }
     }
+
+    public [Bun.inspect.custom]() {
+        return {
+            loadedChunks: this.chunks.size,
+        }
+    }
 }

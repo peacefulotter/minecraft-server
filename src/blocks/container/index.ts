@@ -24,64 +24,123 @@ import { EntityAnimations } from '~/data/enum'
 import type { Server } from '~/net/server'
 import {
     CONTAINER_INVENTORIES,
-    PLAYER_INV_SIZE,
     type ContainerInventories,
 } from '~/inventory/container'
-import { MergedInventory } from '~/inventory/inventory'
+import { MergedInventory, type InventoryItem } from '~/inventory/inventory'
+import type { SocketId } from '~/socket'
 
 type ChangedSlots = ServerBoundPacketData<
     (typeof ClickContainer)['types']
 >['changedSlots']
 
-type ContainerInventoriesWithPlayer = {
-    [K in keyof ContainerInventories]: ContainerInventories[K] & {
-        player: number
-    }
-}
-type ContainerSections<K extends keyof ContainerInventoriesWithPlayer> =
-    Extract<ContainerInventoriesWithPlayer, { [key in K]: any }>[K]
-type V = ContainerSections<'minecraft:furnace'>
+/**
+ * Code to merge multiple inventories into one
+ *
+ * type ContainerInventoriesWithPlayer = {
+ *    [K in keyof ContainerInventories]: ContainerInventories[K] & {
+ *       player: number
+ *    }
+ * }
+ * type ContainerSections<K extends keyof ContainerInventoriesWithPlayer> =
+ *    Extract<ContainerInventoriesWithPlayer, { [key in K]: any }>[K]
+ */
 
-export abstract class Container<K extends keyof ContainerInventoriesWithPlayer>
-    extends MergedInventory<ContainerSections<K>>
-    implements Interactable
-{
-    constructor(public pos: Vec3, public name: BlockName, public menuName: K) {
-        super({
-            ...CONTAINER_INVENTORIES[menuName],
-            player: PLAYER_INV_SIZE,
-        } as ContainerSections<K>)
+// TODO: not all Containers are shared (eg crafting table)
+class SharedContainerInventory<
+    K extends keyof ContainerInventories
+> extends MergedInventory<ContainerInventories[K]> {
+    clients = new Set<SocketId>()
+
+    constructor(
+        protected readonly server: Server,
+        shared: ContainerInventories[K]
+    ) {
+        super(shared)
+        this.addListener(async () => {
+            for (const id of this.clients.values()) {
+                const client = this.server.getClient(id)
+                client.write(await this.getSetContainerContent(client))
+            }
+        })
     }
 
-    setSlots(changedSlots: ChangedSlots) {
-        for (const { slot, item } of changedSlots) {
-            this.setItem(slot, item)
+    async getSetContainerContent(client: Client) {
+        return await SetContainerContent.serialize({
+            windowId: client.windowId,
+            stateId: 0,
+            slots: [
+                ...this.getAllItems(),
+                ...client.inventory.getItemsFromSection('main'),
+                ...client.inventory.getItemsFromSection('hotbar'),
+            ],
+            carriedItem: client.carriedItem?.item,
+        })
+    }
+
+    addClient(client: Client) {
+        this.clients.add(client.entityId)
+    }
+
+    removeClient(client: Client) {
+        this.clients.delete(client.entityId)
+    }
+
+    // Converts a container slot to a player inventory slot
+    toPlayerSlot(client: Client, slot: number) {
+        return slot - this.length + client.inventory.getSectionOffset('main')
+    }
+
+    // On player carrying an item, remove it from wherever it was taken (container or player inventory)
+    // and set it as the player's carried item
+    carryItem(client: Client, slot: number, item: InventoryItem) {
+        console.log('Setting carried item to', slot, item)
+        client.carriedItem = { slot, item }
+        this.setItemWithPlayer(client, slot, undefined)
+    }
+
+    // Be able to set items from the player inventory as well
+    setItemWithPlayer(
+        client: Client,
+        slot: number,
+        item: InventoryItem | undefined
+    ) {
+        if (slot > this.length) {
+            client.inventory.setItemFrom('main', slot, item)
+        } else {
+            const playerSlot = this.toPlayerSlot(client, slot)
+            this.setItem(playerSlot, item)
         }
     }
 
+    setChangedItems(client: Client, items: ChangedSlots) {
+        for (const { slot, item } of items) {
+            this.setItemWithPlayer(client, slot, item)
+        }
+    }
+}
+
+// K extends keyof ContainerInventoriesWithPlayer
+export abstract class Container<K extends keyof ContainerInventories>
+    extends SharedContainerInventory<K>
+    implements Interactable
+{
+    constructor(
+        readonly server: Server,
+        public pos: Vec3,
+        public readonly name: BlockName,
+        public readonly menuName: K
+    ) {
+        super(server, CONTAINER_INVENTORIES[menuName])
+    }
+
     async interact(
-        server: Server,
         client: Client,
         packet: UseItemOnData
     ): Promise<void | ClientBoundPacket | ClientBoundPacket[]> {
         // Save container in client
         client.container = this
-        // Copy client main + hotbar inventory into container for sync when container is closed
-        const clientItems = [
-            ...client.inventory.getItemsFromSection('main'),
-            ...client.inventory.getItemsFromSection('hotbar'),
-        ]
-        this.setItemsFromSection('player', clientItems)
-        console.log('opened screen', this)
-
-        // Fill container test
-        // for (let i = 0; i < this.length; i++) {
-        //     this.setItem(i, {
-        //         itemId: i + 1,
-        //         itemCount: i + 1,
-        //         nbt: undefined,
-        //     })
-        // }
+        // Add client to container
+        this.addClient(client)
 
         // Send swing offhand animation
         server.broadcast(
@@ -108,12 +167,16 @@ export abstract class Container<K extends keyof ContainerInventoriesWithPlayer>
                     { rootName: null }
                 ),
             }),
-            await SetContainerContent.serialize({
-                windowId: client.windowId,
-                stateId: 0,
-                slots: this.getAllItems(),
-                carriedItem: undefined,
-            }),
+            await this.getSetContainerContent(client),
         ]
+    }
+
+    public [Bun.inspect.custom]() {
+        return {
+            pos: this.pos,
+            name: this.name,
+            inv: this.inv,
+            sections: this.sections,
+        }
     }
 }

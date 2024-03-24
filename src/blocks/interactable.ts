@@ -23,7 +23,6 @@ export interface Interactable {
     name: BlockName
 
     interact(
-        server: Server,
         client: Client,
         packet: UseItemOnData
     ): Promise<void | ClientBoundPacket | ClientBoundPacket[]>

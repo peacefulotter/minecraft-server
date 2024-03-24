@@ -56,6 +56,10 @@ export class Server {
     entities: EntityHandler = new EntityHandler()
     blocks: BlockHandler = new BlockHandler()
 
+    getClient = (id: SocketId) => {
+        return this.clients[id]
+    }
+
     async handlePacket(client: Client, buffer: PacketBuffer, packetId: number) {
         const res = await this.handler.handle({
             server: this,
@@ -122,17 +126,10 @@ export class Server {
         log(JSON.stringify(error, null, 2))
     }
 
-    // public toString(): string {
-    //     return `Server
-    //         # clients: ${Object.keys(this.clients).length}
-    //     `
-    // }
-
-    // public [Symbol.toPrimitive](): string {
-    //     return this.toString()
-    // }
-
-    // public [Symbol.for('nodejs.util.inspect.custom')](): string {
-    //     return this.toString()
-    // }
+    public [Bun.inspect.custom]() {
+        return {
+            clients: this.clients,
+            world: this.world,
+        }
+    }
 }
