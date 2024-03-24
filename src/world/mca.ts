@@ -14,6 +14,7 @@ import { EMPTY_CHUNK, biome } from './chunk'
 import { log } from '~/logger'
 import { DB } from '~/db'
 import './fix-stream'
+import chalk from 'chalk'
 
 const CHUNK_SECTIONS = 1024 as const
 const CHUNK_DATA_LENGTH = CHUNK_SECTIONS * 4
@@ -42,7 +43,20 @@ export class World {
         this.loadRegions(files)
     }
 
+    log(...message: any[]) {
+        log(`${chalk.green('World')}`, ...message)
+    }
+
+    logMemory() {
+        this.log(
+            'RSS',
+            parseFloat((process.memoryUsage.rss() / 1024 / 1024).toFixed(2)),
+            'MB'
+        )
+    }
+
     async loadRegions(files: string[]) {
+        this.logMemory()
         const buffers = await Promise.all(
             files.map(async (f) => {
                 const p = path.join(import.meta.dir, 'region', f)
@@ -50,8 +64,8 @@ export class World {
             })
         )
         await Promise.all(buffers.map((b) => this.parseRegion(b)))
-        log('Loaded', this.chunks.size, 'chunks')
-        log('RSS', (process.memoryUsage.rss() / 1024 / 1024).toFixed(2), 'MB')
+        this.log('Loaded', this.chunks.size, 'chunks')
+        this.logMemory()
     }
 
     private getKey(x: number, z: number): EncodedChunkPosition {

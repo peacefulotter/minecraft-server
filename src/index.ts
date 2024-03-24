@@ -52,10 +52,10 @@ globalThis.socket ??= Bun.listen({
     // },
     socket: globalThis.server,
 })
-log(
-    'Server listening on',
-    chalk.cyan(`${globalThis.socket.hostname}:${globalThis.socket.port}`)
+const loc = chalk.cyan(
+    `${globalThis.socket.hostname}:${globalThis.socket.port}`
 )
+log(`${chalk.blueBright('Server')} listening on ${loc}`)
 
 // watch(path.join(import.meta.dir, 'worker'), (event, filename) => {
 //     console.log(`Detected ${event} in ${filename}`)

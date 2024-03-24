@@ -9,9 +9,11 @@ import type { Handler, PacketHandler } from './handlers'
 import type { PacketId } from './net/packets'
 import type { Command } from './commands/handler'
 
+const regex = /T(\d{2}:\d{2}:\d{2}\.\d{3})Z/
+
 export const log = (...message: any[]) => {
-    const d = new Date()
-    console.log(chalk.gray(`[${d.toISOString()}]`), ...message)
+    const d = (new Date().toISOString().match(regex) as any)[1]
+    console.log(chalk.gray(`[${d}]`), ...message)
 }
 
 export const hex = (byte: number) => {
