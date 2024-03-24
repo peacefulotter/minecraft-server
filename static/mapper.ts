@@ -9,6 +9,7 @@ import type {
     MCRecipeType,
 } from './recipe'
 import { getItemNamesFromTag } from './tags'
+import type { Recipes } from '~/data/recipe'
 
 const folder = path.join(import.meta.dir, '..', 'src', 'db')
 
@@ -64,15 +65,10 @@ write('block_name_to_menu', blockNameToMenu)
 
 // ============ RECIPES BUILDER ============
 
-type ShapedRecipe = {
-    pattern: string[]
-    ingredients: Record<string, number[]>
-    output: { id: number; count: number }
+const recipes: Recipes = {
+    'minecraft:crafting_shaped': [],
+    'minecraft:crafting_shapeless': [],
 }
-
-type Recipe = ShapedRecipe
-
-const recipes: Map<MCRecipeType, Recipe[]> = new Map()
 
 const getItemNames = (
     item: { item?: ItemName; tag?: string } | { item: ItemName }[]
@@ -116,11 +112,7 @@ const handleShapedRecipe = ({
         count: outputCount,
     }
 
-    if (!recipes.has(type)) {
-        recipes.set(type, [])
-    }
-
-    recipes.get(type)?.push({
+    recipes[type].push({
         pattern,
         ingredients,
         output,
@@ -136,7 +128,9 @@ for (const p of files) {
     const recipe = (await file.json()) as MCJSONRecipe
     if (recipe.type === 'minecraft:crafting_shaped') {
         handleShapedRecipe(recipe)
+    } else if (recipe.type === 'minecraft:crafting_shapeless') {
+        console.log('Shapeless recipe:', recipe)
     }
 }
 
-write('recipes', Object.fromEntries(recipes))
+write('recipes', recipes)

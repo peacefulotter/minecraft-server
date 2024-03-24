@@ -20,12 +20,10 @@ export const hex = (byte: number) => {
 }
 
 export const logCmdHandler = (commands: Map<string, Command>) => {
-    console.log(
-        `-------{  ${chalk.red('Commands')}  }-------`,
-        `\n${[...commands.values()]
-            .map((cmd) => `${chalk.redBright(cmd.name)}: ${cmd.description}`)
-            .join('\n')}`
-    )
+    log(`-------{  ${chalk.red('Commands')}  }-------`)
+    for (const cmd of commands.values()) {
+        log(`${chalk.redBright(cmd.name)}: ${cmd.description}`)
+    }
 }
 
 export const logHandler = <
@@ -33,18 +31,10 @@ export const logHandler = <
 >(
     handler: Handler<T>
 ) => {
-    console.log(
-        `-------{  ${chalk.greenBright(handler.name)}  }-------`,
-        '\n' +
-            Object.values(handler.handlers)
-                .map(
-                    ({ creator }) =>
-                        `${chalk.yellowBright(hex(creator.id))} - ${
-                            creator.name
-                        }`
-                )
-                .join('\n')
-    )
+    log(`-------{  ${chalk.greenBright(handler.name)}  }-------`)
+    for (const { creator } of Object.values(handler.handlers)) {
+        log(`${chalk.yellowBright(hex(creator.id))} - ${creator.name}`)
+    }
 }
 
 const logPacket =

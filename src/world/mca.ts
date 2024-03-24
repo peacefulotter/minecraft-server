@@ -51,6 +51,7 @@ export class World {
         )
         await Promise.all(buffers.map((b) => this.parseRegion(b)))
         log('Loaded', this.chunks.size, 'chunks')
+        log('RSS', (process.memoryUsage.rss() / 1024 / 1024).toFixed(2), 'MB')
     }
 
     private getKey(x: number, z: number): EncodedChunkPosition {
