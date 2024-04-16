@@ -6,7 +6,7 @@
         "dev": "bun --bun --watch src/index.ts"
     },
     "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.1.0",
         "@types/leb128": "^0.0.0",
         "@types/node-rsa": "^1.1.4",
         "@types/shortid": "^0.0.32",
