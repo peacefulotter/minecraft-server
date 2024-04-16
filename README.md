@@ -2,7 +2,7 @@
 
 ## Issues
 
-If there is any issues during the installation process or when running the server, please file an issue on github ([link](https://github.com/peacefulotter/minecraft-server/issues))
+If there is any issue during the installation process or when running the server, please file an issue on github ([link](https://github.com/peacefulotter/minecraft-server/issues))
 
 ## Installation
 
