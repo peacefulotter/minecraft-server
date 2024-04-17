@@ -3,7 +3,9 @@
     "module": "src/index.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun --bun --watch src/index.ts"
+        "dev": "bun --bun --watch src/index.ts",
+        "start": "bun src/index.ts",
+        "setup": "bun scripts/setup.ts"
     },
     "devDependencies": {
         "@types/bun": "^1.1.0",
